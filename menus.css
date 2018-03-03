@@ -1,0 +1,34 @@
+/* menus.css */
+
+/* Menu styles -- overall settings */
+
+.main-menu {
+  width: 600px;
+  background-color: #DFFFE7;
+  font-weight: bold;
+  font-style: normal;
+  font-size: 100%;
+}
+
+/* Menu styles -- link text settings */
+
+.main-menu a {
+  text-decoration: none;
+  color: purple;
+}
+
+.main-menu a:visited {
+  color: purple;
+}
+
+.main-menu a:focus {
+  color: orange;
+}
+
+.main-menu a:hover {
+  color: red;
+}
+
+.main-menu a:active {
+  color: blue;
+}
