@@ -12,3 +12,6 @@ My thoughts about java application development, spring framework, TDD and other.
 image::conventions.png[arrange_1]
 
 In our development team, we use the following http://antkorwin.com/codestyle.html[code style conventions]
+
+
+include::metrica.adoc[]
