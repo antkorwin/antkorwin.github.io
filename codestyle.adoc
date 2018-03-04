@@ -4,7 +4,8 @@
 :toc: left
 :experimental:
 :numbered:
-Korovin Anatoliy <antkorwin@gmail.com>
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 
 ## Why coding style conventions is important?
