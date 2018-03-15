@@ -22,22 +22,18 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 public class Bar {
 
     @Id
-    @Type(type = "uuid-char")
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
-    @Column(name = "ID", unique = true, nullable = false, insertable = true, updatable = false, length = 36, precision = 0)
-    private UUID id;
+    @GeneratedValue
+    private Long id;
 
     private String stringField = "123";
-
     private int intPrimitiveField = 456;
-
     private Long intNonPrimitiveField = 789L;
 }
 
 
-public interface BarRepository extends JpaRepository<Bar, UUID> {
+public interface BarRepository extends JpaRepository<Bar, Long> {
 }
+
 
 @Service
 public class BarService {
@@ -55,20 +51,17 @@ public class BarService {
     }
 
     @Transactional(readOnly = true)
-    public Bar get(UUID id){
+    public Bar get(Long id){
         return barRepository.getOne(id);
     }
 }
 ----
 
-тест:
+проверим:
 
 [source, java]
 ----
 public class BarTest extends BasePostgresIT {
-
-    @PersistenceContext
-    private EntityManager entityManager;
 
     @Autowired
     private BarService barService;
@@ -102,10 +95,6 @@ public class BarTest extends BasePostgresIT {
                               Bar::getIntNonPrimitiveField)
                   .containsOnly(null, 0, null);
     }
-
-    private Session getSession() {
-        return entityManager.getEntityManagerFactory().createEntityManager().unwrap(Session.class);
-    }
 }
 ----
 <1> вроде все хорошо и все инициализиаруется как надо
@@ -130,11 +119,8 @@ public class BarTest extends BasePostgresIT {
 public class Foo {
 
     @Id
-    @Type(type = "uuid-char")
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
-    @Column(name = "ID", unique = true, nullable = false, insertable = true, updatable = false, length = 36, precision = 0)
-    private UUID id;
+    @GeneratedValue
+    private Long id;
 
     @ColumnDefault("1")  <1>
     private long fieldA;
@@ -152,27 +138,6 @@ public class Foo {
     private int fieldE;
 }
 
-
-public interface FooRepository extends JpaRepository<Foo, UUID> {
-}
-
-
-@Service
-public class FooService {
-
-    @Autowired
-    private FooRepository fooRepository;
-
-    @Transactional
-    public Foo persist(Foo foo){
-        return fooRepository.save(foo);
-    }
-
-    @Transactional(readOnly = true)
-    public Foo get(UUID id){
-        return fooRepository.getOne(id);
-    }
-}
 ----
 <1> так сработает?
 <2> а если не примитивный тип
@@ -181,109 +146,100 @@ public class FooService {
 <5> все до кучи, чтобы уж наверняка =)
 
 
-тест:
+тестируем:
 
 [source,java]
 ----
-public class FooTest extends BasePostgresIT {
+@Test
+public void testDataBaseInitializationField() throws Exception {
 
-    @Autowired
-    private FooService fooService;
+    Foo result = fooService.persist(new Foo());
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    // посмотрим что вернулось
+    Assertions.assertThat(result)
+              .extracting(Foo::getFieldA,
+                          Foo::getFieldB,
+                          Foo::getFieldC,
+                          Foo::getFieldD,
+                          Foo::getFieldE)
+              .containsOnly(0L, null, 0, null, 0);
 
-    @Test
-    public void testDataBaseInitializationField() throws Exception {
+    // често перезапрашиваем объект из другой сессии
+    result = getSession().get(Foo.class, result.getId());
+    Assertions.assertThat(result)
+              .extracting(Foo::getFieldA,
+                          Foo::getFieldB,
+                          Foo::getFieldC,
+                          Foo::getFieldD,
+                          Foo::getFieldE)
+              .containsOnly(0L, null, 0, null, 5);
+             // в итоге при сработает только вариант для которого явно
+             // указано не инсертить потому что все остальные поля будут
+             // переданы в инсерт, хоть нулами, хоть нулями но будут там
+             // и БД уже не будет выдавать значение по умолчанию
+}
 
-        Foo result = fooService.persist(new Foo());
 
-        // посмотрим что вернулось
-        Assertions.assertThat(result)
-                  .extracting(Foo::getFieldA,
-                              Foo::getFieldB,
-                              Foo::getFieldC,
-                              Foo::getFieldD,
-                              Foo::getFieldE)
-                  .containsOnly(0L, null, 0, null, 0);
+/**
+ * А теперь вот интересно что будет если это поле мы все таки заполнили в сущности,
+ * и нам не нужно значение по умолчанию.
+ */
+@Test
+public void testInsert() throws Exception {
 
-        // често перезапрашиваем объект из другой сессии
-        Session session = entityManager.getEntityManagerFactory().createEntityManager().unwrap(Session.class);
-        result = session.get(Foo.class, result.getId());
-        Assertions.assertThat(result)
-                  .extracting(Foo::getFieldA,
-                              Foo::getFieldB,
-                              Foo::getFieldC,
-                              Foo::getFieldD,
-                              Foo::getFieldE)
-                  .containsOnly(0L, null, 0, null, 5);
-                 // в итоге при сработает только вариант для которого явно указано не инсертить
-                 // потому что все остальные поля будут переданы в инсерт, хоть нулами, хоть нулями но будут там и БД
-                 // уже не будет выдавать значение по умолчанию
-    }
+    Foo result = fooService.persist(Foo.builder().fieldE(7).build());
 
-    /**
-     * А теперь вот интересно что будет если это поле мы все таки заполнили в сущности,
-     * и нам не нужно значение по умолчанию.
-     */
-    @Test
-    public void testInsert() throws Exception {
+    // посмотрим что вернулось
+    Assertions.assertThat(result)
+              .extracting(Foo::getFieldA,
+                          Foo::getFieldB,
+                          Foo::getFieldC,
+                          Foo::getFieldD,
+                          Foo::getFieldE)
+              .containsOnly(0L, null, 0, null, 7);
 
-        Foo result = fooService.persist(Foo.builder().fieldE(7).build());
+    // вроде бы все хорошо, но что если перезапросить:
+    result = getSession().get(Foo.class, result.getId());
+    Assertions.assertThat(result)
+              .extracting(Foo::getFieldA,
+                          Foo::getFieldB,
+                          Foo::getFieldC,
+                          Foo::getFieldD,
+                          Foo::getFieldE)
+              .containsOnly(0L, null, 0, null, 5);
+              // и тут мы видим что при инсерте сущности в БД, это поле никуда не ушло
+              // что собственно и дала анотация, но нам-то нужно другое поведение
+}
 
-        // посмотрим что вернулось
-        Assertions.assertThat(result)
-                  .extracting(Foo::getFieldA,
-                              Foo::getFieldB,
-                              Foo::getFieldC,
-                              Foo::getFieldD,
-                              Foo::getFieldE)
-                  .containsOnly(0L, null, 0, null, 7);
 
-        // вроде бы все хорошо, но что если перезапросить:
-        Session session = entityManager.getEntityManagerFactory().createEntityManager().unwrap(Session.class);
-        result = session.get(Foo.class, result.getId());
-        Assertions.assertThat(result)
-                  .extracting(Foo::getFieldA,
-                              Foo::getFieldB,
-                              Foo::getFieldC,
-                              Foo::getFieldD,
-                              Foo::getFieldE)
-                  .containsOnly(0L, null, 0, null, 5);
-                  // и тут мы видим что при инсерте сущности в БД, это поле никуда не ушло
-                  // что собственно и дала анотация, но нам-то нужно другое поведение
-    }
+/**
+ * Странный вариант решения - это делать после инсерта update
+ */
+@Test
+public void testUpdate() throws Exception {
+    Foo result = fooService.persist(Foo.builder().fieldE(7).build());
 
-    /**
-     * Странный вариант решения - это делать после инсерта update
-     */
-    @Test
-    public void testUpdate() throws Exception {
-        Foo result = fooService.persist(Foo.builder().fieldE(7).build());
+    result.setFieldE(123);
+    result = fooService.persist(result);
 
-        result.setFieldE(123);
-        result = fooService.persist(result);
+    // посмотрим что вернулось
+    Assertions.assertThat(result)
+              .extracting(Foo::getFieldA,
+                          Foo::getFieldB,
+                          Foo::getFieldC,
+                          Foo::getFieldD,
+                          Foo::getFieldE)
+              .containsOnly(0L, null, 0, null, 123);
 
-        // посмотрим что вернулось
-        Assertions.assertThat(result)
-                  .extracting(Foo::getFieldA,
-                              Foo::getFieldB,
-                              Foo::getFieldC,
-                              Foo::getFieldD,
-                              Foo::getFieldE)
-                  .containsOnly(0L, null, 0, null, 123);
-
-        // на всякий случай проверим, мы уже никому не верим
-        Session session = entityManager.getEntityManagerFactory().createEntityManager().unwrap(Session.class);
-        result = session.get(Foo.class, result.getId());
-        Assertions.assertThat(result)
-                  .extracting(Foo::getFieldA,
-                              Foo::getFieldB,
-                              Foo::getFieldC,
-                              Foo::getFieldD,
-                              Foo::getFieldE)
-                  .containsOnly(0L, null, 0, null, 123);
-    }
+    // на всякий случай проверим, мы уже никому не верим
+    result = getSession().get(Foo.class, result.getId());
+    Assertions.assertThat(result)
+              .extracting(Foo::getFieldA,
+                          Foo::getFieldB,
+                          Foo::getFieldC,
+                          Foo::getFieldD,
+                          Foo::getFieldE)
+              .containsOnly(0L, null, 0, null, 123);
 }
 ----
 
@@ -304,76 +260,39 @@ public class FooTest extends BasePostgresIT {
 public class Baz {
 
     @Id
-    @Type(type = "uuid-char")
-    @GeneratedValue(generator = "system-uuid")
-    @GenericGenerator(name = "system-uuid", strategy = "uuid2")
-    @Column(name = "ID", unique = true, nullable = false, insertable = true, updatable = false, length = 36, precision = 0)
-    private UUID id;
+    @GeneratedValue
+    private Long id;
 
     private int field;
 
     @PrePersist
     void init(){
-        if(null) !!!
-        setField(7);
-    }
-}
-
-public interface BazRepository extends JpaRepository<Baz, UUID> {
-}
-
-@Service
-public class BazService {
-
-    private final BazRepository bazRepository;
-
-    @Autowired
-    public BazService(BazRepository bazRepository) {
-        this.bazRepository = bazRepository;
-    }
-
-    @Transactional
-    public Baz persist(Baz entity){
-        return bazRepository.save(entity);
-    }
-
-    @Transactional(readOnly = true)
-    public Baz get(UUID id){
-        return bazRepository.getOne(id);
+        if(getField() == 0) {
+          setField(7);
+        }
     }
 }
 ----
 
 
-тест:
+проверяем:
 
 [source,java]
 ----
-public class BazTest extends BasePostgresIT {
+@Test
+public void testDataBaseInitializationField() throws Exception {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    Baz result = bazService.persist(new Baz());
 
-    @Autowired
-    private BazService bazService;
+    // посмотрим что вернулось
+    Assertions.assertThat(result)
+              .extracting(Baz::getField)
+              .containsOnly(7);
 
-    @Test
-    public void testDataBaseInitializationField() throws Exception {
-
-        Baz result = bazService.persist(new Baz());
-
-        // посмотрим что вернулось
-        Assertions.assertThat(result)
-                  .extracting(Baz::getField)
-                  .containsOnly(7);
-
-        // често перезапрашиваем объект из другой сессии
-        Session session = entityManager.getEntityManagerFactory().createEntityManager().unwrap(Session.class);
-        result = session.get(Baz.class, result.getId());
-        Assertions.assertThat(result)
-                  .extracting(Baz::getField)
-                  .containsOnly(7);
-    }
-
+    // често перезапрашиваем объект из другой сессии
+    result = getSession().get(Baz.class, result.getId());
+    Assertions.assertThat(result)
+              .extracting(Baz::getField)
+              .containsOnly(7);
 }
 ----
