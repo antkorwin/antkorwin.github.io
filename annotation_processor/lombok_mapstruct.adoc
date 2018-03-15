@@ -1,0 +1,175 @@
+= Проблемы ленивых - дружим Lombok и Mapstruct
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+
+
+ломбок - понятно, сейчас почти страндарт для java,
+а мапстракт дает возможность очень гибко генерить мапперы сущностей в ДТО и обратно
+
+обе либы используют annotation processing который генерит код.
+Мапстракт при генерации маперов пользуется геттерами и сеттерами объектов,
+которые мы хотим сделать процессингом ломбока.
+
+в общем вопрос то в чем:
+что делать чтобы оба процессора отработали как надо, тоесть сначала
+сгенерить ломбоком геттеры и сеттеры, а потом мапстрактом делать маппер
+
+## Решение (старое и некрасивое):
+
+используем de-lombok чтобы mapstruct увидел геттеры и сеттеры
+
+[source,xml]
+----
+<!-- first de-lombok the sources to make getters/setters visible for mapstruct,
+but DON'T' add the output directory to the sources, as we will only need it for
+mapstruct processing -->
+<plugin>
+    <groupId>org.projectlombok</groupId>
+    <artifactId>lombok-maven-plugin</artifactId>
+    <version>${org.projectlombok.maven.version}</version>
+    <executions>
+        <execution>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>delombok</goal>
+            </goals>
+            <configuration>
+                <sourceDirectory>src/main/java</sourceDirectory>
+                <addOutputDirectory>false</addOutputDirectory>
+                <outputDirectory>${project.build.directory}/generated-sources/delombok</outputDirectory>
+                <verbose>true</verbose>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+
+<!-- use the de-lomobok files to create the necessary mappers -->
+<plugin>
+    <groupId>org.bsc.maven</groupId>
+    <artifactId>maven-processor-plugin</artifactId>
+    <version>2.2.4</version>
+    <configuration>
+        <defaultOutputDirectory>
+            ${project.build.directory}/generated-sources/mapstruct
+        </defaultOutputDirectory>
+        <processors>
+            <processor>org.mapstruct.ap.MappingProcessor</processor>
+        </processors>
+        <sourceDirectory>
+            ${project.build.directory}/generated-sources/delombok
+        </sourceDirectory>
+        <options>
+            <mapstruct.defaultComponentModel>spring</mapstruct.defaultComponentModel>
+        </options>
+    </configuration>
+    <executions>
+        <execution>
+            <id>process</id>
+            <phase>generate-sources</phase>
+            <goals>
+                <goal>process</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+
+<!-- now take the original sources together with the created mappers to the compiler -->
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.5.1</version>
+    <configuration>
+        <annotationProcessors>
+            <annotationProcessor>
+                lombok.launch.AnnotationProcessorHider$AnnotationProcessor
+            </annotationProcessor>
+        </annotationProcessors>
+    </configuration>
+</plugin>
+----
+
+
+## Решение (новое и удобное):
+
+Используем возможности мавен плагина 3.5.1+ определять annotationProcessorPaths
+
+[source,xml]
+----
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.5.1</version>
+    <configuration>
+        <annotationProcessorPaths>
+            <path>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+            </path>
+            <path>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${org.mapstruct.version}</version>
+            </path>
+        </annotationProcessorPaths>
+    </configuration>
+</plugin>
+----
+
+WARNING: важен порядок annotation processor'ов в конфигурации
+
+
+## Прописываем дефолтные значения component model в Mapstruct
+
+мы же делаем решение для ленивых, если вы используете mapstruct в spring,
+то скорее всего ваши мапперы выглядят так:
+
+[source,java]
+----
+@Mapper(componentModel = "spring")  <1>
+public interface CarMapper {
+
+    CarDto carToCarDto(Car car);
+}
+----
+<1> будем избавляться от обязательности указания модели
+
+Вернемся к настройке процессоров, в ней можно указать опции компиляции,
+для mapstruct'а есть опция позволяющая сменить модель компонентов поумолчанию:
+
+[source,xml]
+----
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-compiler-plugin</artifactId>
+    <version>3.5.1</version>
+    <configuration>
+        <annotationProcessorPaths>
+            ...
+        </annotationProcessorPaths>
+        <compilerArgs>
+            <compilerArg>
+                -Amapstruct.defaultComponentModel=spring
+            </compilerArg>
+        </compilerArgs>
+    </configuration>
+</plugin>
+----
+
+
+теперь все наши маперы стали короче на одну строчку:
+
+
+[source,java]
+----
+@Mapper
+public interface CarMapper {
+
+    CarDto carToCarDto(Car car);
+}
+----

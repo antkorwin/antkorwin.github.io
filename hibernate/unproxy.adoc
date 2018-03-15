@@ -1,0 +1,48 @@
+= Hibernate покажи личико (разворачиваем прокси)
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+
+Иногда хибернейт возвращает прокси объект, заместо инстанса нашего класса,
+подробнее о механизме можно прочитать в блоге Vlad Mihalcea
+link:https://vladmihalcea.com/how-does-a-jpa-proxy-work-and-how-to-unproxy-it-with-hibernate/[]
+
+в более старых версия хибернэйта чем 5.2.10 нет метода unproxy
+и получить исходный класс без него можно только хитрым трюком:
+
+
+[source,java]
+----
+public class HibernateUtils {
+
+    /**
+     * Явная инициализация lazy сущности
+     *
+     * @param entity lazy сущность
+     * @return инициализированная сущность
+     */
+    public static <T> T unProxy(T entity) {
+        if (entity instanceof HibernateProxy) {
+            entity =  (T) ((HibernateProxy) entity).getHibernateLazyInitializer()
+                                                   .getImplementation();
+        }
+
+        return entity;
+    }
+
+    /**
+     * Явная инициализация lazy сущности и ее преобразование к указанному классу
+     *
+     * @param entity lazy сущность
+     * @param clazz класс для преобразования
+     * @return преобразованая сущность
+     */
+    public static <T, Y> Y unProxyToClass(T entity, Class<Y> clazz) {
+        return (Y) HibernateUtils.unProxy(entity);
+    }
+}
+----
