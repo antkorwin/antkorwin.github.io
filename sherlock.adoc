@@ -12,10 +12,10 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 link:annotation_processor/lombok_mapstruct.html[Lombok + mapstruct]
 
 . Как правильно сделать значения поумолчанию для полей в entity
-link:Hibernate/entity_init.html[Entity fields initialization]
+link:hibernate/entity_init.html[Entity fields initialization]
 
 . Класс не класс, инстанс не инстанс
-link:Hibernate/unproxy.html[Hibernate unproxy]
+link:hibernate/unproxy.html[Hibernate unproxy]
 
 . Make new instance by reflection
 
