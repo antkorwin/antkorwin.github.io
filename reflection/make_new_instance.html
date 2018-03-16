@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.6.1">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>Грабли</title>
+<title>Make new instance by reflection</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -427,50 +427,105 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
 </head>
-<body class="article">
+<body class="article toc2 toc-left">
 <div id="header">
-<h1>Грабли</h1>
+<h1>Make new instance by reflection</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
 <span id="author2" class="author">Home</span><br>
 <span id="email2" class="email"><a href="http://antkorwin.com" class="bare">http://antkorwin.com</a></span><br>
 </div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_try_it_now">Try it now!</a></li>
+<li><a href="#_correct_version">Correct version</a></li>
+</ul>
+</div>
 </div>
 <div id="content">
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Проблемы ленивых - дружим Lombok и Mapstruct
-<a href="annotation_processor/lombok_mapstruct.html">Lombok + mapstruct</a></p>
-</li>
-<li>
-<p>Как правильно сделать значения поумолчанию для полей в entity
-<a href="hibernate/entity_init.html">Entity fields initialization</a></p>
-</li>
-<li>
-<p>Класс не класс, инстанс не инстанс
-<a href="hibernate/unproxy.html">Hibernate unproxy</a></p>
-</li>
-<li>
-<p>Make new instance by reflection
-<a href="reflection/make_new_instance.html">make new instance</a></p>
-</li>
-<li>
-<p>Транзакции в спринговых ивентах, когда один ивент порождает другой.</p>
-</li>
-<li>
-<p>Как жить с getOrCreate методами в условиях жесткого concurrency.</p>
-</li>
-<li>
-<p>Кэш контекстов в тестах и библиотеки от apache, которые становятся невалидными, если контекст достали из кэша.</p>
-</li>
-</ol>
+<div class="sect1">
+<h2 id="_try_it_now">Try it now!</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class MakeByReflectionTest {
+
+  private static final UUID RANDOM_UUID = UUID.randomUUID();
+  private static final String CONTENT = "wah wah wah";
+
+  @Getter
+  @Setter
+  @AllArgsConstructor
+  public class Pojo {
+      UUID id;
+      String name;
+  }
+
+  @Test
+  public void makeMorePazzlers() throws Exception {
+      // Arrange
+      Constructor&lt;?&gt; constructor = Pojo.class.getDeclaredConstructors()[0];
+      //constructor.setAccessible(true);
+
+      // Act
+      Pojo p = (Pojo) constructor.newInstance(RANDOM_UUID, CONTENT);
+
+      // Assert
+      Assertions.assertThat(p)
+                .isNotNull()
+                .extracting(Pojo::getId, Pojo::getName)
+                .containsOnly(RANDOM_UUID, CONTENT);
+  }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Есть идеи почему этот тест не пройдет?</p>
+</div>
+<div class="paragraph">
+<p>правильным ответом будет "wrong number of arguments"</p>
+</div>
+<div class="paragraph">
+<p>Есть короче такая веселая тема как имплисит параметры в конструкторе,
+Ну и тут pojo это nested класс, для того чтобы он "знал" в кого он там вложен,
+создавая его инстанц, нужно передать ему ссылку на предка, и этого предка
+передают доп параметром конструктора. Такими тонкостями JLS пользуешься редко.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_correct_version">Correct version</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Ну и зеленый тест на последок:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
+public void makeMorePazzlersSuccess() throws Exception {
+    // Arrange
+    Constructor&lt;?&gt; constructor = Pojo.class.getDeclaredConstructors()[0];
+
+    // Act
+    Pojo p = (Pojo) constructor.newInstance(this, RANDOM_UUID, CONTENT);
+
+    // Assert
+    Assertions.assertThat(p)
+              .isNotNull()
+              .extracting(Pojo::getId, Pojo::getName)
+              .containsOnly(RANDOM_UUID, CONTENT);
+}</code></pre>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-03-16 23:54:30 VLAT
+Last updated 2018-03-16 23:13:23 VLAT
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

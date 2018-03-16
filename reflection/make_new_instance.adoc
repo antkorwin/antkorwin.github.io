@@ -1,0 +1,77 @@
+= Make new instance by reflection
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+
+
+## Try it now!
+
+
+[source, java]
+----
+public class MakeByReflectionTest {
+
+  private static final UUID RANDOM_UUID = UUID.randomUUID();
+  private static final String CONTENT = "wah wah wah";
+
+  @Getter
+  @Setter
+  @AllArgsConstructor
+  public class Pojo {
+      UUID id;
+      String name;
+  }
+
+  @Test
+  public void makeMorePazzlers() throws Exception {
+      // Arrange
+      Constructor<?> constructor = Pojo.class.getDeclaredConstructors()[0];
+      //constructor.setAccessible(true);
+
+      // Act
+      Pojo p = (Pojo) constructor.newInstance(RANDOM_UUID, CONTENT);
+
+      // Assert
+      Assertions.assertThat(p)
+                .isNotNull()
+                .extracting(Pojo::getId, Pojo::getName)
+                .containsOnly(RANDOM_UUID, CONTENT);
+  }
+
+}
+----
+
+Есть идеи почему этот тест не пройдет?
+
+правильным ответом будет "wrong number of arguments"
+
+
+Есть короче такая веселая тема как имплисит параметры в конструкторе,
+Ну и тут pojo это nested класс, для того чтобы он "знал" в кого он там вложен,
+создавая его инстанц, нужно передать ему ссылку на предка, и этого предка
+передают доп параметром конструктора. Такими тонкостями JLS пользуешься редко.
+
+## Correct version
+
+Ну и зеленый тест на последок:
+
+[source,java]
+----
+@Test
+public void makeMorePazzlersSuccess() throws Exception {
+    // Arrange
+    Constructor<?> constructor = Pojo.class.getDeclaredConstructors()[0];
+
+    // Act
+    Pojo p = (Pojo) constructor.newInstance(this, RANDOM_UUID, CONTENT);
+
+    // Assert
+    Assertions.assertThat(p)
+              .isNotNull()
+              .extracting(Pojo::getId, Pojo::getName)
+              .containsOnly(RANDOM_UUID, CONTENT);
+}
+----

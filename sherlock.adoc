@@ -18,5 +18,10 @@ link:hibernate/entity_init.html[Entity fields initialization]
 link:hibernate/unproxy.html[Hibernate unproxy]
 
 . Make new instance by reflection
+link:reflection/make_new_instance.html[make new instance]
 
-. Транзакции в ивентах
+. Транзакции в спринговых ивентах, когда один ивент порождает другой.
+
+. Как жить с getOrCreate методами в условиях жесткого concurrency.
+
+. Кэш контекстов в тестах и библиотеки от apache, которые становятся невалидными, если контекст достали из кэша.
