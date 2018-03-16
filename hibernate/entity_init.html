@@ -644,14 +644,31 @@ public void testDataBaseInitializationField() throws Exception {
                           Foo::getFieldD,
                           Foo::getFieldE)
               .containsOnly(0L, null, 0, null, 5);
-             // в итоге при сработает только вариант для которого явно
+             // в итоге сработает только вариант для которого явно
              // указано не инсертить потому что все остальные поля будут
              // переданы в инсерт, хоть нулами, хоть нулями но будут там
              // и БД уже не будет выдавать значение по умолчанию
-}
-
-
-/**
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>посмотрим запрос:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">16:11:12.722 [main] DEBUG org.hibernate.SQL - insert into foo (fielda, fieldb, fieldc, fieldd, id) values (?, ?, ?, ?, ?)
+Hibernate: insert into foo (fielda, fieldb, fieldc, fieldd, id) values (0, null, 0, null, 1)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Выходит что единственное поле, которое честно проинициализировалось дефолтным значением, не отправляется в инсерте.</p>
+</div>
+<div class="paragraph">
+<p>Что будет если мы укажем значение этого поля отличное от дефолтного?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">/**
  * А теперь вот интересно что будет если это поле мы все таки заполнили в сущности,
  * и нам не нужно значение по умолчанию.
  */
@@ -680,10 +697,27 @@ public void testInsert() throws Exception {
               .containsOnly(0L, null, 0, null, 5);
               // и тут мы видим что при инсерте сущности в БД, это поле никуда не ушло
               // что собственно и дала анотация, но нам-то нужно другое поведение
-}
-
-
-/**
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>посмотрим запрос:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">16:11:12.511 [main] DEBUG org.hibernate.SQL - insert into foo (fielda, fieldb, fieldc, fieldd, id) values (?, ?, ?, ?, ?)
+Hibernate: insert into foo (fielda, fieldb, fieldc, fieldd, id) values (0, null, 0, null, 1)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Никакой магии не произошло, запрос остался прежним, поле помеченное как <code>insertable = false</code> никогда не отправляется в insert.</p>
+</div>
+<div class="paragraph">
+<p>Какие варианты?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">/**
  * Странный вариант решения - это делать после инсерта update
  */
 @Test
@@ -713,6 +747,22 @@ public void testUpdate() throws Exception {
               .containsOnly(0L, null, 0, null, 123);
 }</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>посмотрим запросы:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">16:11:12.670 [main] DEBUG org.hibernate.SQL - insert into foo (fielda, fieldb, fieldc, fieldd, id) values (?, ?, ?, ?, ?)
+Hibernate: insert into foo (fielda, fieldb, fieldc, fieldd, id) values (0, null, 0, null, 1)
+
+16:11:12.690 [main] DEBUG org.hibernate.SQL - update foo set fielda=?, fieldb=?, fieldc=?, fieldd=?, one_more=? where id=?
+Hibernate: update foo set fielda=0, fieldb=null, fieldc=0, fieldd=null, one_more=123 where id=1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>тут мы видим что в update значение этого поля можно изменить,
+однако это нам стоило двух запросов к БД.</p>
 </div>
 </div>
 </div>
@@ -771,12 +821,21 @@ public void testDataBaseInitializationField() throws Exception {
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>посмотрим запросы:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">18:47:25.340 [main] DEBUG org.hibernate.SQL - insert into baz (field, id) values (?, ?)
+Hibernate: insert into baz (field, id) values (7, 1)</code></pre>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-03-16 08:59:33 VLAT
+Last updated 2018-03-17 00:24:41 VLAT
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
