@@ -15,3 +15,10 @@ In our development team, we use the following http://antkorwin.com/codestyle.htm
 
 
 include::metrica.adoc[]
+
+## Traps, Pitfalls, Strangenesses...
+
+image::truble.jpg[double truble, 520,200]
+
+different problems and difficulties that often occur in the development process
+link:sherlock.html[Read more]
