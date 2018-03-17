@@ -343,3 +343,6 @@ public void testDataBaseInitializationField() throws Exception {
 18:47:25.340 [main] DEBUG org.hibernate.SQL - insert into baz (field, id) values (?, ?)
 Hibernate: insert into baz (field, id) values (7, 1)
 ----
+
+
+include::../metrica.adoc[]

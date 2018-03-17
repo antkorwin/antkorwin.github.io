@@ -25,3 +25,5 @@ link:reflection/make_new_instance.html[make new instance]
 . Как жить с getOrCreate методами в условиях жесткого concurrency.
 
 . Кэш контекстов в тестах и библиотеки от apache, которые становятся невалидными, если контекст достали из кэша.
+
+include::metrica.adoc[]

@@ -173,3 +173,5 @@ public interface CarMapper {
     CarDto carToCarDto(Car car);
 }
 ----
+
+include::../metrica.adoc[]
