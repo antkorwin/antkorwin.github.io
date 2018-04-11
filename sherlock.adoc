@@ -1,4 +1,4 @@
-= Грабли
+= Traps & Pitfalls
 :source-highlighter: prettify
 :icons: font
 :toc: left
@@ -7,6 +7,7 @@
 :homepage: http://antkorwin.com
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
+image:sher.jpg[300,250]
 
 . Проблемы ленивых - дружим Lombok и Mapstruct
 link:annotation_processor/lombok_mapstruct.html[Lombok + mapstruct]
@@ -20,10 +21,10 @@ link:hibernate/unproxy.html[Hibernate unproxy]
 . Make new instance by reflection
 link:reflection/make_new_instance.html[make new instance]
 
+////
 . Транзакции в спринговых ивентах, когда один ивент порождает другой.
 
 . Как жить с getOrCreate методами в условиях жесткого concurrency.
 
-. Кэш контекстов в тестах и библиотеки от apache, которые становятся невалидными, если контекст достали из кэша.
-
-include::metrica.adoc[]
+. Кэш контекстов в тестах и библиотеки apache, которые становятся невалидными, если контекст достали из кэша.
+////

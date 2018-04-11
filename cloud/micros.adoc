@@ -1,0 +1,342 @@
+= Making of spring cloud based microservices
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+Here, we discussed the building of an infrastructure for a microservice application,
+based on spring cloud stack.
+
+## Service registry (eureka)
+
+### Configuration Eureka Server
+
+[source,java]
+----
+@EnableEurekaServer
+@SpringBootApplication
+public class EurekaServiceApplication {
+    ..
+}
+----
+
+###  Make the application discoverable (client side)
+
+[source, java]
+----
+@SpringBootApplication
+@EnableDiscoveryClient
+public class ComplaintServiceApplication {
+    ..
+}
+----
+
+### Set properties
+
+[source, java]
+----
+spring.application.name=complaint-service
+----
+The name of the service will be used to find it in many cases
+This is exactly the identifier that you need to know for neighboring services and applications
+
+### Make a client for the complaint-service
+
+[source, java]
+----
+@RestController
+@RequestMapping("clients")
+public class ComplaintClientsController {
+
+    private RestTemplate restTemplate;
+
+    @Autowired
+    public GatewayBookController(@LoadBalanced RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @RequestMapping(value = "/init", method = RequestMethod.GET)
+    public String getComplaintName(UUID id){
+        return restTemplate.getForEntity("http://complaint-service/{id}", <1>
+                                         String.class,
+                                         id)
+                           .getBody();
+    }
+}
+----
+<1> Now we can access the service without the ip address on which it is deployed, eureka will help us find the required service instance by its name
+
+## Centralized microservices configuration (Spring config server)
+
+### Making config server
+
+add dependency:
+
+[source,xml]
+----
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-config-server</artifactId>
+</dependency>
+----
+
+properties:
+
+[source,java]
+----
+spring.application.name=config-service
+server.port=${PORT:8888}
+
+spring.cloud.config.failFast=true
+spring.cloud.config.label=master
+spring.cloud.config.profile=default
+spring.cloud.config.server.bootstrap=true
+spring.cloud.config.server.git.uri= // GITHUB_REPO_URL, BITBUCKET_REPO_URL, LOCAL_REPO_URL
+spring.cloud.config.server.git.username= // USER_NAME
+spring.cloud.config.server.git.password= // USER_PASSWORD
+spring.cloud.config.server.git.clone-on-start=true
+----
+
+configuration:
+
+[source,java]
+----
+@EnableConfigServer
+@SpringBootApplication
+public class ConfigServiceApplication {
+
+	public static void main(String[] args) {
+		CustomRunner.run(ConfigServiceApplication.class, args);
+	}
+}
+----
+
+### Making spring config client
+
+set properties:
+
+[source, java]
+----
+spring.cloud.config.uri = http://localhost:8888
+----
+
+dynamic configuration for property value:
+
+[source, java]
+----
+@RefreshScope
+@RestController
+public class TestController {
+
+  @Value("${dynamic.property.name:default}")
+  private String name;
+
+  @RequestMapping("/")
+  public String getName() {
+    return this.name;
+  }
+}
+----
+
+
+### Configuraion repository
+
+[source, xml]
+----
+$ ls
+complaints-service.properties
+complaints-service-production.properties
+complaints-service-develop.properties
+initiative-service-production.properties
+poll-service.properties
+wiki-service.properties
+content-storage.properties
+aggregator-service.properties
+auth-service.properties
+----
+
+
+
+
+## Declarative Web client (Feign)
+
+Enable feign autoconfiguration config:
+
+[source, java]
+----
+@Configuration
+@EnableFeignClients
+public class AppConfig {
+  ...
+}
+----
+
+Describe service API by declaration java interface:
+
+[source,java]
+----
+@FeignClient(value = "content-storage", configuration = FeignConfig.class)
+public interface ContentStorageFeign {
+
+    @ResponseBody
+    @PostMapping(value = "/files/upload", produces = APPLICATION_JSON_VALUE)
+    ContentDescriptor create(@RequestPart(value = "data") MultipartFile file,
+                             @RequestParam(value = "author") String author);
+
+}
+----
+
+We use the service, and the implementation itself creates by spring, no `restTemplates`
+with ugly arguments and methods, just use it as a ordinary service:
+
+[source,java]
+----
+@Autowired
+private ContentStorageFeign contentStorageFeign;
+
+public void upload() {
+    ...
+    contentStorageFeign.create(file, "admin");
+    ...
+}
+----
+
+## Circuit breaker pattern (Hystrix)
+
+configuration:
+[source,java]
+----
+@Configuration
+@EnableCircuitBreaker
+public class AppConfig {
+  ...
+}
+----
+
+client side usage:
+
+[source,java]
+----
+@Service
+public class RatingService {
+
+    @HystrixCommand(fallbackMethod = "default") <1>
+    public String getRating(UUID seasonId) {
+        return new RestTemplate()
+                      .getForObject(DEEP_THOUGHT_URL_PATTERN, String.class, id);  <2>
+    }
+
+    private String default(UUID id) {
+        return "42";
+    }
+}
+----
+<1> specify the method that should be called when the chain is opened
+<2> there is a resource-intensive query, which can exceed the timeout
+
+
+## Logging
+
+### create an Aspect for logging:
+
+[source,java]
+----
+@Slf4j
+@Aspect
+public class LoggingAspect {
+
+    ...
+
+    @Around("@within(org.springframework.web.bind.annotation.RestController)") <1>
+    public Object onRestControllerAnnotation(ProceedingJoinPoint joinPoint)
+            throws Throwable {
+
+        Object result = joinPoint.proceed();
+
+        logging(LoggingType.TRACE,
+                String.valueOf(joinPoint.getSignature()),
+                joinPoint.getArgs(),
+                result);
+
+        return result;
+    }
+
+    ...
+
+}
+----
+<1> intercept all methods inside the sprint REST controller
+
+### Write the simplest config
+
+[source, java]
+----
+@Configuration
+@EnableAspectJAutoProxy
+public class LoggingAspectConfig {
+    @Bean
+    public LoggingAspect loggingAspect() {
+        return new LoggingAspect();
+    }
+}
+----
+
+### Wrap the configuration in the custom annotation
+
+[source, java]
+----
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Import({LoggingAspectConfig.class})
+public @interface EnableLogging {
+}
+----
+
+### Put in a separate dependency
+
+artifactory will help us in this
+
+image::jfrog.png[jfrog]
+
+### Use it!
+
+[source, java]
+----
+@Configuration
+@EnableLogging <1>
+public class AppConfig {
+    ...
+}
+----
+<1> One line in the selected service starts the logging in the required format
+
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'micros'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++

@@ -5,8 +5,8 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.6.1">
-<meta name="author" content="Korovin Anatoliy">
-<title>Java Software Design</title>
+<meta name="author" content="Korovin Anatoliy, Home">
+<title>Making of spring cloud based microservices</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -427,60 +427,425 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css">
 </head>
-<body class="article">
+<body class="article toc2 toc-left">
 <div id="header">
-<h1>Java Software Design</h1>
+<h1>Making of spring cloud based microservices</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
+<span id="author2" class="author">Home</span><br>
+<span id="email2" class="email"><a href="http://antkorwin.com" class="bare">http://antkorwin.com</a></span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_service_registry_eureka">1. Service registry (eureka)</a>
+<ul class="sectlevel2">
+<li><a href="#_configuration_eureka_server">1.1. Configuration Eureka Server</a></li>
+<li><a href="#_make_the_application_discoverable_client_side">1.2. Make the application discoverable (client side)</a></li>
+<li><a href="#_set_properties">1.3. Set properties</a></li>
+<li><a href="#_make_a_client_for_the_complaint_service">1.4. Make a client for the complaint-service</a></li>
+</ul>
+</li>
+<li><a href="#_centralized_microservices_configuration_spring_config_server">2. Centralized microservices configuration (Spring config server)</a>
+<ul class="sectlevel2">
+<li><a href="#_making_config_server">2.1. Making config server</a></li>
+<li><a href="#_making_spring_config_client">2.2. Making spring config client</a></li>
+<li><a href="#_configuraion_repository">2.3. Configuraion repository</a></li>
+</ul>
+</li>
+<li><a href="#_declarative_web_client_feign">3. Declarative Web client (Feign)</a></li>
+<li><a href="#_circuit_breaker_pattern_hystrix">4. Circuit breaker pattern (Hystrix)</a></li>
+<li><a href="#_logging">5. Logging</a>
+<ul class="sectlevel2">
+<li><a href="#_create_an_aspect_for_logging">5.1. create an Aspect for logging:</a></li>
+<li><a href="#_write_the_simplest_config">5.2. Write the simplest config</a></li>
+<li><a href="#_wrap_the_configuration_in_the_custom_annotation">5.3. Wrap the configuration in the custom annotation</a></li>
+<li><a href="#_put_in_a_separate_dependency">5.4. Put in a separate dependency</a></li>
+<li><a href="#_use_it">5.5. Use it!</a></li>
+</ul>
+</li>
+</ul>
 </div>
 </div>
 <div id="content">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>My thoughts about java application development, spring framework, TDD and other&#8230;&#8203;</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_spring_cloud_infrastructure">Spring cloud infrastructure</h2>
-<div class="sectionbody">
-<div class="imageblock">
-<div class="content">
-<img src="bear_pipeline.gif" alt="pipeline" width="520" height="300">
-</div>
-</div>
-<div class="paragraph">
 <p>Here, we discussed the building of an infrastructure for a microservice application,
-based on spring cloud stack. <a href="./cloud/micros.html">Read more</a></p>
+based on spring cloud stack.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_traps_pitfalls_strangenesses">Traps, Pitfalls, Strangenesses&#8230;&#8203;</h2>
+<h2 id="_service_registry_eureka">1. Service registry (eureka)</h2>
 <div class="sectionbody">
-<div class="imageblock">
+<div class="sect2">
+<h3 id="_configuration_eureka_server">1.1. Configuration Eureka Server</h3>
+<div class="listingblock">
 <div class="content">
-<img src="truble.jpg" alt="double truble" width="520" height="200">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@EnableEurekaServer
+@SpringBootApplication
+public class EurekaServiceApplication {
+    ..
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_make_the_application_discoverable_client_side">1.2. Make the application discoverable (client side)</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@SpringBootApplication
+@EnableDiscoveryClient
+public class ComplaintServiceApplication {
+    ..
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_set_properties">1.3. Set properties</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">spring.application.name=complaint-service</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>different problems and difficulties that often occur in the development process
-<a href="sherlock.html">Read more</a></p>
+<p>The name of the service will be used to find it in many cases
+This is exactly the identifier that you need to know for neighboring services and applications</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_make_a_client_for_the_complaint_service">1.4. Make a client for the complaint-service</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@RestController
+@RequestMapping("clients")
+public class ComplaintClientsController {
+
+    private RestTemplate restTemplate;
+
+    @Autowired
+    public GatewayBookController(@LoadBalanced RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @RequestMapping(value = "/init", method = RequestMethod.GET)
+    public String getComplaintName(UUID id){
+        return restTemplate.getForEntity("http://complaint-service/{id}", <i class="conum" data-value="1"></i><b>(1)</b>
+                                         String.class,
+                                         id)
+                           .getBody();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Now we can access the service without the ip address on which it is deployed, eureka will help us find the required service instance by its name</td>
+</tr>
+</table>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_code_style_conventions">Code style conventions</h2>
+<h2 id="_centralized_microservices_configuration_spring_config_server">2. Centralized microservices configuration (Spring config server)</h2>
 <div class="sectionbody">
-<div class="imageblock">
+<div class="sect2">
+<h3 id="_making_config_server">2.1. Making config server</h3>
+<div class="paragraph">
+<p>add dependency:</p>
+</div>
+<div class="listingblock">
 <div class="content">
-<img src="conventions.png" alt="arrange_1">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-config-server&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>In our development team, we use the following <a href="http://antkorwin.com/codestyle.html">code style conventions</a></p>
+<p>properties:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">spring.application.name=config-service
+server.port=${PORT:8888}
+
+spring.cloud.config.failFast=true
+spring.cloud.config.label=master
+spring.cloud.config.profile=default
+spring.cloud.config.server.bootstrap=true
+spring.cloud.config.server.git.uri= // GITHUB_REPO_URL, BITBUCKET_REPO_URL, LOCAL_REPO_URL
+spring.cloud.config.server.git.username= // USER_NAME
+spring.cloud.config.server.git.password= // USER_PASSWORD
+spring.cloud.config.server.git.clone-on-start=true</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@EnableConfigServer
+@SpringBootApplication
+public class ConfigServiceApplication {
+
+	public static void main(String[] args) {
+		CustomRunner.run(ConfigServiceApplication.class, args);
+	}
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_making_spring_config_client">2.2. Making spring config client</h3>
+<div class="paragraph">
+<p>set properties:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">spring.cloud.config.uri = http://localhost:8888</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>dynamic configuration for property value:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@RefreshScope
+@RestController
+public class TestController {
+
+  @Value("${dynamic.property.name:default}")
+  private String name;
+
+  @RequestMapping("/")
+  public String getName() {
+    return this.name;
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configuraion_repository">2.3. Configuraion repository</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">$ ls
+complaints-service.properties
+complaints-service-production.properties
+complaints-service-develop.properties
+initiative-service-production.properties
+poll-service.properties
+wiki-service.properties
+content-storage.properties
+aggregator-service.properties
+auth-service.properties</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_declarative_web_client_feign">3. Declarative Web client (Feign)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Enable feign autoconfiguration config:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+@EnableFeignClients
+public class AppConfig {
+  ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Describe service API by declaration java interface:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@FeignClient(value = "content-storage", configuration = FeignConfig.class)
+public interface ContentStorageFeign {
+
+    @ResponseBody
+    @PostMapping(value = "/files/upload", produces = APPLICATION_JSON_VALUE)
+    ContentDescriptor create(@RequestPart(value = "data") MultipartFile file,
+                             @RequestParam(value = "author") String author);
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We use the service, and the implementation itself creates by spring, no <code>restTemplates</code>
+with ugly arguments and methods, just use it as a ordinary service:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
+private ContentStorageFeign contentStorageFeign;
+
+public void upload() {
+    ...
+    contentStorageFeign.create(file, "admin");
+    ...
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_circuit_breaker_pattern_hystrix">4. Circuit breaker pattern (Hystrix)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+@EnableCircuitBreaker
+public class AppConfig {
+  ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>client side usage:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Service
+public class RatingService {
+
+    @HystrixCommand(fallbackMethod = "default") <i class="conum" data-value="1"></i><b>(1)</b>
+    public String getRating(UUID seasonId) {
+        return new RestTemplate()
+                      .getForObject(DEEP_THOUGHT_URL_PATTERN, String.class, id);  <i class="conum" data-value="2"></i><b>(2)</b>
+    }
+
+    private String default(UUID id) {
+        return "42";
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>specify the method that should be called when the chain is opened</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>there is a resource-intensive query, which can exceed the timeout</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_logging">5. Logging</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_create_an_aspect_for_logging">5.1. create an Aspect for logging:</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Slf4j
+@Aspect
+public class LoggingAspect {
+
+    ...
+
+    @Around("@within(org.springframework.web.bind.annotation.RestController)") <i class="conum" data-value="1"></i><b>(1)</b>
+    public Object onRestControllerAnnotation(ProceedingJoinPoint joinPoint)
+            throws Throwable {
+
+        Object result = joinPoint.proceed();
+
+        logging(LoggingType.TRACE,
+                String.valueOf(joinPoint.getSignature()),
+                joinPoint.getArgs(),
+                result);
+
+        return result;
+    }
+
+    ...
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>intercept all methods inside the sprint REST controller</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_write_the_simplest_config">5.2. Write the simplest config</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+@EnableAspectJAutoProxy
+public class LoggingAspectConfig {
+    @Bean
+    public LoggingAspect loggingAspect() {
+        return new LoggingAspect();
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_wrap_the_configuration_in_the_custom_annotation">5.3. Wrap the configuration in the custom annotation</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Import({LoggingAspectConfig.class})
+public @interface EnableLogging {
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_put_in_a_separate_dependency">5.4. Put in a separate dependency</h3>
+<div class="paragraph">
+<p>artifactory will help us in this</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="jfrog.png" alt="jfrog">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_use_it">5.5. Use it!</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+@EnableLogging <i class="conum" data-value="1"></i><b>(1)</b>
+public class AppConfig {
+    ...
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>One line in the selected service starts the logging in the required format</td>
+</tr>
+</table>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -510,12 +875,32 @@ based on spring cloud stack. <a href="./cloud/micros.html">Read more</a></p>
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/47919536" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'micros'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-04-12 08:53:14 VLAT
+Last updated 2018-04-12 08:57:41 VLAT
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

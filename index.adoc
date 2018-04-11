@@ -6,6 +6,13 @@ Korovin Anatoliy <antkorwin@gmail.com>
 
 My thoughts about java application development, spring framework, TDD and other...
 
+## Spring cloud infrastructure
+
+image::bear_pipeline.gif[pipeline, 520, 300]
+
+Here, we discussed the building of an infrastructure for a microservice application,
+based on spring cloud stack. link:./cloud/micros.html[Read more]
+
 ## Traps, Pitfalls, Strangenesses...
 
 image::truble.jpg[double truble, 520,200]
