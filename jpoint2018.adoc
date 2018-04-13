@@ -1,0 +1,141 @@
+= TITLE
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+
+## Доклады
+
+### Spring 5 (Jurgen Holler)
+
+- spring 5 & spring boot 2
+- reactive web
+- java 9 (jigsaw)
+- junit 5
+- kotlin
+
+image:./jpoint2018/lts.png[long term supports]
+
+### Kafka + Bintray (Барух и Гамов)
+
+image:./jpoint2018/kafka.png[]
+
+- API стримит в HTTP ивенты
+- продюсим ивенты в кафку
+- данные из топика заворачиваем в стрим и все это вертится в KSQL сервере
+- лелаем запросы поверх стрима через KSQL
+
+image:./jpoint2018/firehose.png[]
+
+### Spark ML (Алексей Зиновьев)
+
+image:./jpoint2018/ml.png[]
+
+### Рефакторинг на модули java 9 (Rabea Gransberger)
+
+### BoF : Spring + Kotlin
+- тут были неловкие вопросы
+
+### Boot yourself (1 & 2) Толкачев, Борисов
+- ну вы сами видели
+image:./jpoint2018/hard.jpg[]
+
+- нет смысла писать EPP в нормальном App
+image:./jpoint2018/epp.jpg[]
+
+### Профилирование контейнеров (Саша Голдштейн)
+- перфоманс тулинг для контейнеров
+image:./jpoint2018/goldshtein.jpg[]
+
+### Design clean code (Marcus Biel)
+- смузи
+
+### VmStructs (Пангин Андрей)
+-  hardcore
+image:./jpoint2018/vmstructs.png[]
+
+### Spring 5 future (Jurgen Holler)
+
+- Java vs Kotlin
+
+image:./jpoint2018/bean_java.png[]
+
+image:./jpoint2018/bean_kotlin.png[]
+
+- Чуток кода:
+
+image:./jpoint2018/reactive.png[]
+
+- Вся правда про реакт:
+
+image:./jpoint2018/some_truble.png[]
+
+### Детективы
+
+image:./jpoint2018/sherlok.png[]
+
+
+## Общение
+
+### Потрошители
+- холиварчики Constructor based or fields ?
+- шаринг контрактов
+- тесты стендов
+- агрегаторы
+- отчеты
+- легаси
+- spring data ? elastic
+
+### Jurgen Holler
+- реактив
+- java модули
+
+### Барух и человек Кафка
+- kafka то что нужно!
+
+### Райф
+- bpm
+- планирование
+
+### hh.ru
+- luchen
+- jms
+
+## Фоточки
+
+image:./jpoint2018/baruch.jpg[]
+
+image:./jpoint2018/razbor.jpg[]
+
+image:./jpoint2018/spring_guru.jpg[]
+
+
+// END OF CONTENT
+include::metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'jpoint'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
