@@ -1,4 +1,4 @@
-= TITLE
+= JPoint 2018
 :source-highlighter: prettify
 :icons: font
 :toc: left
