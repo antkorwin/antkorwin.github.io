@@ -1,0 +1,783 @@
+= Spring State Machine
+:source-highlighter: prettify
+:icons: font
+:toc:
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+## Dependencies
+
+We need only one dependency:
+
+image:./spring-init.png[state machine]
+
+One starter does makes all the magic
+
+[source, xml]
+----
+<dependency>
+	<groupId>org.springframework.statemachine</groupId>
+	<artifactId>spring-statemachine-starter</artifactId>
+</dependency>
+----
+
+## States & Events
+
+Let's see the following example:
+
+[plantuml]
+....
+[*] --> BACKLOG
+BACKLOG --> INPROGRESS : developer started feature
+INPROGRESS --> TESTING : developer finished feature
+TESTING -->DONE : QA checked UC
+TESTING --> INPROGRESS : QA rejected UC
+DONE --> [*]
+....
+
+
+Spring statemachine provides the ability to configure through enums.
+
+You can describe states and events in enumeration:
+
+[source, java]
+----
+public enum States {
+    BACKLOG,
+    IN_PROGRESS,
+    TESTING,
+    DONE
+}
+
+public enum  Events {
+    START_FEATURE,
+    FINISH_FEATURE,
+    QA_REJECTED_UC,
+    ROCK_STAR_DOUBLE_TASK,
+    DEPLOY,
+    QA_CHECKED_UC
+}
+----
+
+## Configuration
+
+Create a configuration for the state machine:
+
+[source, java]
+----
+@Configuration
+@EnableStateMachine
+public class StateMachineConfig
+        extends EnumStateMachineConfigurerAdapter
+                        <States, Events> {
+
+    @Override
+    public void configure(
+            StateMachineConfigurationConfigurer
+                    <States, Events> config) throws Exception {
+
+        config.withConfiguration()  <1>
+              .autoStartup(true);
+    }
+
+
+    @Override
+    public void configure(
+            StateMachineStateConfigurer<States, Events> states)
+            throws Exception {
+
+        states.withStates()		<2>
+              .initial(States.BACKLOG)
+              .state(States.IN_PROGRESS)
+              .state(States.TESTING)
+              .end(States.DONE);
+    }
+
+    @Override
+    public void configure(
+            StateMachineTransitionConfigurer<States, Events> transitions)
+            throws Exception {
+
+        transitions.withExternal()  <3>
+                   .source(States.BACKLOG)
+                   .target(States.IN_PROGRESS)
+                   .event(Events.START_FEATURE)
+                   .and()
+                   .withExternal()
+                   .source(States.IN_PROGRESS)
+                   .target(States.TESTING)
+                   .event(Events.FINISH_FIATURE)
+                   .and()
+                   .withExternal()
+                   .source(States.TESTING)
+                   .target(States.IN_PROGRESS)
+                   .event(Events.QA_TEAM_REJECT)
+                   .and()
+                   .withExternal()
+                   .source(States.TESTING)
+                   .target(States.DONE)
+                   .event(Events.QA_TEAM_APPROVE);
+    }
+----
+<1> configuration base state machine properties
+<2> describe states of machine
+<3> describe transitions
+
+## Try to use it
+
+Test successful DI & initialization state machine
+
+[source, java]
+----
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class StatesFirstApplicationTests {
+
+    @Autowired
+    private StateMachine<States, Events> stateMachine;
+
+    @Test
+    public void initTest() {
+        Assertions.assertThat(stateMachine.getState().getId())
+                  .isEqualTo(States.BACKLOG);
+
+        Assertions.assertThat(stateMachine).isNotNull();
+    }
+}
+----
+
+Test "green way":
+
+[source, java]
+----
+@Test
+public void testGreenFlow() {
+    // Arrange
+    // Act
+    stateMachine.sendEvent(Events.START_FEATURE);
+    stateMachine.sendEvent(Events.FINISH_FIATURE);
+    stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
+    // Asserts
+    Assertions.assertThat(stateMachine.getState().getId())
+              .isEqualTo(States.DONE);
+}
+----
+
+## Add listener on state machine
+
+Change configuration:
+
+[source, java]
+----
+@Override
+public void configure(
+				StateMachineConfigurationConfigurer
+								<States, Events> config) throws Exception {
+
+		config.withConfiguration()
+					.listener(listener()) <1>
+					.autoStartup(true);
+}
+
+private StateMachineListener<States, Events> listener() {
+		return new StateMachineListenerAdapter<States, Events>(){
+				@Override
+				public void transition(Transition<States, Events> transition) { <2>
+						log.warn("move from:{} to:{}",
+										 ofNullableState(transition.getSource()),
+										 ofNullableState(transition.getTarget()));
+				}
+
+				@Override
+				public void eventNotAccepted(Message<Events> event) { <3>
+						log.error("event not accepted: {}", event);
+				}
+
+				private Object ofNullableState(State s) {
+						return Optional.ofNullable(s)
+													 .map(State::getId)
+													 .orElse(null);
+				}
+		};
+}
+----
+
+after that we can make "wrong way" test
+
+[source, java]
+----
+@Test
+public void testWrongWay() {
+    // Arrange
+    // Act
+    stateMachine.sendEvent(Events.START_FEATURE);
+    stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
+    // Asserts
+    Assertions.assertThat(stateMachine.getState().getId())
+              .isEqualTo(States.IN_PROGRESS);
+}
+----
+
+then we look at logout error:
+
+image::wrong_way_test.png[wrong way test result]
+
+## More than one state machine? No problem!
+
+change annotation `@EnableStateMachine` to `@EnableStateMachineFactory`
+
+[source, java]
+----
+@Slf4j
+@Configuration
+@EnableStateMachineFactory
+public class StateMachineConfig
+        extends EnumStateMachineConfigurerAdapter
+                        <States, Events> {
+
+								...
+
+}
+----
+
+and we need change test:
+
+[source,java]
+----
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class StatesFirstApplicationTests {
+
+    private StateMachine<States, Events> stateMachine;
+
+    @Autowired
+    private StateMachineFactory<States, Events> stateMachineFactory;
+
+    @Before
+    public void setUp() throws Exception {
+        stateMachine = stateMachineFactory.getStateMachine();
+    }
+
+		...
+}
+----
+
+## Actions - add some business logic
+
+Let's make auto-deploy after the finished feature.
+
+We can do this as follows:
+
+[source,java]
+----
+@Override
+public void configure(
+				StateMachineStateConfigurer<States, Events> states)
+				throws Exception {
+
+		states.withStates()
+					.initial(States.BACKLOG)
+					.state(States.IN_PROGRESS)
+					.state(States.TESTING, deployAction()) <1>
+					.end(States.DONE);
+}
+
+private Action<States, Events> deployAction() {  <2>
+		return context -> {
+				log.warn("DEPLOYING: {}",context.getEvent());
+		};
+}
+----
+<1> add deploy action after enter in TESTING state
+<2> implementation of Deploy action
+
+This approach has one problem.
+If we slightly complicate our business process, then this action can be performed when it is unnecessary.
+For example, if the developer has performed two features in one pull-request, then he can transfer the second task without additional deployment.
+We will assume that he maked this because he is super efficient and we can call him a rock star.
+
+[plantuml]
+....
+[*] --> BACKLOG : time to work!
+
+BACKLOG --> IN_PROGRESS : start feature
+
+IN_PROGRESS --> TESTING : finish feature
+
+TESTING --> DONE : QA approved
+
+TESTING --> IN_PROGRESS : QA rejected task
+
+BACKLOG --> TESTING : Rock Star
+....
+
+Now if we move task from backlog to testing then will be run deploy.
+But we don't want this behavior.
+
+In this case, we can move the action from the states to  transitions configuration:
+
+Add rock star event:
+[source, java]
+----
+transitions.withExternal()
+           		...
+           .and()
+           .withExternal()
+           .source(States.BACKLOG)
+           .target(States.TESTING)
+           .event(Events.ROCK_STAR_MAKE_ALL_IN_ONE);
+----
+check behavior in test:
+
+[source,java]
+----
+@Test
+public void testRockStar() {
+    // Arrange
+    // Act
+    stateMachine.sendEvent(Events.ROCK_STAR_MAKE_ALL_IN_ONE);
+    // Asserts
+    Assertions.assertThat(stateMachine.getState().getId())
+              .isEqualTo(States.TESTING);
+}
+----
+
+test results:
+
+image::deploying_test_result.png[rock star test result]
+
+how can we solve this problem:
+
+[source, java]
+----
+states.withStates()
+      .initial(States.BACKLOG, timeToWorkAction())
+      .state(States.IN_PROGRESS) <1>
+      .state(States.TESTING)
+      .end(States.DONE);
+
+  ...
+
+transitions.withExternal()
+           	...
+           .source(States.IN_PROGRESS)
+           .target(States.TESTING)
+           .event(Events.FINISH_FEATURE)
+           .action(deployAction())  <2>
+           .and()
+           	...
+----
+<1> remove deploying action from states
+<2> past the action on transition from IN_PROGRESS to FINISH_FEATURE
+
+## Guards - use conditions in flow.
+
+Next we will add the ability to run deploying from `BACKLOG` and `IN_PROGRESS` states.
+Before going to `TESTING`, we will verify that the deployment event was called.
+For this we will create a guard on transitions to `TESTING` state.
+
+[plantuml]
+....
+[*] --> BACKLOG : time to work!
+BACKLOG --> IN_PROGRESS : start feature
+IN_PROGRESS --> TESTING : finish feature
+TESTING --> DONE : QA approved
+TESTING --> IN_PROGRESS : QA rejected task
+BACKLOG --> TESTING : Rock Star
+BACKLOG --> BACKLOG : deploy
+IN_PROGRESS --> IN_PROGRESS : deploy
+....
+
+Add transitions for internal `DEPLOY` and guards for transitions to `TESTING`
+
+[source, java]
+----
+transitions.withExternal()
+           .source(States.BACKLOG)
+           .target(States.IN_PROGRESS)
+           .event(Events.START_FEATURE)
+           .and()
+           .withExternal()
+           .source(States.IN_PROGRESS)
+           .target(States.TESTING)
+           .event(Events.FINISH_FEATURE)
+           .guard(checkDeployGuard()) <1>
+           .and()
+           .withExternal()
+           .source(States.TESTING)
+           .target(States.IN_PROGRESS)
+           .event(Events.QA_TEAM_REJECT)
+           .and()
+           .withExternal()
+           .source(States.TESTING)
+           .target(States.DONE)
+           .event(Events.QA_TEAM_APPROVE)
+           .and()
+           .withExternal()
+           .source(States.BACKLOG)
+           .target(States.TESTING)
+           .guard(checkDeployGuard()) <1>
+           .event(Events.ROCK_STAR_MAKE_ALL_IN_ONE)
+           .and()
+
+           .withInternal()
+           .source(States.BACKLOG)
+           .event(Events.DEPLOY) <2>
+           .action(deployAction())
+           .and()
+           .withInternal()
+           .source(States.IN_PROGRESS)
+           .event(Events.DEPLOY) <2>
+           .action(deployAction());
+----
+<1> guards on transitions to `TESTING`
+<2> internal `DEPLOY` events
+
+Then we make guard implementation based on state machine variables.
+You can write in extend state a lot of useful things that will be shared in process.
+
+[source, java]
+----
+private Guard<States, Events> checkDeployGuard() {
+    return context -> {
+        Boolean flag = (Boolean) context.getExtendedState()
+                                        .getVariables()
+                                        .get("deployed");
+        return flag == null ? false : flag;
+    };
+}
+----
+
+After that, we can use this variable in the deployment action:
+
+[source, java]
+----
+private Action<States, Events> deployAction() {
+    return context -> {
+        log.warn("DEPLOYING: {}", context.getEvent());
+        context.getExtendedState()
+               .getVariables()
+               .put("deployed", true);
+    };
+}
+----
+
+Now we can make unit test for this charset
+
+[source, java]
+----
+@Test
+public void testGuard() {
+    // Arrange & act
+    stateMachine.sendEvent(Events.START_FEATURE);
+    stateMachine.sendEvent(Events.FINISH_FEATURE);
+    stateMachine.sendEvent(Events.QA_TEAM_APPROVE); // not accepted!
+    // Asserts
+    Assertions.assertThat(stateMachine.getState().getId())
+              .isEqualTo(States.IN_PROGRESS);
+}
+----
+
+If we don't send the `DEPLOY` event then we get the following result:
+
+image::guard_test_result.png[guard test result]
+
+## Persist State machine in-memory
+
+We need write implementation of StateMachinePersist.
+
+To start write a simple in-memory implementation:
+
+[source, java]
+----
+public class InMemoryPersist
+        implements StateMachinePersist<States, Events, UUID> {
+
+    private HashMap<UUID, StateMachineContext<States, Events>> storage
+            = new HashMap<>();
+
+    @Override
+    public void write(StateMachineContext<States, Events> context,
+                      UUID contextObj) throws Exception {
+
+        storage.put(contextObj, context);
+    }
+
+    @Override
+    public StateMachineContext<States, Events> read(UUID contextObj) throws Exception {
+        return storage.get(contextObj);
+    }
+}
+----
+
+Than we makes persist configuration:
+
+[source, java]
+----
+@Bean
+public StateMachinePersist<States, Events, UUID> inMemoryPersist() {
+    return new InMemoryPersist();
+}
+
+@Bean
+public StateMachinePersister<States, Events, UUID> persister(
+        StateMachinePersist<States, Events, UUID> defaultPersist) {
+
+    return new DefaultStateMachinePersister<>(defaultPersist);
+}
+----
+
+Now we can use it:
+
+[source, java]
+----
+@Autowired
+private StateMachineFactory<States, Events> stateMachineFactory;
+
+@Autowired
+private StateMachinePersister<States, Events, UUID> persister;
+
+@Test
+public void testPersist() throws Exception {
+	 // Arrange
+	 StateMachine<States, Events> firstStateMachine =
+					 stateMachineFactory.getStateMachine();
+
+	 StateMachine<States, Events> secondStateMachine =
+					 stateMachineFactory.getStateMachine();
+
+	 firstStateMachine.sendEvent(Events.START_FEATURE);
+	 firstStateMachine.sendEvent(Events.DEPLOY);
+
+	 // precondition
+	 Assertions.assertThat(secondStateMachine.getState().getId())
+						 .isEqualTo(States.BACKLOG);
+
+	 // Act
+	 persister.persist(firstStateMachine, firstStateMachine.getUuid()); <1>
+	 persister.restore(secondStateMachine, firstStateMachine.getUuid()); <2>
+
+	 // Asserts
+	 Assertions.assertThat(secondStateMachine.getState().getId())
+						 .isEqualTo(States.IN_PROGRESS);
+}
+----
+<1> save first state machine context
+<2> load first state machine context to second
+
+## Persist state machine in MongoDb
+
+We need add some dependencies for work with MongoDb.
+Also we will write integration tests with TestContainers framework.
+
+[source, mvn]
+----
+<!-- MongoDB -->
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-data-mongodb</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.springframework.statemachine</groupId>
+	<artifactId>spring-statemachine-data-mongodb</artifactId>
+	<version>2.0.0.RELEASE</version>
+</dependency>
+<!-- MongoDB -->
+
+<!-- TestContainers -->
+<dependency>
+	<groupId>org.testcontainers</groupId>
+	<artifactId>testcontainers</artifactId>
+	<version>1.4.3</version>
+</dependency>
+<!-- TestContainers -->
+----
+
+Then we make MongoDb persist
+
+[source, java]
+----
+@Bean
+public StateMachineRuntimePersister<States, Events, UUID> mongoPersist(
+        MongoDbStateMachineRepository mongoRepository) {
+
+    return new MongoDbPersistingStateMachineInterceptor<States,Events,UUID>(mongoRepository);
+}
+----
+
+Now we can make integration test.
+
+I have abstract class for testing mongodb application in spring framework.
+
+[source, java]
+----
+@SpringBootTest
+@RunWith(SpringRunner.class)
+public abstract class BaseMongoIT {
+
+    private static final Integer MONGO_PORT = 27017;
+    private static GenericContainer mongo =
+            new GenericContainer("mongo:latest")
+            .withExposedPorts(MONGO_PORT);
+
+    static {
+        mongo.start();
+        System.setProperty("spring.data.mongodb.host", mongo.getContainerIpAddress());
+        System.setProperty("spring.data.mongodb.port", mongo.getMappedPort(MONGO_PORT).toString());
+    }
+
+    @Autowired
+    protected MongoTemplate mongoTemplate;
+}
+----
+
+and test case:
+
+[source, java]
+----
+public class MongoPersistTest extends BaseMongoIT {
+
+    @Autowired
+    private StateMachinePersister<States, Events, UUID> persister;
+    @Autowired
+    private StateMachineFactory<States, Events> stateMachineFactory;
+
+	@Test
+    public void testMongoPersist() throws Exception {
+        // Arrange
+        StateMachine<States, Events> firstStateMachine = stateMachineFactory.getStateMachine();
+        StateMachine<States, Events> secondStateMachine = stateMachineFactory.getStateMachine();
+
+        firstStateMachine.sendEvent(Events.START_FEATURE);
+        firstStateMachine.sendEvent(Events.DEPLOY);
+
+        // Act
+        persister.persist(firstStateMachine, firstStateMachine.getUuid());
+        persister.persist(secondStateMachine, secondStateMachine.getUuid());
+        persister.restore(secondStateMachine, firstStateMachine.getUuid());
+
+        // Asserts
+        Assertions.assertThat(secondStateMachine.getState().getId())
+                  .isEqualTo(States.IN_PROGRESS);
+
+        boolean deployed = (boolean) secondStateMachine.getExtendedState()
+                                                       .getVariables()
+                                                       .get("deployed");
+
+        Assertions.assertThat(deployed).isEqualTo(true);
+
+        // Mongo specific asserts:
+        Assertions.assertThat(mongoTemplate.getCollectionNames())
+                  .isNotEmpty();
+
+        List<Document> documents = mongoTemplate.findAll(Document.class,
+                                                         "MongoDbRepositoryStateMachine");
+
+        Assertions.assertThat(documents).hasSize(2);
+        Assertions.assertThat(documents)
+                  .flatExtracting(Document::values)
+                  .contains(firstStateMachine.getUuid().toString(),
+                            secondStateMachine.getUuid().toString())
+                  .contains(firstStateMachine.getState().getId().toString(),
+                            secondStateMachine.getState().getId().toString());
+    }
+}
+----
+
+
+## Live without state machines seems boring.
+
+You can coding this business logic in ugly spaghetti hardcode:
+
+[source, java]
+----
+@Slf4j
+    class StateMachine {
+
+        private States currentState;
+        private HashMap<String, Object> variables;
+        private boolean finished;
+
+        public void processing(Events event) {
+
+            if(!finished) {
+                log.error("already finished state machine");
+            }
+
+            switch (currentState) {
+                case BACKLOG:
+                    if (event == Events.START_FEATURE) {
+                        currentState = States.IN_PROGRESS;
+                        // transition logic
+                    } else if (event == Events.DEPLOY) {
+                        variables.put("deployed", true);
+                        // start deploy
+                    } else {
+                        log.error("not accepted event.");
+                    }
+                    break;
+
+                case IN_PROGRESS:
+                    if (event == Events.FINISH_FEATURE) {
+                        if (variables.get("deployed").equals(true)) {
+                            currentState = States.TESTING;
+                            // run business logic
+                        } else {
+                            log.error("unreachable state");
+                        }
+                        // transition logic
+                    } else if (event == Events.DEPLOY) {
+                        variables.put("deployed", true);
+                        // start deploy
+                    } else {
+                        log.error("not accepted event.");
+                    }
+                    break;
+
+                case TESTING:
+                    if(event == Events.QA_TEAM_APPROVE){
+                        currentState = States.DONE;
+                        finished = true;
+                        log.info("successful done!");
+                    } else if (event == Events.QA_TEAM_REJECT){
+                        currentState = States.IN_PROGRESS;
+                        log.info("reject");
+                    } else {
+                        log.error("not accepted event.");
+                    }
+                    break;
+
+						...			
+
+            }
+        }
+----
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'statemachine'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
