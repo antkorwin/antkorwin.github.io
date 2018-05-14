@@ -842,6 +842,11 @@ icon:minus[] Когда не стоит использовать:
 
 - нет возможности разворачивать в продакшене полноценный BPM фреймворк
 
+## Проект на github
+
+Все исходники можно посмотреть на гитхабе:
+
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
 
 
 // END OF CONTENT
