@@ -8,13 +8,13 @@
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
-## Dependencies
+## Настройка проекта
 
-Create a new SpringBoot project, we need to add only one dependency.
+Создаем новый SpringBoot проект и добалвяем в зависимостях statemachine
 
 image:./spring-init.png[state machine]
 
-One starter does makes all the magic
+Вся магия в одном стартере для стэйт-машины.
 
 [source, xml]
 ----
@@ -24,24 +24,27 @@ One starter does makes all the magic
 </dependency>
 ----
 
-## States & Events
+## Состояния и события
 
-Let's see the following example:
+Для примера возьмем бизнес-процесс, знакомый большинству разработчиков.
+Если вдруг канбан прошел мимо вас, то стоит немного почитать про эту методологию разработки.
+
 
 [plantuml]
 ....
-[*] --> BACKLOG
-BACKLOG --> INPROGRESS : developer started feature
-INPROGRESS --> TESTING : developer finished feature
-TESTING -->DONE : QA checked UC
-TESTING --> INPROGRESS : QA rejected UC
+[*] --> BACKLOG : заказчик придумал новую задачу
+BACKLOG --> INPROGRESS : разработчики взяли задачу в работу
+INPROGRESS --> TESTING : разработчики сделали задачу
+TESTING -->DONE : команда тестирования проверила кейс и не нашла там багов
+TESTING --> INPROGRESS : команда тестирования нашла ошибки и вернула таск в работу
 DONE --> [*]
 ....
 
+Из этого бизнес-процесса мы можем вычленить следующие состояния:
+`BACKLOG`,`IN_PROGRESS`,`TESTING`,`DONE`. Собственно это и будет набором стэйтов.
 
-Spring statemachine provides the ability to configure through enums.
-
-You can describe states and events in enumeration:
+Переход из одного состояния в другое происходит по определенному событию.
+Spring State Machine позволяет конфигурировать стэйты и ивенты через java enum-ы.
 
 [source, java]
 ----
@@ -56,22 +59,22 @@ public enum  Events {
     START_FEATURE,
     FINISH_FEATURE,
     QA_REJECTED_UC,
-    ROCK_STAR_DOUBLE_TASK,
-    DEPLOY,
     QA_CHECKED_UC
 }
 ----
 
-## Configuration
+## Конфигурация для statemachine
 
-Create a configuration for the state machine:
+Мы будем рассматривать пример использования statemachine
+через стандартные механизмы Spring DI, для этого нам понадобится сделать
+spring configuration описывающий настройки стэйт-машины.
 
 [source, java]
 ----
 @Configuration
 @EnableStateMachine
 public class StateMachineConfig
-        extends EnumStateMachineConfigurerAdapter
+        extends EnumStateMachineConfigurerAdapter <1>
                         <States, Events> {
 
     @Override
@@ -79,7 +82,7 @@ public class StateMachineConfig
             StateMachineConfigurationConfigurer
                     <States, Events> config) throws Exception {
 
-        config.withConfiguration()  <1>
+        config.withConfiguration()  <2>
               .autoStartup(true);
     }
 
@@ -89,7 +92,7 @@ public class StateMachineConfig
             StateMachineStateConfigurer<States, Events> states)
             throws Exception {
 
-        states.withStates()		<2>
+        states.withStates()		<3>
               .initial(States.BACKLOG)
               .state(States.IN_PROGRESS)
               .state(States.TESTING)
@@ -101,7 +104,7 @@ public class StateMachineConfig
             StateMachineTransitionConfigurer<States, Events> transitions)
             throws Exception {
 
-        transitions.withExternal()  <3>
+        transitions.withExternal()  <4>
                    .source(States.BACKLOG)
                    .target(States.IN_PROGRESS)
                    .event(Events.START_FEATURE)
@@ -122,13 +125,30 @@ public class StateMachineConfig
                    .event(Events.QA_TEAM_APPROVE);
     }
 ----
-<1> configuration base state machine properties
-<2> describe states of machine
-<3> describe transitions
+<1> мы работаем с типизированной стэйт-машиной,
+и все наши состояния и события описаны в энумах,
+ поэтому конфигурация тоже отражает эту типизацию
+<2> оверайдим метод конфигурации базовых настрок стэйт-машины
+<3> описываем состояния стэйт-машины
+<4> описываем переходы
 
-## Try to use it
+В базовой конфигурации мы задаем настройку автозапуска для стэйт-машины,
+это позволит нам автоматиески переходить в стартовый стэйт, при создании стэйт-машины.
 
-Test successful DI & initialization of state machine
+В настройках состояний нужно указать точку входа в стэйт-машину (initial state),
+при запуске стэйт-машины переход в эту точку будет первым.
+Тут важно понимать что переход в состояние BACKLOG из ниоткуда это тоже переход, далее мы увидим это более наглядно.
+
+Так же в конфигурации состояний мы задает точку выхода (end state), перейдя в которую стэйт-машина будет остановлена.
+
+Настройка переходов выглядит довольно интуитивно-понятной, для каждого перехода
+нужно указать исходное состояние, целевое состояние и событие которое придете к такому переходу.
+
+
+## Используем стэйт-машину
+
+Первым делом, протестируем что контекст сконфигурирован корректно и
+спринг инжектит нужную стэйт-машину:
 
 [source, java]
 ----
@@ -149,26 +169,29 @@ public class StatesFirstApplicationTests {
 }
 ----
 
-Test "green way":
+Напишем тест для основного флоу так называемый "green way":
 
 [source, java]
 ----
 @Test
 public void testGreenFlow() {
-    // Arrange
-    // Act
+    // Arrange & Act
     stateMachine.sendEvent(Events.START_FEATURE);
     stateMachine.sendEvent(Events.FINISH_FIATURE);
     stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.DONE);
+              .isEqualTo(States.DONE); <1>
 }
 ----
+<1> главный критерий успешного выполнения всех переходов - это достижение стэйт-машиной стэйта DONE,
+в полноценном тесте стоило бы проверить каждый переход, а не только конечное состояние после серии переходов,
+но для наших исследовательских целей этого будет достаточно.
 
-## Add listener on state machine
 
-Change configuration:
+## Перехватываем события стэйт-машины
+
+Добавляем listener в конфигурацию:
 
 [source, java]
 ----
@@ -204,8 +227,11 @@ private StateMachineListener<States, Events> listener() {
 		};
 }
 ----
+<1> прописываем обработчик событий для стэйт машины
+<2> переопределяем метод перехвата любого перехода
+<3> переопределяем метод срабатывающий при попытке осуществить недопустимый переход
 
-after that we can make "wrong way" test
+После этого можно написать тест с недопустимым переходом:
 
 [source, java]
 ----
@@ -221,14 +247,20 @@ public void testWrongWay() {
 }
 ----
 
-then we look at logout error:
+И в логах мы увидим что обработчик отработал как мы этого ожидали:
 
 image::wrong_way_test.png[wrong way test result]
 
-## More than one state machine? No problem!
+Тут видно еще один нюанс, о котором я рассказывал выше, первый переход в `BACKLOG`(initial стэйт)
+тоже является переходом для стэйт машины и наш обработчик его отлавливает, но исходное состояние для него будет  `NULL`,
+для этого в обработчике пришлось оборачивать стэйты получаемые из `transition` в  `ofNullableState`
 
-change annotation `@EnableStateMachine` to `@EnableStateMachineFactory`
+## Создаем несколько экземпляров стэйт-машины
 
+Для инстанцирования стэйт машин нужно заменить в конфигурации аннотацию `@EnableStateMachine` на `@EnableStateMachineFactory`.
+Это позволит нам инжектить в код фабрику создающую стэйт-машины.
+
+Исправим конфигурацию:
 [source, java]
 ----
 @Slf4j
@@ -243,7 +275,7 @@ public class StateMachineConfig
 }
 ----
 
-and we need change test:
+Модифицируем тесты:
 
 [source,java]
 ----
@@ -265,11 +297,12 @@ public class StatesFirstApplicationTests {
 }
 ----
 
-## Actions - add some business logic
+## Добавим бизнес логику на переход из стэйта в стэйт
 
-Let's make auto-deploy after the finished feature.
+Давайте добавим немного автоматизации, например
+сделаем автодеплой перед запуском стэйта `TESTING`.
 
-We can do this as follows:
+Мы можем сделать это следующим образом:
 
 [source,java]
 ----
@@ -291,35 +324,30 @@ private Action<States, Events> deployAction() {  <2>
 		};
 }
 ----
-<1> add deploy action after enter in TESTING state
-<2> implementation of Deploy action
+<1> запускаем действие deployAction после входа в стейт `TESTING`
+<2> реализация действия deployAction
 
-This approach has one problem.
-If we slightly complicate our business process, then this action can be performed when it is unnecessary.
-For example, if the developer has finished two features in one pull-request, then he can transfer the second task without additional deployment.
-We will assume that he maked this because he is super efficient and we can call him a "Rock Star".
+Этот подход имеет одну проблему.
+
+Если мы немного усложним наш бизнес процесс, то это действие может выполняться когда нам этого не нужно.
+Например, разработчик может реализовать две фичи в одном пул-реквесте, тогда нам нужно
+переместить вторую задачу в `TESTING` в обход состояния `IN_PROGRESS`.
+Будем надеяться, что разработчик так сделал от того что он слишком эффективен
+и успевает реализовать два таска в одном, еще и в два раза быстрее чем изначально планировал.
+Обычно таких супер эффективных программистов мы называем Рок Звездами =)
 
 [plantuml]
 ....
 [*] --> BACKLOG : time to work!
-
 BACKLOG --> IN_PROGRESS : start feature
-
 IN_PROGRESS --> TESTING : finish feature
-
 TESTING --> DONE : QA approved
-
 TESTING --> IN_PROGRESS : QA rejected task
-
 BACKLOG --> TESTING : Rock Star
 ....
 
-Now if we move task from backlog to testing then will be run deploy.
-But we don't want this behavior.
+Добавим событие и переход:
 
-In this case, we can move the action from the states to  transitions configuration:
-
-Add rock star event:
 [source, java]
 ----
 transitions.withExternal()
@@ -330,7 +358,8 @@ transitions.withExternal()
            .target(States.TESTING)
            .event(Events.ROCK_STAR_MAKE_ALL_IN_ONE);
 ----
-check behavior in test:
+
+проверим что все работает так как мы планировали:
 
 [source,java]
 ----
@@ -345,11 +374,14 @@ public void testRockStar() {
 }
 ----
 
-test results:
+результат теста:
 
 image::deploying_test_result.png[rock star test result]
 
-how can we solve this problem:
+Теперь когда мы перемещаем таск из `BACKLOG` в `TESTING` запускается процесс деплоя.
+Но это не то поведение которое нам нужно. Для решения этой проблемы мы можем переместить
+вызов действия из конфигурации стейтов в конфигурацию переходов:
+
 
 [source, java]
 ----
@@ -370,14 +402,16 @@ transitions.withExternal()
            .and()
            	...
 ----
-<1> remove deploying action from states
-<2> past the action on transition from IN_PROGRESS to FINISH_FEATURE
+<1> убираем вызов действия из стэйтов
+<2> добавляем вызов действия на переход из IN_PROGRESS в FINISH_FEATURE
 
-## Guards - use conditions in flow.
+## Guards - добавляем условия на переходы
 
-Next we will add the ability to run deploying from `BACKLOG` and `IN_PROGRESS` states.
-Before going to `TESTING`, we will verify that the deployment event was called.
-For this we will create a guard on transitions to `TESTING` state.
+Теперь мы добавим возможность запустить деплой из стейта `BACKLOG`
+и из стейта `IN_PROGRESS`. Сделаем событие `DEPLOY` так чтобы разработчики
+сами могли решить когда он им нужен. Однако перед входом в стейт `TESTING` мы
+будем проверять был ли выполнен деплой, и если нет то переход в стейт `TESTING`
+будет неосуществим. Эту проверку мы сделаем при помощи guard'а на переходе в стейт `TESTING`.
 
 [plantuml]
 ....
@@ -391,7 +425,8 @@ BACKLOG --> BACKLOG : deploy
 IN_PROGRESS --> IN_PROGRESS : deploy
 ....
 
-Add transitions for internal `DEPLOY` and guards for transitions to `TESTING`
+Добавим внутренние переходы для событий `DEPLOY` из стейтов `BACKLOG` и `IN_PROGRESS`.
+Так же добавим guard для перехода в стейт `TESTING`:
 
 [source, java]
 ----
@@ -433,11 +468,13 @@ transitions.withExternal()
            .event(Events.DEPLOY) <2>
            .action(deployAction());
 ----
-<1> guards on transitions to `TESTING`
-<2> internal `DEPLOY` events
+<1> проверяем условие доступности перехода в `TESTING`
+<2> внутренне событие (не меняющее стейт) `DEPLOY`
 
-Then we make guard implementation based on state machine variables.
-You can write in extend state a lot of useful things that will be shared in process.
+Теперь сделаем реализацию guard'а с использованием переменных из контекста стейт-машины.
+Вы можете писать в ExtendedState переменные, которые будут расшарены между всем процессом
+исполнения стейт-машины. Количество этих переменных не ограничено, мы просто задаем имя переменной (строкой) и ее значение (Object).
+
 
 [source, java]
 ----
@@ -451,7 +488,7 @@ private Guard<States, Events> checkDeployGuard() {
 }
 ----
 
-After that, we can use this variable in the deployment action:
+Теперь нужно не забыть установить значение этой переменной в действии деплоя:
 
 [source, java]
 ----
@@ -465,7 +502,7 @@ private Action<States, Events> deployAction() {
 }
 ----
 
-Now we can make unit test for this case
+Сделаем юнит-тест для этого кейса:
 
 [source, java]
 ----
@@ -481,15 +518,17 @@ public void testGuard() {
 }
 ----
 
-If we don't send the `DEPLOY` event then we get the following result:
+Если мы не вызываем событие `DEPLOY` то мы получим следующий результат:
 
 image::guard_test_result.png[guard test result]
 
-## Persist State machine in-memory
 
-We need write implementation of StateMachinePersist.
+## Сохранение/восстановления состояния стейт-машины
 
-To start write a simple in-memory implementation:
+
+Для сохранения/восстановления состояний стейт-машины нужно реализовать интерфейс `StateMachinePersist`.
+
+Для начала напишем простую реализацию in-memory persist:
 
 [source, java]
 ----
@@ -497,7 +536,7 @@ public class InMemoryPersist
         implements StateMachinePersist<States, Events, UUID> {
 
     private HashMap<UUID, StateMachineContext<States, Events>> storage
-            = new HashMap<>();
+            = new HashMap<>(); <1>
 
     @Override
     public void write(StateMachineContext<States, Events> context,
@@ -512,8 +551,12 @@ public class InMemoryPersist
     }
 }
 ----
+<1> в качестве хранилища будем использовать HashMap
 
-Than we makes persist configuration:
+Обратите внимание что сохраняется не экземпляр `StateMachine` а контекст (`StateMachineContext`)
+
+Теперь нам нужно сделать конфигурацию для нашего способа персистинга и добавить реализацию `StateMachinePersister`
+работающую через наш способ хранения контекста стейт-машины.
 
 [source, java]
 ----
@@ -530,7 +573,7 @@ public StateMachinePersister<States, Events, UUID> persister(
 }
 ----
 
-Now we can use it:
+Теперь можно воспользоваться полученным механизмом:
 
 [source, java]
 ----
@@ -565,13 +608,14 @@ public void testPersist() throws Exception {
 						 .isEqualTo(States.IN_PROGRESS);
 }
 ----
-<1> save first state machine context
-<2> load first state machine context to second
+<1> сохраняем контекст первой стейт-машины
+<2> загружаем во сторую стейт-машину состояние первой
 
-## Persist state machine in MongoDb
 
-We need add some dependencies for work with MongoDb.
-Also we will write integration tests with TestContainers framework.
+## Сохраняем стейт-машины в MongoDb
+
+Для работы с MongoDb нам понадобится добавить парочку новых зависимостей.
+Так же мы будем использовать TestContainers для написания интеграционных тестов.
 
 [source, mvn]
 ----
@@ -596,7 +640,7 @@ Also we will write integration tests with TestContainers framework.
 <!-- TestContainers -->
 ----
 
-Then we make MongoDb persist
+Теперь мы можем добавить персист для MongoDb:
 
 [source, java]
 ----
@@ -608,9 +652,10 @@ public StateMachineRuntimePersister<States, Events, UUID> mongoPersist(
 }
 ----
 
-Now we can make integration test.
+Теперь можно написать интеграционный тест.
 
-I have abstract class for testing mongodb application in spring framework.
+Для запуска mongodb в тесте я буду пользоваться библиотекой TestContainers,
+для всех интеграционных тестов mongodb я использую следующий базовый класс:
 
 [source, java]
 ----
@@ -634,7 +679,7 @@ public abstract class BaseMongoIT {
 }
 ----
 
-and test case:
+в итоге тестовый кейс будет выглядеть так:
 
 [source, java]
 ----
@@ -688,9 +733,17 @@ public class MongoPersistTest extends BaseMongoIT {
 ----
 
 
-## Live without state machines seems boring.
+## Зачем и когда нужны стейт-машины
 
-You can coding this business logic in ugly spaghetti hardcode:
+Если взять наш пример выше, то без стейт-машины его можно было бы реализовать другими способами.
+
+Давайте рассмотрим возможные альтернативы использованию стейт-машин.
+
+### Первая альтернатива - захардкодить
+
+следующим спагети-кодом, конечно можно подумать над организацией этого метода,
+но в конечном итоге мысль использовать стейт-машину будет самым простым вариантом
+наведения порядка и даст простоту поддержки и модификации этого кода:
 
 [source, java]
 ----
@@ -757,6 +810,40 @@ You can coding this business logic in ugly spaghetti hardcode:
 ----
 
 
+### Вторая альтерантива - BPM фреймворк
+
+Для чего стоит реализовать подобный бизнес-кейс на каком-нибудь BPMN движке мы рассмотрим
+в другой статье, тут я лишь коротко раскрою этот вопрос. Во первых, вам нужно будет
+поднимать в проекте полноценный фреймворк для BPMN процесов, со своей специфичной БД.
+Эти фреймворки не легковесные, далеко не все из них нативно работают в java.
+Во вторых нужно уметь пользоваться нотацией BPMN и описать процесс.
+
+image:bpm.png[bpmn]
+
+icon:plus[] Когда стоит использовать BPM:
+
+- если у вас сложные бизнес процессы
+
+- когда нужно много возможностей: сообщения, подпроцессы, сигналы, условные переходы и т.п.
+
+- если нужно версионирование процессов
+
+- когда есть необходимость графически визуализировать используемые процессы
+
+- когда нужен механизм для просмотра и отладки всех текущих процессов и их состояний
+
+icon:minus[] Когда не стоит использовать:
+
+- у вас очень простые процессы и набор состояний системы очевиден
+
+- мало времени на разработку системы или нет специалистов в предметной области
+
+- нет необходимости версионировать процессы
+
+- нет возможности разворачивать в продакшене полноценный BPM фреймворк
+
+
+
 // END OF CONTENT
 include::../metrica.adoc[]
 
@@ -769,7 +856,7 @@ include::../metrica.adoc[]
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'statemachine'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'statemachine_rus'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE

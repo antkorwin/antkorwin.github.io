@@ -444,32 +444,37 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_dependencies">1. Dependencies</a></li>
-<li><a href="#_states_events">2. States &amp; Events</a></li>
-<li><a href="#_configuration">3. Configuration</a></li>
-<li><a href="#_try_to_use_it">4. Try to use it</a></li>
-<li><a href="#_add_listener_on_state_machine">5. Add listener on state machine</a></li>
-<li><a href="#_more_than_one_state_machine_no_problem">6. More than one state machine? No problem!</a></li>
-<li><a href="#_actions_add_some_business_logic">7. Actions - add some business logic</a></li>
-<li><a href="#_guards_use_conditions_in_flow">8. Guards - use conditions in flow.</a></li>
-<li><a href="#_persist_state_machine_in_memory">9. Persist State machine in-memory</a></li>
-<li><a href="#_persist_state_machine_in_mongodb">10. Persist state machine in MongoDb</a></li>
-<li><a href="#_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</a></li>
+<li><a href="#_Настройка_проекта">1. Настройка проекта</a></li>
+<li><a href="#_Состояния_и_события">2. Состояния и события</a></li>
+<li><a href="#_Конфигурация_для_statemachine">3. Конфигурация для statemachine</a></li>
+<li><a href="#_Используем_стэйт_машину">4. Используем стэйт-машину</a></li>
+<li><a href="#_Перехватываем_события_стэйт_машины">5. Перехватываем события стэйт-машины</a></li>
+<li><a href="#_Создаем_несколько_экземпляров_стэйт_машины">6. Создаем несколько экземпляров стэйт-машины</a></li>
+<li><a href="#_Добавим_бизнес_логику_на_переход_из_стэйта_в_стэйт">7. Добавим бизнес логику на переход из стэйта в стэйт</a></li>
+<li><a href="#_guards_добавляем_условия_на_переходы">8. Guards - добавляем условия на переходы</a></li>
+<li><a href="#_Сохранениевосстановления_состояния_стейт_машины">9. Сохранение/восстановления состояния стейт-машины</a></li>
+<li><a href="#_Сохраняем_стейт_машины_в_mongodb">10. Сохраняем стейт-машины в MongoDb</a></li>
+<li><a href="#_Зачем_и_когда_нужны_стейт_машины">11. Зачем и когда нужны стейт-машины</a>
+<ul class="sectlevel2">
+<li><a href="#_Первая_альтернатива_захардкодить">11.1. Первая альтернатива - захардкодить</a></li>
+<li><a href="#_Вторая_альтерантива_bpm_фреймворк">11.2. Вторая альтерантива - BPM фреймворк</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_dependencies">1. Dependencies</h2>
+<h2 id="_Настройка_проекта">1. Настройка проекта</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Create a new SpringBoot project, we need to add only one dependency.</p>
+<p>Создаем новый SpringBoot проект и добалвяем в зависимостях statemachine</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./spring-init.png" alt="state machine"></span></p>
 </div>
 <div class="paragraph">
-<p>One starter does makes all the magic</p>
+<p>Вся магия в одном стартере для стэйт-машины.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -482,21 +487,24 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_states_events">2. States &amp; Events</h2>
+<h2 id="_Состояния_и_события">2. Состояния и события</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Let&#8217;s see the following example:</p>
+<p>Для примера возьмем бизнес-процесс, знакомый большинству разработчиков.
+Если вдруг канбан прошел мимо вас, то стоит немного почитать про эту методологию разработки.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="diag-522e7afb91deedf0e41f9c31eb11c7ea.png" alt="diag 522e7afb91deedf0e41f9c31eb11c7ea" width="290" height="616">
+<img src="diag-8aadf2e263d1e534b197ce0c4b68740b.png" alt="diag 8aadf2e263d1e534b197ce0c4b68740b" width="629" height="632">
 </div>
 </div>
 <div class="paragraph">
-<p>Spring statemachine provides the ability to configure through enums.</p>
+<p>Из этого бизнес-процесса мы можем вычленить следующие состояния:
+<code>BACKLOG</code>,<code>IN_PROGRESS</code>,<code>TESTING</code>,<code>DONE</code>. Собственно это и будет набором стэйтов.</p>
 </div>
 <div class="paragraph">
-<p>You can describe states and events in enumeration:</p>
+<p>Переход из одного состояния в другое происходит по определенному событию.
+Spring State Machine позволяет конфигурировать стэйты и ивенты через java enum-ы.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -511,8 +519,6 @@ public enum  Events {
     START_FEATURE,
     FINISH_FEATURE,
     QA_REJECTED_UC,
-    ROCK_STAR_DOUBLE_TASK,
-    DEPLOY,
     QA_CHECKED_UC
 }</code></pre>
 </div>
@@ -520,17 +526,19 @@ public enum  Events {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_configuration">3. Configuration</h2>
+<h2 id="_Конфигурация_для_statemachine">3. Конфигурация для statemachine</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Create a configuration for the state machine:</p>
+<p>Мы будем рассматривать пример использования statemachine
+через стандартные механизмы Spring DI, для этого нам понадобится сделать
+spring configuration описывающий настройки стэйт-машины.</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
 @EnableStateMachine
 public class StateMachineConfig
-        extends EnumStateMachineConfigurerAdapter
+        extends EnumStateMachineConfigurerAdapter <i class="conum" data-value="1"></i><b>(1)</b>
                         &lt;States, Events&gt; {
 
     @Override
@@ -538,7 +546,7 @@ public class StateMachineConfig
             StateMachineConfigurationConfigurer
                     &lt;States, Events&gt; config) throws Exception {
 
-        config.withConfiguration()  <i class="conum" data-value="1"></i><b>(1)</b>
+        config.withConfiguration()  <i class="conum" data-value="2"></i><b>(2)</b>
               .autoStartup(true);
     }
 
@@ -548,7 +556,7 @@ public class StateMachineConfig
             StateMachineStateConfigurer&lt;States, Events&gt; states)
             throws Exception {
 
-        states.withStates()		<i class="conum" data-value="2"></i><b>(2)</b>
+        states.withStates()		<i class="conum" data-value="3"></i><b>(3)</b>
               .initial(States.BACKLOG)
               .state(States.IN_PROGRESS)
               .state(States.TESTING)
@@ -560,7 +568,7 @@ public class StateMachineConfig
             StateMachineTransitionConfigurer&lt;States, Events&gt; transitions)
             throws Exception {
 
-        transitions.withExternal()  <i class="conum" data-value="3"></i><b>(3)</b>
+        transitions.withExternal()  <i class="conum" data-value="4"></i><b>(4)</b>
                    .source(States.BACKLOG)
                    .target(States.IN_PROGRESS)
                    .event(Events.START_FEATURE)
@@ -586,25 +594,48 @@ public class StateMachineConfig
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>configuration base state machine properties</td>
+<td>мы работаем с типизированной стэйт-машиной,
+и все наши состояния и события описаны в энумах,
+ поэтому конфигурация тоже отражает эту типизацию</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>describe states of machine</td>
+<td>оверайдим метод конфигурации базовых настрок стэйт-машины</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>describe transitions</td>
+<td>описываем состояния стэйт-машины</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>описываем переходы</td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>В базовой конфигурации мы задаем настройку автозапуска для стэйт-машины,
+это позволит нам автоматиески переходить в стартовый стэйт, при создании стэйт-машины.</p>
+</div>
+<div class="paragraph">
+<p>В настройках состояний нужно указать точку входа в стэйт-машину (initial state),
+при запуске стэйт-машины переход в эту точку будет первым.
+Тут важно понимать что переход в состояние BACKLOG из ниоткуда это тоже переход, далее мы увидим это более наглядно.</p>
+</div>
+<div class="paragraph">
+<p>Так же в конфигурации состояний мы задает точку выхода (end state), перейдя в которую стэйт-машина будет остановлена.</p>
+</div>
+<div class="paragraph">
+<p>Настройка переходов выглядит довольно интуитивно-понятной, для каждого перехода
+нужно указать исходное состояние, целевое состояние и событие которое придете к такому переходу.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_try_to_use_it">4. Try to use it</h2>
+<h2 id="_Используем_стэйт_машину">4. Используем стэйт-машину</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Test successful DI &amp; initialization of state machine</p>
+<p>Первым делом, протестируем что контекст сконфигурирован корректно и
+спринг инжектит нужную стэйт-машину:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -626,30 +657,39 @@ public class StatesFirstApplicationTests {
 </div>
 </div>
 <div class="paragraph">
-<p>Test "green way":</p>
+<p>Напишем тест для основного флоу так называемый "green way":</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
 public void testGreenFlow() {
-    // Arrange
-    // Act
+    // Arrange &amp; Act
     stateMachine.sendEvent(Events.START_FEATURE);
     stateMachine.sendEvent(Events.FINISH_FIATURE);
     stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.DONE);
+              .isEqualTo(States.DONE); <i class="conum" data-value="1"></i><b>(1)</b>
 }</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>главный критерий успешного выполнения всех переходов - это достижение стэйт-машиной стэйта DONE,
+в полноценном тесте стоило бы проверить каждый переход, а не только конечное состояние после серии переходов,
+но для наших исследовательских целей этого будет достаточно.</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_add_listener_on_state_machine">5. Add listener on state machine</h2>
+<h2 id="_Перехватываем_события_стэйт_машины">5. Перехватываем события стэйт-машины</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Change configuration:</p>
+<p>Добавляем listener в конфигурацию:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -686,8 +726,24 @@ private StateMachineListener&lt;States, Events&gt; listener() {
 }</code></pre>
 </div>
 </div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>прописываем обработчик событий для стэйт машины</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>переопределяем метод перехвата любого перехода</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>переопределяем метод срабатывающий при попытке осуществить недопустимый переход</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
-<p>after that we can make "wrong way" test</p>
+<p>После этого можно написать тест с недопустимым переходом:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -704,20 +760,29 @@ public void testWrongWay() {
 </div>
 </div>
 <div class="paragraph">
-<p>then we look at logout error:</p>
+<p>И в логах мы увидим что обработчик отработал как мы этого ожидали:</p>
 </div>
 <div class="imageblock">
 <div class="content">
 <img src="wrong_way_test.png" alt="wrong way test result">
 </div>
 </div>
+<div class="paragraph">
+<p>Тут видно еще один нюанс, о котором я рассказывал выше, первый переход в <code>BACKLOG</code>(initial стэйт)
+тоже является переходом для стэйт машины и наш обработчик его отлавливает, но исходное состояние для него будет  <code>NULL</code>,
+для этого в обработчике пришлось оборачивать стэйты получаемые из <code>transition</code> в  <code>ofNullableState</code></p>
+</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_more_than_one_state_machine_no_problem">6. More than one state machine? No problem!</h2>
+<h2 id="_Создаем_несколько_экземпляров_стэйт_машины">6. Создаем несколько экземпляров стэйт-машины</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>change annotation <code>@EnableStateMachine</code> to <code>@EnableStateMachineFactory</code></p>
+<p>Для инстанцирования стэйт машин нужно заменить в конфигурации аннотацию <code>@EnableStateMachine</code> на <code>@EnableStateMachineFactory</code>.
+Это позволит нам инжектить в код фабрику создающую стэйт-машины.</p>
+</div>
+<div class="paragraph">
+<p>Исправим конфигурацию:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -734,7 +799,7 @@ public class StateMachineConfig
 </div>
 </div>
 <div class="paragraph">
-<p>and we need change test:</p>
+<p>Модифицируем тесты:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -759,13 +824,14 @@ public class StatesFirstApplicationTests {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_actions_add_some_business_logic">7. Actions - add some business logic</h2>
+<h2 id="_Добавим_бизнес_логику_на_переход_из_стэйта_в_стэйт">7. Добавим бизнес логику на переход из стэйта в стэйт</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Let&#8217;s make auto-deploy after the finished feature.</p>
+<p>Давайте добавим немного автоматизации, например
+сделаем автодеплой перед запуском стэйта <code>TESTING</code>.</p>
 </div>
 <div class="paragraph">
-<p>We can do this as follows:</p>
+<p>Мы можем сделать это следующим образом:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -792,34 +858,32 @@ private Action&lt;States, Events&gt; deployAction() {  <i class="conum" data-val
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>add deploy action after enter in TESTING state</td>
+<td>запускаем действие deployAction после входа в стейт <code>TESTING</code></td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>implementation of Deploy action</td>
+<td>реализация действия deployAction</td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>This approach has one problem.
-If we slightly complicate our business process, then this action can be performed when it is unnecessary.
-For example, if the developer has finished two features in one pull-request, then he can transfer the second task without additional deployment.
-We will assume that he maked this because he is super efficient and we can call him a "Rock Star".</p>
+<p>Этот подход имеет одну проблему.</p>
+</div>
+<div class="paragraph">
+<p>Если мы немного усложним наш бизнес процесс, то это действие может выполняться когда нам этого не нужно.
+Например, разработчик может реализовать две фичи в одном пул-реквесте, тогда нам нужно
+переместить вторую задачу в <code>TESTING</code> в обход состояния <code>IN_PROGRESS</code>.
+Будем надеяться, что разработчик так сделал от того что он слишком эффективен
+и успевает реализовать два таска в одном, еще и в два раза быстрее чем изначально планировал.
+Обычно таких супер эффективных программистов мы называем Рок Звездами =)</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="diag-6193a71dfcb006d37f3208ed4a7bbde1.png" alt="diag 6193a71dfcb006d37f3208ed4a7bbde1" width="340" height="550">
+<img src="diag-6a477c4f0c403ffd2795f9f3fcd19d47.png" alt="diag 6a477c4f0c403ffd2795f9f3fcd19d47" width="340" height="550">
 </div>
 </div>
 <div class="paragraph">
-<p>Now if we move task from backlog to testing then will be run deploy.
-But we don&#8217;t want this behavior.</p>
-</div>
-<div class="paragraph">
-<p>In this case, we can move the action from the states to  transitions configuration:</p>
-</div>
-<div class="paragraph">
-<p>Add rock star event:</p>
+<p>Добавим событие и переход:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -833,7 +897,7 @@ But we don&#8217;t want this behavior.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>check behavior in test:</p>
+<p>проверим что все работает так как мы планировали:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -849,7 +913,7 @@ public void testRockStar() {
 </div>
 </div>
 <div class="paragraph">
-<p>test results:</p>
+<p>результат теста:</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -857,7 +921,9 @@ public void testRockStar() {
 </div>
 </div>
 <div class="paragraph">
-<p>how can we solve this problem:</p>
+<p>Теперь когда мы перемещаем таск из <code>BACKLOG</code> в <code>TESTING</code> запускается процесс деплоя.
+Но это не то поведение которое нам нужно. Для решения этой проблемы мы можем переместить
+вызов действия из конфигурации стейтов в конфигурацию переходов:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -883,23 +949,25 @@ transitions.withExternal()
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>remove deploying action from states</td>
+<td>убираем вызов действия из стэйтов</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>past the action on transition from IN_PROGRESS to FINISH_FEATURE</td>
+<td>добавляем вызов действия на переход из IN_PROGRESS в FINISH_FEATURE</td>
 </tr>
 </table>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_guards_use_conditions_in_flow">8. Guards - use conditions in flow.</h2>
+<h2 id="_guards_добавляем_условия_на_переходы">8. Guards - добавляем условия на переходы</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Next we will add the ability to run deploying from <code>BACKLOG</code> and <code>IN_PROGRESS</code> states.
-Before going to <code>TESTING</code>, we will verify that the deployment event was called.
-For this we will create a guard on transitions to <code>TESTING</code> state.</p>
+<p>Теперь мы добавим возможность запустить деплой из стейта <code>BACKLOG</code>
+и из стейта <code>IN_PROGRESS</code>. Сделаем событие <code>DEPLOY</code> так чтобы разработчики
+сами могли решить когда он им нужен. Однако перед входом в стейт <code>TESTING</code> мы
+будем проверять был ли выполнен деплой, и если нет то переход в стейт <code>TESTING</code>
+будет неосуществим. Эту проверку мы сделаем при помощи guard&#8217;а на переходе в стейт <code>TESTING</code>.</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -907,7 +975,8 @@ For this we will create a guard on transitions to <code>TESTING</code> state.</p
 </div>
 </div>
 <div class="paragraph">
-<p>Add transitions for internal <code>DEPLOY</code> and guards for transitions to <code>TESTING</code></p>
+<p>Добавим внутренние переходы для событий <code>DEPLOY</code> из стейтов <code>BACKLOG</code> и <code>IN_PROGRESS</code>.
+Так же добавим guard для перехода в стейт <code>TESTING</code>:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -954,17 +1023,18 @@ For this we will create a guard on transitions to <code>TESTING</code> state.</p
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>guards on transitions to <code>TESTING</code></td>
+<td>проверяем условие доступности перехода в <code>TESTING</code></td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>internal <code>DEPLOY</code> events</td>
+<td>внутренне событие (не меняющее стейт) <code>DEPLOY</code></td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>Then we make guard implementation based on state machine variables.
-You can write in extend state a lot of useful things that will be shared in process.</p>
+<p>Теперь сделаем реализацию guard&#8217;а с использованием переменных из контекста стейт-машины.
+Вы можете писать в ExtendedState переменные, которые будут расшарены между всем процессом
+исполнения стейт-машины. Количество этих переменных не ограничено, мы просто задаем имя переменной (строкой) и ее значение (Object).</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -979,7 +1049,7 @@ You can write in extend state a lot of useful things that will be shared in proc
 </div>
 </div>
 <div class="paragraph">
-<p>After that, we can use this variable in the deployment action:</p>
+<p>Теперь нужно не забыть установить значение этой переменной в действии деплоя:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -994,7 +1064,7 @@ You can write in extend state a lot of useful things that will be shared in proc
 </div>
 </div>
 <div class="paragraph">
-<p>Now we can make unit test for this case</p>
+<p>Сделаем юнит-тест для этого кейса:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1011,7 +1081,7 @@ public void testGuard() {
 </div>
 </div>
 <div class="paragraph">
-<p>If we don&#8217;t send the <code>DEPLOY</code> event then we get the following result:</p>
+<p>Если мы не вызываем событие <code>DEPLOY</code> то мы получим следующий результат:</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -1021,13 +1091,13 @@ public void testGuard() {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_persist_state_machine_in_memory">9. Persist State machine in-memory</h2>
+<h2 id="_Сохранениевосстановления_состояния_стейт_машины">9. Сохранение/восстановления состояния стейт-машины</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We need write implementation of StateMachinePersist.</p>
+<p>Для сохранения/восстановления состояний стейт-машины нужно реализовать интерфейс <code>StateMachinePersist</code>.</p>
 </div>
 <div class="paragraph">
-<p>To start write a simple in-memory implementation:</p>
+<p>Для начала напишем простую реализацию in-memory persist:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1035,7 +1105,7 @@ public void testGuard() {
         implements StateMachinePersist&lt;States, Events, UUID&gt; {
 
     private HashMap&lt;UUID, StateMachineContext&lt;States, Events&gt;&gt; storage
-            = new HashMap&lt;&gt;();
+            = new HashMap&lt;&gt;(); <i class="conum" data-value="1"></i><b>(1)</b>
 
     @Override
     public void write(StateMachineContext&lt;States, Events&gt; context,
@@ -1051,8 +1121,20 @@ public void testGuard() {
 }</code></pre>
 </div>
 </div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>в качестве хранилища будем использовать HashMap</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
-<p>Than we makes persist configuration:</p>
+<p>Обратите внимание что сохраняется не экземпляр <code>StateMachine</code> а контекст (<code>StateMachineContext</code>)</p>
+</div>
+<div class="paragraph">
+<p>Теперь нам нужно сделать конфигурацию для нашего способа персистинга и добавить реализацию <code>StateMachinePersister</code>
+работающую через наш способ хранения контекста стейт-машины.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1070,7 +1152,7 @@ public StateMachinePersister&lt;States, Events, UUID&gt; persister(
 </div>
 </div>
 <div class="paragraph">
-<p>Now we can use it:</p>
+<p>Теперь можно воспользоваться полученным механизмом:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1110,22 +1192,22 @@ public void testPersist() throws Exception {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>save first state machine context</td>
+<td>сохраняем контекст первой стейт-машины</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>load first state machine context to second</td>
+<td>загружаем во сторую стейт-машину состояние первой</td>
 </tr>
 </table>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_persist_state_machine_in_mongodb">10. Persist state machine in MongoDb</h2>
+<h2 id="_Сохраняем_стейт_машины_в_mongodb">10. Сохраняем стейт-машины в MongoDb</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We need add some dependencies for work with MongoDb.
-Also we will write integration tests with TestContainers framework.</p>
+<p>Для работы с MongoDb нам понадобится добавить парочку новых зависимостей.
+Так же мы будем использовать TestContainers для написания интеграционных тестов.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1151,7 +1233,7 @@ Also we will write integration tests with TestContainers framework.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Then we make MongoDb persist</p>
+<p>Теперь мы можем добавить персист для MongoDb:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1164,10 +1246,11 @@ public StateMachineRuntimePersister&lt;States, Events, UUID&gt; mongoPersist(
 </div>
 </div>
 <div class="paragraph">
-<p>Now we can make integration test.</p>
+<p>Теперь можно написать интеграционный тест.</p>
 </div>
 <div class="paragraph">
-<p>I have abstract class for testing mongodb application in spring framework.</p>
+<p>Для запуска mongodb в тесте я буду пользоваться библиотекой TestContainers,
+для всех интеграционных тестов mongodb я использую следующий базовый класс:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1192,7 +1275,7 @@ public abstract class BaseMongoIT {
 </div>
 </div>
 <div class="paragraph">
-<p>and test case:</p>
+<p>в итоге тестовый кейс будет выглядеть так:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1248,10 +1331,20 @@ public abstract class BaseMongoIT {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</h2>
+<h2 id="_Зачем_и_когда_нужны_стейт_машины">11. Зачем и когда нужны стейт-машины</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>You can coding this business logic in ugly spaghetti hardcode:</p>
+<p>Если взять наш пример выше, то без стейт-машины его можно было бы реализовать другими способами.</p>
+</div>
+<div class="paragraph">
+<p>Давайте рассмотрим возможные альтернативы использованию стейт-машин.</p>
+</div>
+<div class="sect2">
+<h3 id="_Первая_альтернатива_захардкодить">11.1. Первая альтернатива - захардкодить</h3>
+<div class="paragraph">
+<p>следующим спагети-кодом, конечно можно подумать над организацией этого метода,
+но в конечном итоге мысль использовать стейт-машину будет самым простым вариантом
+наведения порядка и даст простоту поддержки и модификации этого кода:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1317,6 +1410,60 @@ public abstract class BaseMongoIT {
         }</code></pre>
 </div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_Вторая_альтерантива_bpm_фреймворк">11.2. Вторая альтерантива - BPM фреймворк</h3>
+<div class="paragraph">
+<p>Для чего стоит реализовать подобный бизнес-кейс на каком-нибудь BPMN движке мы рассмотрим
+в другой статье, тут я лишь коротко раскрою этот вопрос. Во первых, вам нужно будет
+поднимать в проекте полноценный фреймворк для BPMN процесов, со своей специфичной БД.
+Эти фреймворки не легковесные, далеко не все из них нативно работают в java.
+Во вторых нужно уметь пользоваться нотацией BPMN и описать процесс.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="bpm.png" alt="bpmn"></span></p>
+</div>
+<div class="paragraph">
+<p><span class="icon"><i class="fa fa-plus"></i></span> Когда стоит использовать BPM:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>если у вас сложные бизнес процессы</p>
+</li>
+<li>
+<p>когда нужно много возможностей: сообщения, подпроцессы, сигналы, условные переходы и т.п.</p>
+</li>
+<li>
+<p>если нужно версионирование процессов</p>
+</li>
+<li>
+<p>когда есть необходимость графически визуализировать используемые процессы</p>
+</li>
+<li>
+<p>когда нужен механизм для просмотра и отладки всех текущих процессов и их состояний</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="icon"><i class="fa fa-minus"></i></span> Когда не стоит использовать:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>у вас очень простые процессы и набор состояний системы очевиден</p>
+</li>
+<li>
+<p>мало времени на разработку системы или нет специалистов в предметной области</p>
+</li>
+<li>
+<p>нет необходимости версионировать процессы</p>
+</li>
+<li>
+<p>нет возможности разворачивать в продакшене полноценный BPM фреймворк</p>
+</li>
+</ul>
+</div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
     (function (d, w, c) {
@@ -1353,7 +1500,7 @@ public abstract class BaseMongoIT {
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'statemachine'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'statemachine_rus'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
@@ -1367,9 +1514,10 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 </div>
 </div>
+</div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-05-15 07:44:12 +10
+Last updated 2018-05-15 07:44:13 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
