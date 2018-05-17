@@ -463,13 +463,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_dependencies">1. Dependencies</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Create a new SpringBoot project, we need to add only one dependency.</p>
+<p>Create a new SpringBoot project and add statemachine in dependencies.</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./spring-init.png" alt="state machine"></span></p>
 </div>
 <div class="paragraph">
-<p>One starter does makes all the magic</p>
+<p>One starter made all the magic</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -485,18 +485,26 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_states_events">2. States &amp; Events</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Let&#8217;s see the following example:</p>
+<p>For example, consider the business process known to most developers.
+If you didn&#8217;t hear about kanban before, then you should read about this methodology.
+You can find many articles about it on the Internet.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s see the following scheme:</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="diag-522e7afb91deedf0e41f9c31eb11c7ea.png" alt="diag 522e7afb91deedf0e41f9c31eb11c7ea" width="290" height="616">
+<img src="diag-f57902c9697a281e923d1bdf65d798c2.png" alt="diag f57902c9697a281e923d1bdf65d798c2" width="504" height="632">
 </div>
 </div>
 <div class="paragraph">
-<p>Spring statemachine provides the ability to configure through enums.</p>
+<p>We can extract the following states from this business-process: <code>BACKLOG</code>,
+<code>IN_PROGRESS</code>, <code>TESTING</code>, <code>DONE</code>. This will be our set of states.
+The transition from one state to another passes by a certain event.</p>
 </div>
 <div class="paragraph">
-<p>You can describe states and events in enumeration:</p>
+<p>Spring statemachine provides the ability to configure through enums.
+You can describe states and events in enumeration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1052,7 +1060,7 @@ public void testGuard() {
 </div>
 </div>
 <div class="paragraph">
-<p>Than we makes persist configuration:</p>
+<p>Than we make a persist configuration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1369,7 +1377,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-05-15 07:44:12 +10
+Last updated 2018-05-18 00:24:03 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

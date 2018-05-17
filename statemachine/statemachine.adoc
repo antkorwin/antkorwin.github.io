@@ -10,11 +10,11 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Dependencies
 
-Create a new SpringBoot project, we need to add only one dependency.
+Create a new SpringBoot project and add statemachine in dependencies.
 
 image:./spring-init.png[state machine]
 
-One starter does makes all the magic
+One starter made all the magic
 
 [source, xml]
 ----
@@ -26,21 +26,27 @@ One starter does makes all the magic
 
 ## States & Events
 
-Let's see the following example:
+For example, consider the business process known to most developers.
+If you didn't hear about kanban before, then you should read about this methodology.
+You can find many articles about it on the Internet.
+
+Let's see the following scheme:
 
 [plantuml]
 ....
-[*] --> BACKLOG
+[*] --> BACKLOG : business team gave new tasks
 BACKLOG --> INPROGRESS : developer started feature
 INPROGRESS --> TESTING : developer finished feature
-TESTING -->DONE : QA checked UC
-TESTING --> INPROGRESS : QA rejected UC
+TESTING -->DONE : QA-team checked the use case and marked it as successful
+TESTING --> INPROGRESS : QA-team found a bugs and rejected the use case
 DONE --> [*]
 ....
 
+We can extract the following states from this business-process: `BACKLOG`,
+`IN_PROGRESS`, `TESTING`, `DONE`. This will be our set of states.
+The transition from one state to another passes by a certain event.
 
 Spring statemachine provides the ability to configure through enums.
-
 You can describe states and events in enumeration:
 
 [source, java]
@@ -513,7 +519,7 @@ public class InMemoryPersist
 }
 ----
 
-Than we makes persist configuration:
+Than we make a persist configuration:
 
 [source, java]
 ----
