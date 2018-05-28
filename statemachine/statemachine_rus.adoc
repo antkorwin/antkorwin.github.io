@@ -112,7 +112,7 @@ public class StateMachineConfig
                    .withExternal()
                    .source(States.IN_PROGRESS)
                    .target(States.TESTING)
-                   .event(Events.FINISH_FIATURE)
+                   .event(Events.FINISH_FEATURE)
                    .and()
                    .withExternal()
                    .source(States.TESTING)
@@ -139,7 +139,7 @@ public class StateMachineConfig
 при запуске стэйт-машины переход в эту точку будет первым.
 Тут важно понимать что переход в состояние BACKLOG из ниоткуда это тоже переход, далее мы увидим это более наглядно.
 
-Так же в конфигурации состояний мы задает точку выхода (end state), перейдя в которую стэйт-машина будет остановлена.
+Так же в конфигурации состояний мы задаем точку выхода (end state), перейдя в которую стэйт-машина будет остановлена.
 
 Настройка переходов выглядит довольно интуитивно-понятной, для каждого перехода
 нужно указать исходное состояние, целевое состояние и событие которое придете к такому переходу.
@@ -177,7 +177,7 @@ public class StatesFirstApplicationTests {
 public void testGreenFlow() {
     // Arrange & Act
     stateMachine.sendEvent(Events.START_FEATURE);
-    stateMachine.sendEvent(Events.FINISH_FIATURE);
+    stateMachine.sendEvent(Events.FINISH_FEATURE);
     stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())

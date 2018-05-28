@@ -531,14 +531,15 @@ public enum  Events {
 <h2 id="_configuration">3. Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Create a configuration for the state machine:</p>
+<p>We will consider an example of using a statemachine through the use of standard spring DI.
+We need to make a spring configuration for the state machine:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
 @EnableStateMachine
 public class StateMachineConfig
-        extends EnumStateMachineConfigurerAdapter
+        extends EnumStateMachineConfigurerAdapter <i class="conum" data-value="1"></i><b>(1)</b>
                         &lt;States, Events&gt; {
 
     @Override
@@ -546,7 +547,7 @@ public class StateMachineConfig
             StateMachineConfigurationConfigurer
                     &lt;States, Events&gt; config) throws Exception {
 
-        config.withConfiguration()  <i class="conum" data-value="1"></i><b>(1)</b>
+        config.withConfiguration()  <i class="conum" data-value="2"></i><b>(2)</b>
               .autoStartup(true);
     }
 
@@ -556,7 +557,7 @@ public class StateMachineConfig
             StateMachineStateConfigurer&lt;States, Events&gt; states)
             throws Exception {
 
-        states.withStates()		<i class="conum" data-value="2"></i><b>(2)</b>
+        states.withStates()		<i class="conum" data-value="3"></i><b>(3)</b>
               .initial(States.BACKLOG)
               .state(States.IN_PROGRESS)
               .state(States.TESTING)
@@ -568,7 +569,7 @@ public class StateMachineConfig
             StateMachineTransitionConfigurer&lt;States, Events&gt; transitions)
             throws Exception {
 
-        transitions.withExternal()  <i class="conum" data-value="3"></i><b>(3)</b>
+        transitions.withExternal()  <i class="conum" data-value="4"></i><b>(4)</b>
                    .source(States.BACKLOG)
                    .target(States.IN_PROGRESS)
                    .event(Events.START_FEATURE)
@@ -576,7 +577,7 @@ public class StateMachineConfig
                    .withExternal()
                    .source(States.IN_PROGRESS)
                    .target(States.TESTING)
-                   .event(Events.FINISH_FIATURE)
+                   .event(Events.FINISH_FEATURE)
                    .and()
                    .withExternal()
                    .source(States.TESTING)
@@ -594,17 +595,41 @@ public class StateMachineConfig
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>configuration base state machine properties</td>
+<td>we working with a type-safe, all of our states and events are described by the enums, so these types will be declared in the configuration.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>describe states of machine</td>
+<td>override base method for configuring the state machine.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>describe transitions</td>
+<td>description of states</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>description of transitions</td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>We set the autostart setting in the base configuration,
+then the state machine will start immediately in the initialization state.</p>
+</div>
+<div class="paragraph">
+<p>You need to specify the entry point to the state machine (the initial state) in the settings of states.
+When the state machine is start, the transition to this point will be the first.</p>
+</div>
+<div class="paragraph">
+<p>It is important to understand that the transition to the <code>BACKLOG</code> state from "nowhere" is also a transition, a little later we will see it more clearly.</p>
+</div>
+<div class="paragraph">
+<p>Also, we specify the exit point (end state) in the configuration of states.
+Transition to this state will stop the state machine.</p>
+</div>
+<div class="paragraph">
+<p>The configuration of the transitional looks pretty intuitive,
+for each transition you need to specify the initial state,
+the target state, and the event that will triggered this transition.</p>
 </div>
 </div>
 </div>
@@ -634,7 +659,7 @@ public class StatesFirstApplicationTests {
 </div>
 </div>
 <div class="paragraph">
-<p>Test "green way":</p>
+<p>We test the main flow of the application, when execution is on a positive way ("green way"):</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -643,13 +668,25 @@ public void testGreenFlow() {
     // Arrange
     // Act
     stateMachine.sendEvent(Events.START_FEATURE);
-    stateMachine.sendEvent(Events.FINISH_FIATURE);
+    stateMachine.sendEvent(Events.FINISH_FEATURE);
     stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.DONE);
+              .isEqualTo(States.DONE); <i class="conum" data-value="1"></i><b>(1)</b>
 }</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>The main criterion for the successful completion of all transitions
+is the achievement by the state machine of state DONE.
+In a real test, it would be worthwhile to check each transition,
+not only the final state after a series of transitions,
+but for our research purposes this will be enough.</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -1377,7 +1414,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-05-18 00:24:03 +10
+Last updated 2018-05-29 09:05:02 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

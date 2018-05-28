@@ -70,14 +70,15 @@ public enum  Events {
 
 ## Configuration
 
-Create a configuration for the state machine:
+We will consider an example of using a statemachine through the use of standard spring DI.
+We need to make a spring configuration for the state machine:
 
 [source, java]
 ----
 @Configuration
 @EnableStateMachine
 public class StateMachineConfig
-        extends EnumStateMachineConfigurerAdapter
+        extends EnumStateMachineConfigurerAdapter <1>
                         <States, Events> {
 
     @Override
@@ -85,7 +86,7 @@ public class StateMachineConfig
             StateMachineConfigurationConfigurer
                     <States, Events> config) throws Exception {
 
-        config.withConfiguration()  <1>
+        config.withConfiguration()  <2>
               .autoStartup(true);
     }
 
@@ -95,7 +96,7 @@ public class StateMachineConfig
             StateMachineStateConfigurer<States, Events> states)
             throws Exception {
 
-        states.withStates()		<2>
+        states.withStates()		<3>
               .initial(States.BACKLOG)
               .state(States.IN_PROGRESS)
               .state(States.TESTING)
@@ -107,7 +108,7 @@ public class StateMachineConfig
             StateMachineTransitionConfigurer<States, Events> transitions)
             throws Exception {
 
-        transitions.withExternal()  <3>
+        transitions.withExternal()  <4>
                    .source(States.BACKLOG)
                    .target(States.IN_PROGRESS)
                    .event(Events.START_FEATURE)
@@ -115,7 +116,7 @@ public class StateMachineConfig
                    .withExternal()
                    .source(States.IN_PROGRESS)
                    .target(States.TESTING)
-                   .event(Events.FINISH_FIATURE)
+                   .event(Events.FINISH_FEATURE)
                    .and()
                    .withExternal()
                    .source(States.TESTING)
@@ -128,9 +129,26 @@ public class StateMachineConfig
                    .event(Events.QA_TEAM_APPROVE);
     }
 ----
-<1> configuration base state machine properties
-<2> describe states of machine
-<3> describe transitions
+<1> we working with a type-safe, all of our states and events are described by the enums, so these types will be declared in the configuration.
+<2> override base method for configuring the state machine.
+<3> description of states
+<4> description of transitions
+
+We set the autostart setting in the base configuration,
+then the state machine will start immediately in the initialization state.
+
+You need to specify the entry point to the state machine (the initial state) in the settings of states.
+When the state machine is start, the transition to this point will be the first.
+
+It is important to understand that the transition to the `BACKLOG` state from "nowhere" is also a transition, a little later we will see it more clearly.
+
+Also, we specify the exit point (end state) in the configuration of states.
+Transition to this state will stop the state machine.
+
+The configuration of the transitional looks pretty intuitive,
+for each transition you need to specify the initial state,
+the target state, and the event that will triggered this transition.
+
 
 ## Try to use it
 
@@ -155,7 +173,8 @@ public class StatesFirstApplicationTests {
 }
 ----
 
-Test "green way":
+We test the main flow of the application, when execution is on a positive way ("green way"):
+
 
 [source, java]
 ----
@@ -164,13 +183,19 @@ public void testGreenFlow() {
     // Arrange
     // Act
     stateMachine.sendEvent(Events.START_FEATURE);
-    stateMachine.sendEvent(Events.FINISH_FIATURE);
+    stateMachine.sendEvent(Events.FINISH_FEATURE);
     stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.DONE);
+              .isEqualTo(States.DONE); <1>
 }
 ----
+<1> The main criterion for the successful completion of all transitions
+is the achievement by the state machine of state DONE.
+In a real test, it would be worthwhile to check each transition,
+not only the final state after a series of transitions,
+but for our research purposes this will be enough.
+
 
 ## Add listener on state machine
 
