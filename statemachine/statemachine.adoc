@@ -197,9 +197,9 @@ not only the final state after a series of transitions,
 but for our research purposes this will be enough.
 
 
-## Add listener on state machine
+## Intercept the events of the state machine
 
-Change configuration:
+Add state machine listener in configuration:
 
 [source, java]
 ----
@@ -235,8 +235,11 @@ private StateMachineListener<States, Events> listener() {
 		};
 }
 ----
+<1> declaration of listener
+<2> override callback for intercept any transitions
+<3> override callback for attempt of unacceptable transitions
 
-after that we can make "wrong way" test
+after that we can make "wrong way" test:
 
 [source, java]
 ----
@@ -256,9 +259,17 @@ then we look at logout error:
 
 image::wrong_way_test.png[wrong way test result]
 
+This is a clear example of what I said before,
+the starting transition from "nowhere" to `BACKLOG` is also a transition.
+We should use the method `ofNullableState`
+because the source state in this transition is `null`.
+
+
 ## More than one state machine? No problem!
 
-change annotation `@EnableStateMachine` to `@EnableStateMachineFactory`
+change annotation `@EnableStateMachine` to `@EnableStateMachineFactory`,
+this provide us the ability to create state machine from factory
+and we can inject factory instead of concrete instance.
 
 [source, java]
 ----
@@ -274,7 +285,7 @@ public class StateMachineConfig
 }
 ----
 
-and we need change test:
+and now we need to change the tests:
 
 [source,java]
 ----
@@ -305,8 +316,7 @@ We can do this as follows:
 [source,java]
 ----
 @Override
-public void configure(
-				StateMachineStateConfigurer<States, Events> states)
+public void configure(StateMachineStateConfigurer<States, Events> states)
 				throws Exception {
 
 		states.withStates()
@@ -786,6 +796,11 @@ You can coding this business logic in ugly spaghetti hardcode:
             }
         }
 ----
+
+
+## source code of this project on the github
+
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
 
 
 // END OF CONTENT

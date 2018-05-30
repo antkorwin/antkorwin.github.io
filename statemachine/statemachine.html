@@ -448,13 +448,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_states_events">2. States &amp; Events</a></li>
 <li><a href="#_configuration">3. Configuration</a></li>
 <li><a href="#_try_to_use_it">4. Try to use it</a></li>
-<li><a href="#_add_listener_on_state_machine">5. Add listener on state machine</a></li>
+<li><a href="#_intercept_the_events_of_the_state_machine">5. Intercept the events of the state machine</a></li>
 <li><a href="#_more_than_one_state_machine_no_problem">6. More than one state machine? No problem!</a></li>
 <li><a href="#_actions_add_some_business_logic">7. Actions - add some business logic</a></li>
 <li><a href="#_guards_use_conditions_in_flow">8. Guards - use conditions in flow.</a></li>
 <li><a href="#_persist_state_machine_in_memory">9. Persist State machine in-memory</a></li>
 <li><a href="#_persist_state_machine_in_mongodb">10. Persist state machine in MongoDb</a></li>
 <li><a href="#_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</a></li>
+<li><a href="#_source_code_of_this_project_on_the_github">12. source code of this project on the github</a></li>
 </ul>
 </div>
 </div>
@@ -691,10 +692,10 @@ but for our research purposes this will be enough.</td>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_add_listener_on_state_machine">5. Add listener on state machine</h2>
+<h2 id="_intercept_the_events_of_the_state_machine">5. Intercept the events of the state machine</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Change configuration:</p>
+<p>Add state machine listener in configuration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -731,8 +732,24 @@ private StateMachineListener&lt;States, Events&gt; listener() {
 }</code></pre>
 </div>
 </div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>declaration of listener</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>override callback for intercept any transitions</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>override callback for attempt of unacceptable transitions</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
-<p>after that we can make "wrong way" test</p>
+<p>after that we can make "wrong way" test:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -756,13 +773,21 @@ public void testWrongWay() {
 <img src="wrong_way_test.png" alt="wrong way test result">
 </div>
 </div>
+<div class="paragraph">
+<p>This is a clear example of what I said before,
+the starting transition from "nowhere" to <code>BACKLOG</code> is also a transition.
+We should use the method <code>ofNullableState</code>
+because the source state in this transition is <code>null</code>.</p>
+</div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_more_than_one_state_machine_no_problem">6. More than one state machine? No problem!</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>change annotation <code>@EnableStateMachine</code> to <code>@EnableStateMachineFactory</code></p>
+<p>change annotation <code>@EnableStateMachine</code> to <code>@EnableStateMachineFactory</code>,
+this provide us the ability to create state machine from factory
+and we can inject factory instead of concrete instance.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -779,7 +804,7 @@ public class StateMachineConfig
 </div>
 </div>
 <div class="paragraph">
-<p>and we need change test:</p>
+<p>and now we need to change the tests:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -815,8 +840,7 @@ public class StatesFirstApplicationTests {
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Override
-public void configure(
-				StateMachineStateConfigurer&lt;States, Events&gt; states)
+public void configure(StateMachineStateConfigurer&lt;States, Events&gt; states)
 				throws Exception {
 
 		states.withStates()
@@ -1362,6 +1386,14 @@ public abstract class BaseMongoIT {
         }</code></pre>
 </div>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_source_code_of_this_project_on_the_github">12. source code of this project on the github</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
+</div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
     (function (d, w, c) {
@@ -1414,7 +1446,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-05-29 09:05:02 +10
+Last updated 2018-05-30 23:40:31 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
