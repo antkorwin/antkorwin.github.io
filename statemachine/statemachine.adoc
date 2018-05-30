@@ -358,9 +358,8 @@ BACKLOG --> TESTING : Rock Star
 Now if we move task from backlog to testing then will be run deploy.
 But we don't want this behavior.
 
-In this case, we can move the action from the states to  transitions configuration:
+Add rock star transition in configuration:
 
-Add rock star event:
 [source, java]
 ----
 transitions.withExternal()
@@ -390,7 +389,10 @@ test results:
 
 image::deploying_test_result.png[rock star test result]
 
-how can we solve this problem:
+Now we can see that the `deployAction` is triggered by any transition to the state `TESTING`.
+
+How can we solve this problem? We can move the action
+from the states to transitions configuration:
 
 [source, java]
 ----
@@ -417,7 +419,8 @@ transitions.withExternal()
 ## Guards - use conditions in flow.
 
 Next we will add the ability to run deploying from `BACKLOG` and `IN_PROGRESS` states.
-Before going to `TESTING`, we will verify that the deployment event was called.
+We will make `DEPLOY` a separate event so that the developers themselves can decide when to do it.
+But before going to `TESTING`, we will verify that the deployment event was called.
 For this we will create a guard on transitions to `TESTING` state.
 
 [plantuml]
@@ -528,9 +531,9 @@ image::guard_test_result.png[guard test result]
 
 ## Persist State machine in-memory
 
-We need write implementation of StateMachinePersist.
+We need to write an implementation of StateMachinePersist.
 
-To start write a simple in-memory implementation:
+To start we make a simple (in-memory) implementation:
 
 [source, java]
 ----
@@ -538,7 +541,7 @@ public class InMemoryPersist
         implements StateMachinePersist<States, Events, UUID> {
 
     private HashMap<UUID, StateMachineContext<States, Events>> storage
-            = new HashMap<>();
+            = new HashMap<>(); <1>
 
     @Override
     public void write(StateMachineContext<States, Events> context,
@@ -553,6 +556,12 @@ public class InMemoryPersist
     }
 }
 ----
+<1> to save the state machine we use the HashMap
+
+WARNING: note that the context of the state machine is saved, not the state machine.
+The StateCacheContext contains not only the current state,
+there are also stored variables that we write to the context.
+It provide ability to restore a completely identical state of the state machine.
 
 Than we make a persist configuration:
 
@@ -652,6 +661,7 @@ public StateMachineRuntimePersister<States, Events, UUID> mongoPersist(
 Now we can make integration test.
 
 I have abstract class for testing mongodb application in spring framework.
+The TestContainers library allows us to run the mongodb in docker and use it as a target data base:
 
 [source, java]
 ----
@@ -731,11 +741,15 @@ public class MongoPersistTest extends BaseMongoIT {
 
 ## Live without state machines seems boring.
 
-You can coding this business logic in ugly spaghetti hardcode:
+Let's look at several alternative solutions, without using the state machines and consider the pros and cons of them.
+
+
+### You can hardcode your business logic
+
+It looks like a spaghetti code:
 
 [source, java]
 ----
-@Slf4j
     class StateMachine {
 
         private States currentState;
@@ -797,8 +811,56 @@ You can coding this business logic in ugly spaghetti hardcode:
         }
 ----
 
+Of course, you can work on the organization of this code,
+you can replace the repeating logic and make strategies for processing events, etc.
+But in the first approximation it is very difficult to maintain this code.
+It is difficult to track the logic of the transitions and their availability.
 
-## source code of this project on the github
+icon:plus[] Pros:
+
+- Speed of implementation, you don't need to create an infrastructure for working with business processes
+
+icon:minus[] Cons:
+
+- Very poor further code maintenance
+
+
+### The second alternative - you can use any BPM engine
+
+This is a good alternative, but quite expensive.
+I will shortly discuss the cost of using the BPM in the project.
+First, you will need to deploy a full-fledged framework for BPM processes in the project.
+These frameworks are not lightweight, not all of them work natively in java.
+Secondly, you need to know BPMN notation and be able to describe your business process using this notation.
+
+image:bpm.png[bpmn]
+
+icon:plus[] You should use BPMN-engine:
+
+- If you have very complex business processes.
+
+- When you need a lot of opportunities provided by the BPM notation,
+such as: messages, subprocesses, signals, conditions on any transitions, etc.
+
+- If you need process versioning.
+
+- When you need to visualize the processes by their code.
+
+- When you need tools to view and debug all current processes and their states.
+
+icon:minus[] You should not use BPMN-engine:
+
+- If you have very simple processes and a set of system states is obvious.
+
+- If you have little time to develop and(or) you don't have specialists in this subject area.
+
+- If you do not need to versioning the processes.
+
+- There is no way to deploy a full-fledged BPM framework in production.
+
+
+
+## Source code of this project on the github
 
 image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
 

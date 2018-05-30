@@ -454,8 +454,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_guards_use_conditions_in_flow">8. Guards - use conditions in flow.</a></li>
 <li><a href="#_persist_state_machine_in_memory">9. Persist State machine in-memory</a></li>
 <li><a href="#_persist_state_machine_in_mongodb">10. Persist state machine in MongoDb</a></li>
-<li><a href="#_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</a></li>
-<li><a href="#_source_code_of_this_project_on_the_github">12. source code of this project on the github</a></li>
+<li><a href="#_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</a>
+<ul class="sectlevel2">
+<li><a href="#_you_can_hardcode_your_business_logic">11.1. You can hardcode your business logic</a></li>
+<li><a href="#_the_second_alternative_you_can_use_any_bpm_engine">11.2. The second alternative - you can use any BPM engine</a></li>
+</ul>
+</li>
+<li><a href="#_source_code_of_this_project_on_the_github">12. Source code of this project on the github</a></li>
 </ul>
 </div>
 </div>
@@ -885,10 +890,7 @@ We will assume that he maked this because he is super efficient and we can call 
 But we don&#8217;t want this behavior.</p>
 </div>
 <div class="paragraph">
-<p>In this case, we can move the action from the states to  transitions configuration:</p>
-</div>
-<div class="paragraph">
-<p>Add rock star event:</p>
+<p>Add rock star transition in configuration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -926,7 +928,11 @@ public void testRockStar() {
 </div>
 </div>
 <div class="paragraph">
-<p>how can we solve this problem:</p>
+<p>Now we can see that the <code>deployAction</code> is triggered by any transition to the state <code>TESTING</code>.</p>
+</div>
+<div class="paragraph">
+<p>How can we solve this problem? We can move the action
+from the states to transitions configuration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -967,7 +973,8 @@ transitions.withExternal()
 <div class="sectionbody">
 <div class="paragraph">
 <p>Next we will add the ability to run deploying from <code>BACKLOG</code> and <code>IN_PROGRESS</code> states.
-Before going to <code>TESTING</code>, we will verify that the deployment event was called.
+We will make <code>DEPLOY</code> a separate event so that the developers themselves can decide when to do it.
+But before going to <code>TESTING</code>, we will verify that the deployment event was called.
 For this we will create a guard on transitions to <code>TESTING</code> state.</p>
 </div>
 <div class="imageblock">
@@ -1093,10 +1100,10 @@ public void testGuard() {
 <h2 id="_persist_state_machine_in_memory">9. Persist State machine in-memory</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We need write implementation of StateMachinePersist.</p>
+<p>We need to write an implementation of StateMachinePersist.</p>
 </div>
 <div class="paragraph">
-<p>To start write a simple in-memory implementation:</p>
+<p>To start we make a simple (in-memory) implementation:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1104,7 +1111,7 @@ public void testGuard() {
         implements StateMachinePersist&lt;States, Events, UUID&gt; {
 
     private HashMap&lt;UUID, StateMachineContext&lt;States, Events&gt;&gt; storage
-            = new HashMap&lt;&gt;();
+            = new HashMap&lt;&gt;(); <i class="conum" data-value="1"></i><b>(1)</b>
 
     @Override
     public void write(StateMachineContext&lt;States, Events&gt; context,
@@ -1119,6 +1126,29 @@ public void testGuard() {
     }
 }</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>to save the state machine we use the HashMap</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+note that the context of the state machine is saved, not the state machine.
+The StateCacheContext contains not only the current state,
+there are also stored variables that we write to the context.
+It provide ability to restore a completely identical state of the state machine.
+</td>
+</tr>
+</table>
 </div>
 <div class="paragraph">
 <p>Than we make a persist configuration:</p>
@@ -1236,7 +1266,8 @@ public StateMachineRuntimePersister&lt;States, Events, UUID&gt; mongoPersist(
 <p>Now we can make integration test.</p>
 </div>
 <div class="paragraph">
-<p>I have abstract class for testing mongodb application in spring framework.</p>
+<p>I have abstract class for testing mongodb application in spring framework.
+The TestContainers library allows us to run the mongodb in docker and use it as a target data base:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1320,12 +1351,16 @@ public abstract class BaseMongoIT {
 <h2 id="_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>You can coding this business logic in ugly spaghetti hardcode:</p>
+<p>Let&#8217;s look at several alternative solutions, without using the state machines and consider the pros and cons of them.</p>
+</div>
+<div class="sect2">
+<h3 id="_you_can_hardcode_your_business_logic">11.1. You can hardcode your business logic</h3>
+<div class="paragraph">
+<p>It looks like a spaghetti code:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Slf4j
-    class StateMachine {
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    class StateMachine {
 
         private States currentState;
         private HashMap&lt;String, Object&gt; variables;
@@ -1386,10 +1421,92 @@ public abstract class BaseMongoIT {
         }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>Of course, you can work on the organization of this code,
+you can replace the repeating logic and make strategies for processing events, etc.
+But in the first approximation it is very difficult to maintain this code.
+It is difficult to track the logic of the transitions and their availability.</p>
+</div>
+<div class="paragraph">
+<p><span class="icon"><i class="fa fa-plus"></i></span> Pros:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Speed of implementation, you don&#8217;t need to create an infrastructure for working with business processes</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="icon"><i class="fa fa-minus"></i></span> Cons:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Very poor further code maintenance</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_second_alternative_you_can_use_any_bpm_engine">11.2. The second alternative - you can use any BPM engine</h3>
+<div class="paragraph">
+<p>This is a good alternative, but quite expensive.
+I will shortly discuss the cost of using the BPM in the project.
+First, you will need to deploy a full-fledged framework for BPM processes in the project.
+These frameworks are not lightweight, not all of them work natively in java.
+Secondly, you need to know BPMN notation and be able to describe your business process using this notation.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="bpm.png" alt="bpmn"></span></p>
+</div>
+<div class="paragraph">
+<p><span class="icon"><i class="fa fa-plus"></i></span> You should use BPMN-engine:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If you have very complex business processes.</p>
+</li>
+<li>
+<p>When you need a lot of opportunities provided by the BPM notation,
+such as: messages, subprocesses, signals, conditions on any transitions, etc.</p>
+</li>
+<li>
+<p>If you need process versioning.</p>
+</li>
+<li>
+<p>When you need to visualize the processes by their code.</p>
+</li>
+<li>
+<p>When you need tools to view and debug all current processes and their states.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><span class="icon"><i class="fa fa-minus"></i></span> You should not use BPMN-engine:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If you have very simple processes and a set of system states is obvious.</p>
+</li>
+<li>
+<p>If you have little time to develop and(or) you don&#8217;t have specialists in this subject area.</p>
+</li>
+<li>
+<p>If you do not need to versioning the processes.</p>
+</li>
+<li>
+<p>There is no way to deploy a full-fledged BPM framework in production.</p>
+</li>
+</ul>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_source_code_of_this_project_on_the_github">12. source code of this project on the github</h2>
+<h2 id="_source_code_of_this_project_on_the_github">12. Source code of this project on the github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
@@ -1446,7 +1563,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-05-30 23:40:31 +10
+Last updated 2018-05-31 09:19:34 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

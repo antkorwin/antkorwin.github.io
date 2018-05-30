@@ -6,9 +6,15 @@ Korovin Anatoliy <antkorwin@gmail.com>
 
 My thoughts about java application development, spring framework, TDD and other...
 
+## State machine workshop video
+
+video::J56_t5lny9c[youtube, width=520, height=390]
+
+
 ## Spring State Machine
 
 image::./statemachine/ssm_logo.png[statemachine, 520, 300]
+
 This article explains how to create a spring state machine.
 We will look the configuration of various business cases.
 Also we will write several custom implementations for persisting the state machine.
