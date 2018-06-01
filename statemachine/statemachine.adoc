@@ -559,7 +559,7 @@ public class InMemoryPersist
 <1> to save the state machine we use the HashMap
 
 WARNING: note that the context of the state machine is saved, not the state machine.
-The StateCacheContext contains not only the current state,
+The `StateMachineContext` contains not only the current state,
 there are also stored variables that we write to the context.
 It provide ability to restore a completely identical state of the state machine.
 
