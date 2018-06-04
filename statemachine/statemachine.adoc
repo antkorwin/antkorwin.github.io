@@ -738,6 +738,33 @@ public class MongoPersistTest extends BaseMongoIT {
 }
 ----
 
+## Multiple configuration of state machines in one project
+
+We sometimes need to use a several different state machines in single project.
+These state machines can have their own sets of states and events.
+
+In order to make several state machines, you need to use a name on the state machine factory declaration:
+
+[source, java]
+----
+@Configuration
+@EnableStateMachineFactory(name = "secondStateMachineFactory")
+public class SecondStateMachineConfig extends EnumStateMachineConfigurerAdapter<States, Events> {
+		...
+}
+----
+
+Now you can inject the state machine by using this name in qualifier:
+
+[source, java]
+----
+@Autowired
+@Qualifier("secondStateMachineFactory")
+private StateMachineFactory<States, Events> secondStateMachineFactory;
+----
+
+So, you can use several state machines at the same time.
+
 
 ## Live without state machines seems boring.
 

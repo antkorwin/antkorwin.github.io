@@ -731,6 +731,34 @@ public class MongoPersistTest extends BaseMongoIT {
 }
 ----
 
+## Несколько стэйт-машин в одном проекте
+
+Иногда, приходится использовать несколько различных стэйт-машин, в одном проекте.
+У этих машин свой набор состояний и своя конфигурация.
+
+Для того чтобы сделать несколько конфигураций, нужно указать имя для фабрики `StateMachineFactory`,
+по которому потом можно будет инжектить нужную зависимость.
+
+[source, java]
+----
+@Configuration
+@EnableStateMachineFactory(name = "secondStateMachineFactory")
+public class SecondStateMachineConfig extends EnumStateMachineConfigurerAdapter<States, Events> {
+		...
+}
+----
+
+Теперь можно использовать эту стейт-машину, указав имя фабрики в `Qualifier`
+
+[source, java]
+----
+@Autowired
+@Qualifier("secondStateMachineFactory")
+private StateMachineFactory<States, Events> secondStateMachineFactory;
+----
+
+Теперь мы можем использовать несколько стейт-машин одновременно.
+
 
 ## Зачем и когда нужны стейт-машины
 

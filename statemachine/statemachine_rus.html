@@ -454,13 +454,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_guards_добавляем_условия_на_переходы">8. Guards - добавляем условия на переходы</a></li>
 <li><a href="#_Сохранениевосстановления_состояний_стейт_машины">9. Сохранение/восстановления состояний стейт-машины</a></li>
 <li><a href="#_Сохраняем_стейт_машины_в_mongodb">10. Сохраняем стейт-машины в MongoDb</a></li>
-<li><a href="#_Зачем_и_когда_нужны_стейт_машины">11. Зачем и когда нужны стейт-машины</a>
+<li><a href="#_Несколько_стэйт_машин_в_одном_проекте">11. Несколько стэйт-машин в одном проекте</a></li>
+<li><a href="#_Зачем_и_когда_нужны_стейт_машины">12. Зачем и когда нужны стейт-машины</a>
 <ul class="sectlevel2">
-<li><a href="#_Первая_альтернатива_захардкодить">11.1. Первая альтернатива - захардкодить</a></li>
-<li><a href="#_Вторая_альтерантива_bpm_фреймворк">11.2. Вторая альтерантива - BPM фреймворк</a></li>
+<li><a href="#_Первая_альтернатива_захардкодить">12.1. Первая альтернатива - захардкодить</a></li>
+<li><a href="#_Вторая_альтерантива_bpm_фреймворк">12.2. Вторая альтерантива - BPM фреймворк</a></li>
 </ul>
 </li>
-<li><a href="#_Проект_на_github">12. Проект на github</a></li>
+<li><a href="#_Проект_на_github">13. Проект на github</a></li>
 </ul>
 </div>
 </div>
@@ -1331,13 +1332,48 @@ public abstract class BaseMongoIT {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Зачем_и_когда_нужны_стейт_машины">11. Зачем и когда нужны стейт-машины</h2>
+<h2 id="_Несколько_стэйт_машин_в_одном_проекте">11. Несколько стэйт-машин в одном проекте</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Иногда, приходится использовать несколько различных стэйт-машин, в одном проекте.
+У этих машин свой набор состояний и своя конфигурация.</p>
+</div>
+<div class="paragraph">
+<p>Для того чтобы сделать несколько конфигураций, нужно указать имя для фабрики <code>StateMachineFactory</code>,
+по которому потом можно будет инжектить нужную зависимость.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+@EnableStateMachineFactory(name = "secondStateMachineFactory")
+public class SecondStateMachineConfig extends EnumStateMachineConfigurerAdapter&lt;States, Events&gt; {
+		...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Теперь можно использовать эту стейт-машину, указав имя фабрики в <code>Qualifier</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
+@Qualifier("secondStateMachineFactory")
+private StateMachineFactory&lt;States, Events&gt; secondStateMachineFactory;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Теперь мы можем использовать несколько стейт-машин одновременно.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_Зачем_и_когда_нужны_стейт_машины">12. Зачем и когда нужны стейт-машины</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Без использования стэйт-машин наш пример можно было бы решить другими способами, давайте рассмотрим некоторые из них и сравним альтернативные варианты.</p>
 </div>
 <div class="sect2">
-<h3 id="_Первая_альтернатива_захардкодить">11.1. Первая альтернатива - захардкодить</h3>
+<h3 id="_Первая_альтернатива_захардкодить">12.1. Первая альтернатива - захардкодить</h3>
 <div class="paragraph">
 <p>Всю логику стэйт машины можно представить в виде обычного кода с условиями и ветвлениями:</p>
 </div>
@@ -1415,7 +1451,7 @@ public abstract class BaseMongoIT {
 </div>
 </div>
 <div class="sect2">
-<h3 id="_Вторая_альтерантива_bpm_фреймворк">11.2. Вторая альтерантива - BPM фреймворк</h3>
+<h3 id="_Вторая_альтерантива_bpm_фреймворк">12.2. Вторая альтерантива - BPM фреймворк</h3>
 <div class="paragraph">
 <p>Чего нам будет стоить реализовать подобный бизнес-кейс на каком-нибудь BPMN движке, мы рассмотрим
 в другой статье, тут я лишь коротко раскрою этот вопрос. Во-первых, вам нужно будет
@@ -1471,7 +1507,7 @@ public abstract class BaseMongoIT {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Проект_на_github">12. Проект на github</h2>
+<h2 id="_Проект_на_github">13. Проект на github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Все исходники можно посмотреть на гитхабе:</p>
@@ -1531,7 +1567,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-05-30 23:18:56 +10
+Last updated 2018-06-05 08:18:08 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

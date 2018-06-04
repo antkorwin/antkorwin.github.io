@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>Spring State Machine</title>
+<title>Exception Handling in Spring State Machine</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,7 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Spring State Machine</h1>
+<h1>Exception Handling in Spring State Machine</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
@@ -444,1104 +444,266 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_dependencies">1. Dependencies</a></li>
-<li><a href="#_states_events">2. States &amp; Events</a></li>
-<li><a href="#_configuration">3. Configuration</a></li>
-<li><a href="#_try_to_use_it">4. Try to use it</a></li>
-<li><a href="#_intercept_the_events_of_the_state_machine">5. Intercept the events of the state machine</a></li>
-<li><a href="#_more_than_one_state_machine_no_problem">6. More than one state machine? No problem!</a></li>
-<li><a href="#_actions_add_some_business_logic">7. Actions - add some business logic</a></li>
-<li><a href="#_guards_use_conditions_in_flow">8. Guards - use conditions in flow.</a></li>
-<li><a href="#_persist_state_machine_in_memory">9. Persist State machine in-memory</a></li>
-<li><a href="#_persist_state_machine_in_mongodb">10. Persist state machine in MongoDb</a></li>
-<li><a href="#_multiple_configuration_of_state_machines_in_one_project">11. Multiple configuration of state machines in one project</a></li>
-<li><a href="#_live_without_state_machines_seems_boring">12. Live without state machines seems boring.</a>
+<li><a href="#_exception_handling">1. Exception handling</a>
 <ul class="sectlevel2">
-<li><a href="#_you_can_hardcode_your_business_logic">12.1. You can hardcode your business logic</a></li>
-<li><a href="#_the_second_alternative_you_can_use_any_bpm_engine">12.2. The second alternative - you can use any BPM engine</a></li>
+<li><a href="#_error_in_action">1.1. Error in action</a></li>
+<li><a href="#_error_in_guard_check">1.2. Error in guard check</a></li>
+<li><a href="#_indication_of_state_machine_errors">1.3. Indication of state machine errors</a></li>
 </ul>
 </li>
-<li><a href="#_source_code_of_this_project_on_the_github">13. Source code of this project on the github</a></li>
+<li><a href="#_how_to_resolve_available_events_from_the_current_state">2. How to resolve available events from the current state</a></li>
+<li><a href="#_source_code_of_this_project_on_the_github">3. Source code of this project on the github</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_dependencies">1. Dependencies</h2>
+<h2 id="_exception_handling">1. Exception handling</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Create a new SpringBoot project and add statemachine in dependencies.</p>
+<p>When you work with state machines, you often take care of errors, which may happen in business logic layer.</p>
 </div>
+<div class="sect2">
+<h3 id="_error_in_action">1.1. Error in action</h3>
 <div class="paragraph">
-<p><span class="image"><img src="./spring-init.png" alt="state machine"></span></p>
-</div>
-<div class="paragraph">
-<p>One starter made all the magic</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;dependency&gt;
-	&lt;groupId&gt;org.springframework.statemachine&lt;/groupId&gt;
-	&lt;artifactId&gt;spring-statemachine-starter&lt;/artifactId&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_states_events">2. States &amp; Events</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>For example, consider the business process known to most developers.
-If you didn&#8217;t hear about kanban before, then you should read about this methodology.
-You can find many articles about it on the Internet.</p>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s see the following scheme:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="diag-f57902c9697a281e923d1bdf65d798c2.png" alt="diag f57902c9697a281e923d1bdf65d798c2" width="504" height="632">
-</div>
-</div>
-<div class="paragraph">
-<p>We can extract the following states from this business-process: <code>BACKLOG</code>,
-<code>IN_PROGRESS</code>, <code>TESTING</code>, <code>DONE</code>. This will be our set of states.
-The transition from one state to another passes by a certain event.</p>
-</div>
-<div class="paragraph">
-<p>Spring statemachine provides the ability to configure through enums.
-You can describe states and events in enumeration:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public enum States {
-    BACKLOG,
-    IN_PROGRESS,
-    TESTING,
-    DONE
-}
-
-public enum  Events {
-    START_FEATURE,
-    FINISH_FEATURE,
-    QA_REJECTED_UC,
-    ROCK_STAR_DOUBLE_TASK,
-    DEPLOY,
-    QA_CHECKED_UC
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">3. Configuration</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We will consider an example of using a statemachine through the use of standard spring DI.
-We need to make a spring configuration for the state machine:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
-@EnableStateMachine
-public class StateMachineConfig
-        extends EnumStateMachineConfigurerAdapter <i class="conum" data-value="1"></i><b>(1)</b>
-                        &lt;States, Events&gt; {
-
-    @Override
-    public void configure(
-            StateMachineConfigurationConfigurer
-                    &lt;States, Events&gt; config) throws Exception {
-
-        config.withConfiguration()  <i class="conum" data-value="2"></i><b>(2)</b>
-              .autoStartup(true);
-    }
-
-
-    @Override
-    public void configure(
-            StateMachineStateConfigurer&lt;States, Events&gt; states)
-            throws Exception {
-
-        states.withStates()		<i class="conum" data-value="3"></i><b>(3)</b>
-              .initial(States.BACKLOG)
-              .state(States.IN_PROGRESS)
-              .state(States.TESTING)
-              .end(States.DONE);
-    }
-
-    @Override
-    public void configure(
-            StateMachineTransitionConfigurer&lt;States, Events&gt; transitions)
-            throws Exception {
-
-        transitions.withExternal()  <i class="conum" data-value="4"></i><b>(4)</b>
-                   .source(States.BACKLOG)
-                   .target(States.IN_PROGRESS)
-                   .event(Events.START_FEATURE)
-                   .and()
-                   .withExternal()
-                   .source(States.IN_PROGRESS)
-                   .target(States.TESTING)
-                   .event(Events.FINISH_FEATURE)
-                   .and()
-                   .withExternal()
-                   .source(States.TESTING)
-                   .target(States.IN_PROGRESS)
-                   .event(Events.QA_TEAM_REJECT)
-                   .and()
-                   .withExternal()
-                   .source(States.TESTING)
-                   .target(States.DONE)
-                   .event(Events.QA_TEAM_APPROVE);
-    }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>we working with a type-safe, all of our states and events are described by the enums, so these types will be declared in the configuration.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>override base method for configuring the state machine.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>description of states</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="4"></i><b>4</b></td>
-<td>description of transitions</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>We set the autostart setting in the base configuration,
-then the state machine will start immediately in the initialization state.</p>
-</div>
-<div class="paragraph">
-<p>You need to specify the entry point to the state machine (the initial state) in the settings of states.
-When the state machine is start, the transition to this point will be the first.</p>
-</div>
-<div class="paragraph">
-<p>It is important to understand that the transition to the <code>BACKLOG</code> state from "nowhere" is also a transition, a little later we will see it more clearly.</p>
-</div>
-<div class="paragraph">
-<p>Also, we specify the exit point (end state) in the configuration of states.
-Transition to this state will stop the state machine.</p>
-</div>
-<div class="paragraph">
-<p>The configuration of the transitional looks pretty intuitive,
-for each transition you need to specify the initial state,
-the target state, and the event that will triggered this transition.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_try_to_use_it">4. Try to use it</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Test successful DI &amp; initialization of state machine</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@RunWith(SpringRunner.class)
-@SpringBootTest
-public class StatesFirstApplicationTests {
-
-    @Autowired
-    private StateMachine&lt;States, Events&gt; stateMachine;
-
-    @Test
-    public void initTest() {
-        Assertions.assertThat(stateMachine.getState().getId())
-                  .isEqualTo(States.BACKLOG);
-
-        Assertions.assertThat(stateMachine).isNotNull();
-    }
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>We test the main flow of the application, when execution is on a positive way ("green way"):</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
-public void testGreenFlow() {
-    // Arrange
-    // Act
-    stateMachine.sendEvent(Events.START_FEATURE);
-    stateMachine.sendEvent(Events.FINISH_FEATURE);
-    stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
-    // Asserts
-    Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.DONE); <i class="conum" data-value="1"></i><b>(1)</b>
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The main criterion for the successful completion of all transitions
-is the achievement by the state machine of state DONE.
-In a real test, it would be worthwhile to check each transition,
-not only the final state after a series of transitions,
-but for our research purposes this will be enough.</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_intercept_the_events_of_the_state_machine">5. Intercept the events of the state machine</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Add state machine listener in configuration:</p>
+<p>Let&#8217;s consider what happens if an error occurs during the execution of the action:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Override
-public void configure(
-				StateMachineConfigurationConfigurer
-								&lt;States, Events&gt; config) throws Exception {
-
-		config.withConfiguration()
-					.listener(listener()) <i class="conum" data-value="1"></i><b>(1)</b>
-					.autoStartup(true);
+public void configure(StateMachineTransitionConfigurer&lt;States, Events&gt; transitions) throws Exception {
+		transitions.withExternal()
+				.source(States.BACKLOG)
+				.target(States.DONE)
+				.action(failAction())
+				.event(Events.ROCK_STAR_DOUBLE_TASK);
 }
 
-private StateMachineListener&lt;States, Events&gt; listener() {
-		return new StateMachineListenerAdapter&lt;States, Events&gt;(){
-				@Override
-				public void transition(Transition&lt;States, Events&gt; transition) { <i class="conum" data-value="2"></i><b>(2)</b>
-						log.warn("move from:{} to:{}",
-										 ofNullableState(transition.getSource()),
-										 ofNullableState(transition.getTarget()));
-				}
-
-				@Override
-				public void eventNotAccepted(Message&lt;Events&gt; event) { <i class="conum" data-value="3"></i><b>(3)</b>
-						log.error("event not accepted: {}", event);
-				}
-
-				private Object ofNullableState(State s) {
-						return Optional.ofNullable(s)
-													 .map(State::getId)
-													 .orElse(null);
-				}
-		};
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>declaration of listener</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>override callback for intercept any transitions</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>override callback for attempt of unacceptable transitions</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>after that we can make "wrong way" test:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
-public void testWrongWay() {
-    // Arrange
-    // Act
-    stateMachine.sendEvent(Events.START_FEATURE);
-    stateMachine.sendEvent(Events.QA_TEAM_APPROVE);
-    // Asserts
-    Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.IN_PROGRESS);
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>then we look at logout error:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="wrong_way_test.png" alt="wrong way test result">
-</div>
-</div>
-<div class="paragraph">
-<p>This is a clear example of what I said before,
-the starting transition from "nowhere" to <code>BACKLOG</code> is also a transition.
-We should use the method <code>ofNullableState</code>
-because the source state in this transition is <code>null</code>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_more_than_one_state_machine_no_problem">6. More than one state machine? No problem!</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>change annotation <code>@EnableStateMachine</code> to <code>@EnableStateMachineFactory</code>,
-this provide us the ability to create state machine from factory
-and we can inject factory instead of concrete instance.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Slf4j
-@Configuration
-@EnableStateMachineFactory
-public class StateMachineConfig
-        extends EnumStateMachineConfigurerAdapter
-                        &lt;States, Events&gt; {
-
-								...
-
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>and now we need to change the tests:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@RunWith(SpringRunner.class)
-@SpringBootTest
-public class StatesFirstApplicationTests {
-
-    private StateMachine&lt;States, Events&gt; stateMachine;
-
-    @Autowired
-    private StateMachineFactory&lt;States, Events&gt; stateMachineFactory;
-
-    @Before
-    public void setUp() throws Exception {
-        stateMachine = stateMachineFactory.getStateMachine();
-    }
-
-		...
-}</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_actions_add_some_business_logic">7. Actions - add some business logic</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Let&#8217;s make auto-deploy after the finished feature.</p>
-</div>
-<div class="paragraph">
-<p>We can do this as follows:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Override
-public void configure(StateMachineStateConfigurer&lt;States, Events&gt; states)
-				throws Exception {
-
-		states.withStates()
-					.initial(States.BACKLOG)
-					.state(States.IN_PROGRESS)
-					.state(States.TESTING, deployAction()) <i class="conum" data-value="1"></i><b>(1)</b>
-					.end(States.DONE);
-}
-
-private Action&lt;States, Events&gt; deployAction() {  <i class="conum" data-value="2"></i><b>(2)</b>
+private Action&lt;States, Events&gt; failAction() {
 		return context -&gt; {
-				log.warn("DEPLOYING: {}",context.getEvent());
+				throw new RuntimeException("fail in action");
 		};
 }</code></pre>
 </div>
 </div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>add deploy action after enter in TESTING state</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>implementation of Deploy action</td>
-</tr>
-</table>
-</div>
 <div class="paragraph">
-<p>This approach has one problem.
-If we slightly complicate our business process, then this action can be performed when it is unnecessary.
-For example, if the developer has finished two features in one pull-request, then he can transfer the second task without additional deployment.
-We will assume that he maked this because he is super efficient and we can call him a "Rock Star".</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="diag-6193a71dfcb006d37f3208ed4a7bbde1.png" alt="diag 6193a71dfcb006d37f3208ed4a7bbde1" width="340" height="550">
-</div>
-</div>
-<div class="paragraph">
-<p>Now if we move task from backlog to testing then will be run deploy.
-But we don&#8217;t want this behavior.</p>
-</div>
-<div class="paragraph">
-<p>Add rock star transition in configuration:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">transitions.withExternal()
-           		...
-           .and()
-           .withExternal()
-           .source(States.BACKLOG)
-           .target(States.TESTING)
-           .event(Events.ROCK_STAR_MAKE_ALL_IN_ONE);</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>check behavior in test:</p>
+<p>Then we make a test:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
-public void testRockStar() {
-    // Arrange
+public void failInActionTest() {
     // Act
-    stateMachine.sendEvent(Events.ROCK_STAR_MAKE_ALL_IN_ONE);
+    stateMachine.sendEvent(ROCK_STAR_DOUBLE_TASK);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.TESTING);
+              .isEqualTo(States.BACKLOG);
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>test results:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="deploying_test_result.png" alt="rock star test result">
-</div>
+<p>Result of the test:</p>
 </div>
 <div class="paragraph">
-<p>Now we can see that the <code>deployAction</code> is triggered by any transition to the state <code>TESTING</code>.</p>
+<p><span class="image"><img src="failed_action.png" alt="failed action test result"></span></p>
 </div>
 <div class="paragraph">
-<p>How can we solve this problem? We can move the action
-from the states to transitions configuration:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">states.withStates()
-      .initial(States.BACKLOG, timeToWorkAction())
-      .state(States.IN_PROGRESS) <i class="conum" data-value="1"></i><b>(1)</b>
-      .state(States.TESTING)
-      .end(States.DONE);
-
-  ...
-
-transitions.withExternal()
-           	...
-           .source(States.IN_PROGRESS)
-           .target(States.TESTING)
-           .event(Events.FINISH_FEATURE)
-           .action(deployAction())  <i class="conum" data-value="2"></i><b>(2)</b>
-           .and()
-           	...</code></pre>
+<p>We are trying to make a transition with failed action.
+And we see this exception in log,
+but it not thrown to the place of the call.
+Because spring state machine handle all runtime exceptions.</p>
 </div>
 </div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>remove deploying action from states</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>past the action on transition from IN_PROGRESS to FINISH_FEATURE</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_guards_use_conditions_in_flow">8. Guards - use conditions in flow.</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_error_in_guard_check">1.2. Error in guard check</h3>
 <div class="paragraph">
-<p>Next we will add the ability to run deploying from <code>BACKLOG</code> and <code>IN_PROGRESS</code> states.
-We will make <code>DEPLOY</code> a separate event so that the developers themselves can decide when to do it.
-But before going to <code>TESTING</code>, we will verify that the deployment event was called.
-For this we will create a guard on transitions to <code>TESTING</code> state.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="diag-7a7674aaf956a2c255e67f7cb19e3772.png" alt="diag 7a7674aaf956a2c255e67f7cb19e3772" width="332" height="550">
-</div>
+<p>Let&#8217;s try to make exception in the guard.</p>
 </div>
 <div class="paragraph">
-<p>Add transitions for internal <code>DEPLOY</code> and guards for transitions to <code>TESTING</code></p>
+<p>Add a new transition:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">transitions.withExternal()
            .source(States.BACKLOG)
-           .target(States.IN_PROGRESS)
-           .event(Events.START_FEATURE)
-           .and()
-           .withExternal()
-           .source(States.IN_PROGRESS)
-           .target(States.TESTING)
-           .event(Events.FINISH_FEATURE)
-           .guard(checkDeployGuard()) <i class="conum" data-value="1"></i><b>(1)</b>
-           .and()
-           .withExternal()
-           .source(States.TESTING)
-           .target(States.IN_PROGRESS)
-           .event(Events.QA_TEAM_REJECT)
-           .and()
-           .withExternal()
-           .source(States.TESTING)
            .target(States.DONE)
-           .event(Events.QA_TEAM_APPROVE)
-           .and()
-           .withExternal()
-           .source(States.BACKLOG)
-           .target(States.TESTING)
-           .guard(checkDeployGuard()) <i class="conum" data-value="1"></i><b>(1)</b>
-           .event(Events.ROCK_STAR_MAKE_ALL_IN_ONE)
-           .and()
-
-           .withInternal()
-           .source(States.BACKLOG)
-           .event(Events.DEPLOY) <i class="conum" data-value="2"></i><b>(2)</b>
-           .action(deployAction())
-           .and()
-           .withInternal()
-           .source(States.IN_PROGRESS)
-           .event(Events.DEPLOY) <i class="conum" data-value="2"></i><b>(2)</b>
-           .action(deployAction());</code></pre>
+           .event(Events.START_FEATURE)
+           .guard(failGuard());</code></pre>
 </div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>guards on transitions to <code>TESTING</code></td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>internal <code>DEPLOY</code> events</td>
-</tr>
-</table>
 </div>
 <div class="paragraph">
-<p>Then we make guard implementation based on state machine variables.
-You can write in extend state a lot of useful things that will be shared in process.</p>
+<p>and failed guard:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private Guard&lt;States, Events&gt; checkDeployGuard() {
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private Guard&lt;States, Events&gt; failGuard() {
     return context -&gt; {
-        Boolean flag = (Boolean) context.getExtendedState()
-                                        .getVariables()
-                                        .get("deployed");
-        return flag == null ? false : flag;
+        throw new RuntimeException("fail in Guard");
     };
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>After that, we can use this variable in the deployment action:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private Action&lt;States, Events&gt; deployAction() {
-    return context -&gt; {
-        log.warn("DEPLOYING: {}", context.getEvent());
-        context.getExtendedState()
-               .getVariables()
-               .put("deployed", true);
-    };
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Now we can make unit test for this case</p>
+<p>Now we can write a test:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
-public void testGuard() {
-    // Arrange &amp; act
-    stateMachine.sendEvent(Events.START_FEATURE);
-    stateMachine.sendEvent(Events.FINISH_FEATURE);
-    stateMachine.sendEvent(Events.QA_TEAM_APPROVE); // not accepted!
+public void failInGuardTest() {
+    // Act
+    stateMachine.sendEvent(START_FEATURE);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.IN_PROGRESS);
+              .isEqualTo(States.BACKLOG);
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>If we don&#8217;t send the <code>DEPLOY</code> event then we get the following result:</p>
+<p>After that we seeing in log the same behavior:</p>
 </div>
-<div class="imageblock">
+<div class="paragraph">
+<p><span class="image"><img src="failed_guard.png" alt="failed guard"></span></p>
+</div>
+<div class="paragraph">
+<p>Exception thrown, but we can&#8217;t catch it on the place of the call.
+The state machine didn&#8217;t move to the target state, this is expected behavior.
+The throw of exception while checking guard condition is equals to returned false by guard.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_indication_of_state_machine_errors">1.3. Indication of state machine errors</h3>
+<div class="paragraph">
+<p>Spring state machine have a not rich functionality for working with errors.
+We can set error in actions or guards, but we can&#8217;t get type of error later.
+We can only check for an error, but not the type of exception.</p>
+</div>
+<div class="paragraph">
+<p>let&#8217;s see example:</p>
+</div>
+<div class="listingblock">
 <div class="content">
-<img src="guard_test_result.png" alt="guard test result">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">transitions.withExternal()
+           .source(States.BACKLOG)
+           .target(States.DONE)
+           .action(actionWithInternalError())
+           .event(Events.FINISH_FEATURE);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We set error in this action, by creating concrete type of exception:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private Action&lt;States, Events&gt; actionWithInternalError() {
+    return context -&gt; {
+        context.getStateMachine()
+               .setStateMachineError(new RuntimeException("fail in Action"));
+    };
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s try to check it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
+public void internalFailTest() {
+    // Check precondition
+    Assertions.assertThat(stateMachine.hasStateMachineError()).isFalse();
+    // Act
+    stateMachine.sendEvent(FINISH_FEATURE);
+    // Asserts
+    Assertions.assertThat(stateMachine.getState().getId())
+              .isEqualTo(States.DONE);
+
+    Assertions.assertThat(stateMachine.hasStateMachineError()).isTrue();
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This test was successfully passed.</p>
+</div>
+<div class="paragraph">
+<p>Before we sent the event in the state machine, it did not have errors.
+And after this transition we got an error by using <code>hasStateMachineError</code> method.
+However, the state machine successfully moved to the target state.</p>
+</div>
+<div class="paragraph">
+<p>The interface of StateMachine is not provide any methods for the getting type of exception.
+It is strange, but you can make workaround for this by using variables of state machine.</p>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_persist_state_machine_in_memory">9. Persist State machine in-memory</h2>
+<h2 id="_how_to_resolve_available_events_from_the_current_state">2. How to resolve available events from the current state</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We need to write an implementation of StateMachinePersist.</p>
-</div>
-<div class="paragraph">
-<p>To start we make a simple (in-memory) implementation:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class InMemoryPersist
-        implements StateMachinePersist&lt;States, Events, UUID&gt; {
-
-    private HashMap&lt;UUID, StateMachineContext&lt;States, Events&gt;&gt; storage
-            = new HashMap&lt;&gt;(); <i class="conum" data-value="1"></i><b>(1)</b>
-
-    @Override
-    public void write(StateMachineContext&lt;States, Events&gt; context,
-                      UUID contextObj) throws Exception {
-
-        storage.put(contextObj, context);
-    }
-
-    @Override
-    public StateMachineContext&lt;States, Events&gt; read(UUID contextObj) throws Exception {
-        return storage.get(contextObj);
-    }
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>to save the state machine we use the HashMap</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-note that the context of the state machine is saved, not the state machine.
-The <code>StateMachineContext</code> contains not only the current state,
-there are also stored variables that we write to the context.
-It provide ability to restore a completely identical state of the state machine.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Than we make a persist configuration:</p>
+<p>Sometimes you need to evaluate a list of available transitions from the current state of the state machine.
+Unfortunately, the spring state machine has not internal methods for this case.
+But you can solve this problem yourself:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Bean
-public StateMachinePersist&lt;States, Events, UUID&gt; inMemoryPersist() {
-    return new InMemoryPersist();
-}
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public List&lt;EventsT&gt; getAvailableEvents(StateMachine&lt;StatesT, EventsT&gt; stateMachine) {
 
-@Bean
-public StateMachinePersister&lt;States, Events, UUID&gt; persister(
-        StateMachinePersist&lt;States, Events, UUID&gt; defaultPersist) {
-
-    return new DefaultStateMachinePersister&lt;&gt;(defaultPersist);
+    return stateMachine.getTransitions()
+                       .stream()
+                       .filter(t -&gt; isTransitionSourceFromCurrentState(t, stateMachine))
+                       .filter(t -&gt; evaluateGuardCondition(stateMachine, t))
+                       .map(Transition::getTrigger)
+                       .map(Trigger::getEvent)
+                       .collect(toList());
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Now we can use it:</p>
+<p>In this code we find all transitions from the current state
+and trying to check guards on this transitions.
+If the guard returns false or throws the exception
+then we skip this event.</p>
+</div>
+<div class="paragraph">
+<p>You can find the full source code on github
+(<a href="https://github.com/antkorwin/statemachine/blob/master/src/main/java/com/antkorwin/statemachine/statemachine/resolver/StateMachineResolverImpl.java">StateMachineResolverImpl.java</a>)</p>
+</div>
+<div class="paragraph">
+<p>for example:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="diag-2dee050e2216a0927abf990aebd55bef.png" alt="diag 2dee050e2216a0927abf990aebd55bef" width="256" height="376">
+</div>
+</div>
+<div class="paragraph">
+<p>if we request the list of available events in the <code>CROSSROADS</code> state
+then we got a list consist of the <code>LEFT</code>, <code>RIGHT</code>.
+In addition the list will contain the event <code>FLY_UP</code> if condition <code>flyingGuard</code> is true.</p>
+</div>
+<div class="paragraph">
+<p>Example of using the <code>StateMachineResolver</code>:</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
-private StateMachineFactory&lt;States, Events&gt; stateMachineFactory;
-
-@Autowired
-private StateMachinePersister&lt;States, Events, UUID&gt; persister;
+private StateMachineResolver&lt;States, Events&gt; stateMachineResolver;
 
 @Test
-public void testPersist() throws Exception {
-	 // Arrange
-	 StateMachine&lt;States, Events&gt; firstStateMachine =
-					 stateMachineFactory.getStateMachine();
-
-	 StateMachine&lt;States, Events&gt; secondStateMachine =
-					 stateMachineFactory.getStateMachine();
-
-	 firstStateMachine.sendEvent(Events.START_FEATURE);
-	 firstStateMachine.sendEvent(Events.DEPLOY);
-
-	 // precondition
-	 Assertions.assertThat(secondStateMachine.getState().getId())
-						 .isEqualTo(States.BACKLOG);
-
-	 // Act
-	 persister.persist(firstStateMachine, firstStateMachine.getUuid()); <i class="conum" data-value="1"></i><b>(1)</b>
-	 persister.restore(secondStateMachine, firstStateMachine.getUuid()); <i class="conum" data-value="2"></i><b>(2)</b>
-
-	 // Asserts
-	 Assertions.assertThat(secondStateMachine.getState().getId())
-						 .isEqualTo(States.IN_PROGRESS);
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>save first state machine context</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>load first state machine context to second</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_persist_state_machine_in_mongodb">10. Persist state machine in MongoDb</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We need add some dependencies for work with MongoDb.
-Also we will write integration tests with TestContainers framework.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-mvn" data-lang="mvn">&lt;!-- MongoDB --&gt;
-&lt;dependency&gt;
-	&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
-	&lt;artifactId&gt;spring-boot-starter-data-mongodb&lt;/artifactId&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-	&lt;groupId&gt;org.springframework.statemachine&lt;/groupId&gt;
-	&lt;artifactId&gt;spring-statemachine-data-mongodb&lt;/artifactId&gt;
-	&lt;version&gt;2.0.0.RELEASE&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;!-- MongoDB --&gt;
-
-&lt;!-- TestContainers --&gt;
-&lt;dependency&gt;
-	&lt;groupId&gt;org.testcontainers&lt;/groupId&gt;
-	&lt;artifactId&gt;testcontainers&lt;/artifactId&gt;
-	&lt;version&gt;1.4.3&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;!-- TestContainers --&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Then we make MongoDb persist</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Bean
-public StateMachineRuntimePersister&lt;States, Events, UUID&gt; mongoPersist(
-        MongoDbStateMachineRepository mongoRepository) {
-
-    return new MongoDbPersistingStateMachineInterceptor&lt;States,Events,UUID&gt;(mongoRepository);
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Now we can make integration test.</p>
-</div>
-<div class="paragraph">
-<p>I have abstract class for testing mongodb application in spring framework.
-The TestContainers library allows us to run the mongodb in docker and use it as a target data base:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@SpringBootTest
-@RunWith(SpringRunner.class)
-public abstract class BaseMongoIT {
-
-    private static final Integer MONGO_PORT = 27017;
-    private static GenericContainer mongo =
-            new GenericContainer("mongo:latest")
-            .withExposedPorts(MONGO_PORT);
-
-    static {
-        mongo.start();
-        System.setProperty("spring.data.mongodb.host", mongo.getContainerIpAddress());
-        System.setProperty("spring.data.mongodb.port", mongo.getMappedPort(MONGO_PORT).toString());
-    }
-
-    @Autowired
-    protected MongoTemplate mongoTemplate;
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>and test case:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class MongoPersistTest extends BaseMongoIT {
-
-    @Autowired
-    private StateMachinePersister&lt;States, Events, UUID&gt; persister;
-    @Autowired
-    private StateMachineFactory&lt;States, Events&gt; stateMachineFactory;
-
-	@Test
-    public void testMongoPersist() throws Exception {
-        // Arrange
-        StateMachine&lt;States, Events&gt; firstStateMachine = stateMachineFactory.getStateMachine();
-        StateMachine&lt;States, Events&gt; secondStateMachine = stateMachineFactory.getStateMachine();
-
-        firstStateMachine.sendEvent(Events.START_FEATURE);
-        firstStateMachine.sendEvent(Events.DEPLOY);
-
-        // Act
-        persister.persist(firstStateMachine, firstStateMachine.getUuid());
-        persister.persist(secondStateMachine, secondStateMachine.getUuid());
-        persister.restore(secondStateMachine, firstStateMachine.getUuid());
-
-        // Asserts
-        Assertions.assertThat(secondStateMachine.getState().getId())
-                  .isEqualTo(States.IN_PROGRESS);
-
-        boolean deployed = (boolean) secondStateMachine.getExtendedState()
-                                                       .getVariables()
-                                                       .get("deployed");
-
-        Assertions.assertThat(deployed).isEqualTo(true);
-
-        // Mongo specific asserts:
-        Assertions.assertThat(mongoTemplate.getCollectionNames())
-                  .isNotEmpty();
-
-        List&lt;Document&gt; documents = mongoTemplate.findAll(Document.class,
-                                                         "MongoDbRepositoryStateMachine");
-
-        Assertions.assertThat(documents).hasSize(2);
-        Assertions.assertThat(documents)
-                  .flatExtracting(Document::values)
-                  .contains(firstStateMachine.getUuid().toString(),
-                            secondStateMachine.getUuid().toString())
-                  .contains(firstStateMachine.getState().getId().toString(),
-                            secondStateMachine.getState().getId().toString());
-    }
+public void testResolverWithoutGuard() {
+    // Act
+    List&lt;Events&gt; availableEvents = stateMachineResolver.getAvailableEvents(stateMachine);
+    // Asserts
+    Assertions.assertThat(availableEvents)
+              .containsOnly(Events.LEFT,
+                            Events.RIGHT);
 }</code></pre>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_multiple_configuration_of_state_machines_in_one_project">11. Multiple configuration of state machines in one project</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We sometimes need to use a several different state machines in single project.
-These state machines can have their own sets of states and events.</p>
-</div>
-<div class="paragraph">
-<p>In order to make several state machines, you need to use a name on the state machine factory declaration:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
-@EnableStateMachineFactory(name = "secondStateMachineFactory")
-public class SecondStateMachineConfig extends EnumStateMachineConfigurerAdapter&lt;States, Events&gt; {
-		...
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Now you can inject the state machine by using this name in qualifier:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
-@Qualifier("secondStateMachineFactory")
-private StateMachineFactory&lt;States, Events&gt; secondStateMachineFactory;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>So, you can use several state machines at the same time.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_live_without_state_machines_seems_boring">12. Live without state machines seems boring.</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Let&#8217;s look at several alternative solutions, without using the state machines and consider the pros and cons of them.</p>
-</div>
-<div class="sect2">
-<h3 id="_you_can_hardcode_your_business_logic">12.1. You can hardcode your business logic</h3>
-<div class="paragraph">
-<p>It looks like a spaghetti code:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    class StateMachine {
-
-        private States currentState;
-        private HashMap&lt;String, Object&gt; variables;
-        private boolean finished;
-
-        public void processing(Events event) {
-
-            if(!finished) {
-                log.error("already finished state machine");
-            }
-
-            switch (currentState) {
-                case BACKLOG:
-                    if (event == Events.START_FEATURE) {
-                        currentState = States.IN_PROGRESS;
-                        // transition logic
-                    } else if (event == Events.DEPLOY) {
-                        variables.put("deployed", true);
-                        // start deploy
-                    } else {
-                        log.error("not accepted event.");
-                    }
-                    break;
-
-                case IN_PROGRESS:
-                    if (event == Events.FINISH_FEATURE) {
-                        if (variables.get("deployed").equals(true)) {
-                            currentState = States.TESTING;
-                            // run business logic
-                        } else {
-                            log.error("unreachable state");
-                        }
-                        // transition logic
-                    } else if (event == Events.DEPLOY) {
-                        variables.put("deployed", true);
-                        // start deploy
-                    } else {
-                        log.error("not accepted event.");
-                    }
-                    break;
-
-                case TESTING:
-                    if(event == Events.QA_TEAM_APPROVE){
-                        currentState = States.DONE;
-                        finished = true;
-                        log.info("successful done!");
-                    } else if (event == Events.QA_TEAM_REJECT){
-                        currentState = States.IN_PROGRESS;
-                        log.info("reject");
-                    } else {
-                        log.error("not accepted event.");
-                    }
-                    break;
-
-						...
-
-            }
-        }</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Of course, you can work on the organization of this code,
-you can replace the repeating logic and make strategies for processing events, etc.
-But in the first approximation it is very difficult to maintain this code.
-It is difficult to track the logic of the transitions and their availability.</p>
-</div>
-<div class="paragraph">
-<p><span class="icon"><i class="fa fa-plus"></i></span> Pros:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Speed of implementation, you don&#8217;t need to create an infrastructure for working with business processes</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p><span class="icon"><i class="fa fa-minus"></i></span> Cons:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Very poor further code maintenance</p>
-</li>
-</ul>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_the_second_alternative_you_can_use_any_bpm_engine">12.2. The second alternative - you can use any BPM engine</h3>
-<div class="paragraph">
-<p>This is a good alternative, but quite expensive.
-I will shortly discuss the cost of using the BPM in the project.
-First, you will need to deploy a full-fledged framework for BPM processes in the project.
-These frameworks are not lightweight, not all of them work natively in java.
-Secondly, you need to know BPMN notation and be able to describe your business process using this notation.</p>
-</div>
-<div class="paragraph">
-<p><span class="image"><img src="bpm.png" alt="bpmn"></span></p>
-</div>
-<div class="paragraph">
-<p><span class="icon"><i class="fa fa-plus"></i></span> You should use BPMN-engine:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>If you have very complex business processes.</p>
-</li>
-<li>
-<p>When you need a lot of opportunities provided by the BPM notation,
-such as: messages, subprocesses, signals, conditions on any transitions, etc.</p>
-</li>
-<li>
-<p>If you need process versioning.</p>
-</li>
-<li>
-<p>When you need to visualize the processes by their code.</p>
-</li>
-<li>
-<p>When you need tools to view and debug all current processes and their states.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p><span class="icon"><i class="fa fa-minus"></i></span> You should not use BPMN-engine:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>If you have very simple processes and a set of system states is obvious.</p>
-</li>
-<li>
-<p>If you have little time to develop and(or) you don&#8217;t have specialists in this subject area.</p>
-</li>
-<li>
-<p>If you do not need to versioning the processes.</p>
-</li>
-<li>
-<p>There is no way to deploy a full-fledged BPM framework in production.</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_source_code_of_this_project_on_the_github">13. Source code of this project on the github</h2>
+<h2 id="_source_code_of_this_project_on_the_github">3. Source code of this project on the github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
@@ -1582,7 +744,7 @@ such as: messages, subprocesses, signals, conditions on any transitions, etc.</p
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'statemachine'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'statemachine_part2'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
@@ -1598,7 +760,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-05 08:15:25 +10
+Last updated 2018-06-05 08:21:00 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
