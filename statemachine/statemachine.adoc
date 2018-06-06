@@ -26,7 +26,7 @@ One starter made all the magic
 
 ## States & Events
 
-For example, consider the business process known to most developers.
+For example, consider the business process that is known to most developers.
 If you didn't hear about kanban before, then you should read about this methodology.
 You can find many articles about it on the Internet.
 
@@ -44,9 +44,12 @@ DONE --> [*]
 
 We can extract the following states from this business-process: `BACKLOG`,
 `IN_PROGRESS`, `TESTING`, `DONE`. This will be our set of states.
-The transition from one state to another passes by a certain event.
 
-Spring statemachine provides the ability to configure through enums.
+The transition from one state to another passes by a certain event.
+Also we need extracting set of events from scheme:
+`START_FEATURE`, `FINISH_FEATURE`, `QA_REJECTED_UC`, `ROCK_STAR_DOUBLE_TASK`, `DEPLOY`, `QA_CHECKED_UC`.
+
+Spring state machine provides the ability to configure itself through enums.
 You can describe states and events in enumeration:
 
 [source, java]
@@ -129,8 +132,9 @@ public class StateMachineConfig
                    .event(Events.QA_TEAM_APPROVE);
     }
 ----
-<1> we working with a type-safe, all of our states and events are described by the enums, so these types will be declared in the configuration.
-<2> override base method for configuring the state machine.
+<1> we working with a type-safe, all of our states and events are described by the enums,
+so these types will be declared in the configuration.
+<2> override a base method for configuring the state machine.
 <3> description of states
 <4> description of transitions
 
@@ -236,10 +240,10 @@ private StateMachineListener<States, Events> listener() {
 }
 ----
 <1> declaration of listener
-<2> override callback for intercept any transitions
-<3> override callback for attempt of unacceptable transitions
+<2> override a callback for intercept any transitions
+<3> override a callback for attempt of unacceptable transitions
 
-after that we can make "wrong way" test:
+After that we can make "wrong way" test:
 
 [source, java]
 ----
@@ -320,10 +324,10 @@ public void configure(StateMachineStateConfigurer<States, Events> states)
 				throws Exception {
 
 		states.withStates()
-					.initial(States.BACKLOG)
-					.state(States.IN_PROGRESS)
-					.state(States.TESTING, deployAction()) <1>
-					.end(States.DONE);
+              .initial(States.BACKLOG)
+              .state(States.IN_PROGRESS)
+              .state(States.TESTING, deployAction()) <1>
+              .end(States.DONE);
 }
 
 private Action<States, Events> deployAction() {  <2>
@@ -332,13 +336,14 @@ private Action<States, Events> deployAction() {  <2>
 		};
 }
 ----
-<1> add deploy action after enter in TESTING state
-<2> implementation of Deploy action
+<1> add the deploy action in the configuration of states after enter in the `TESTING` state
+<2> implementation of deploy action
 
-This approach has one problem.
+This approach has a one problem.
 If we slightly complicate our business process, then this action can be performed when it is unnecessary.
-For example, if the developer has finished two features in one pull-request, then he can transfer the second task without additional deployment.
-We will assume that he maked this because he is super efficient and we can call him a "Rock Star".
+For example, if the developer finished a two features in one pull-request,
+then he can transfer the second task to `TESTING` without run additional deployment.
+We hope that he did it because he is super efficient, so we can call him a "Rock Star".
 
 [plantuml]
 ....
@@ -355,10 +360,7 @@ TESTING --> IN_PROGRESS : QA rejected task
 BACKLOG --> TESTING : Rock Star
 ....
 
-Now if we move task from backlog to testing then will be run deploy.
-But we don't want this behavior.
-
-Add rock star transition in configuration:
+Add the "rock star" transition in the configuration:
 
 [source, java]
 ----
@@ -370,7 +372,10 @@ transitions.withExternal()
            .target(States.TESTING)
            .event(Events.ROCK_STAR_MAKE_ALL_IN_ONE);
 ----
-check behavior in test:
+Now if we move task from backlog to testing then will be run deploy.
+But we don't want this behavior.
+
+check this proposition in the test:
 
 [source,java]
 ----
@@ -389,10 +394,10 @@ test results:
 
 image::deploying_test_result.png[rock star test result]
 
-Now we can see that the `deployAction` is triggered by any transition to the state `TESTING`.
+We can see that the `deployAction` is triggered by any transition to the state `TESTING`.
 
 How can we solve this problem? We can move the action
-from the states to transitions configuration:
+from the configuration of states to the configuration of transitions:
 
 [source, java]
 ----
@@ -413,8 +418,10 @@ transitions.withExternal()
            .and()
            	...
 ----
-<1> remove deploying action from states
+<1> remove deploying action from the configuration of states
 <2> past the action on transition from IN_PROGRESS to FINISH_FEATURE
+
+It provides us a more flexibility and allows to run actions by making a certain transitions.
 
 ## Guards - use conditions in flow.
 
