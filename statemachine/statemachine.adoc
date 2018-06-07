@@ -426,7 +426,7 @@ It provides us a more flexibility and allows to run actions by making a certain 
 ## Guards - use conditions in flow.
 
 Next we will add the ability to run deploying from `BACKLOG` and `IN_PROGRESS` states.
-We will make `DEPLOY` a separate event so that the developers themselves can decide when to do it.
+We will make `DEPLOY` as a separate event so that a developers can decide when to do it themselves.
 But before going to `TESTING`, we will verify that the deployment event was called.
 For this we will create a guard on transitions to `TESTING` state.
 
@@ -487,7 +487,7 @@ transitions.withExternal()
 <1> guards on transitions to `TESTING`
 <2> internal `DEPLOY` events
 
-Then we make guard implementation based on state machine variables.
+Then we make guard implementation based on the state machine variables.
 You can write in extend state a lot of useful things that will be shared in process.
 
 [source, java]
@@ -536,11 +536,22 @@ If we don't send the `DEPLOY` event then we get the following result:
 
 image::guard_test_result.png[guard test result]
 
-## Persist State machine in-memory
+## Persisting State machine
+
+In this section, we will look at how to save and load the current state of the state machine in different storages.
+
+The process of creating a state machine immediately in a certain state is not easy,
+so that not to keep all the created state machines in memory all the time,
+we need a tool to save and load the state of the state machine by identifier.
+
+### Persisting state machine in-memory
+
+To start we make a simple (in-memory) implementation.
+
+WARNING: We used this kind of storage just for a demonstration.
+For a real application you need to prefer more stable and complexity storage system.
 
 We need to write an implementation of StateMachinePersist.
-
-To start we make a simple (in-memory) implementation:
 
 [source, java]
 ----
@@ -563,7 +574,7 @@ public class InMemoryPersist
     }
 }
 ----
-<1> to save the state machine we use the HashMap
+<1> to save a state machine we using the HashMap
 
 WARNING: note that the context of the state machine is saved, not the state machine.
 The `StateMachineContext` contains not only the current state,
@@ -625,7 +636,7 @@ public void testPersist() throws Exception {
 <1> save first state machine context
 <2> load first state machine context to second
 
-## Persist state machine in MongoDb
+### Persisting state machine in MongoDb
 
 We need add some dependencies for work with MongoDb.
 Also we will write integration tests with TestContainers framework.

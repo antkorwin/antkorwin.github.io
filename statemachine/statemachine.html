@@ -452,16 +452,20 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_more_than_one_state_machine_no_problem">6. More than one state machine? No problem!</a></li>
 <li><a href="#_actions_add_some_business_logic">7. Actions - add some business logic</a></li>
 <li><a href="#_guards_use_conditions_in_flow">8. Guards - use conditions in flow.</a></li>
-<li><a href="#_persist_state_machine_in_memory">9. Persist State machine in-memory</a></li>
-<li><a href="#_persist_state_machine_in_mongodb">10. Persist state machine in MongoDb</a></li>
-<li><a href="#_multiple_configuration_of_state_machines_in_one_project">11. Multiple configuration of state machines in one project</a></li>
-<li><a href="#_live_without_state_machines_seems_boring">12. Live without state machines seems boring.</a>
+<li><a href="#_persisting_state_machine">9. Persisting State machine</a>
 <ul class="sectlevel2">
-<li><a href="#_you_can_hardcode_your_business_logic">12.1. You can hardcode your business logic</a></li>
-<li><a href="#_the_second_alternative_you_can_use_any_bpm_engine">12.2. The second alternative - you can use any BPM engine</a></li>
+<li><a href="#_persisting_state_machine_in_memory">9.1. Persisting state machine in-memory</a></li>
+<li><a href="#_persisting_state_machine_in_mongodb">9.2. Persisting state machine in MongoDb</a></li>
 </ul>
 </li>
-<li><a href="#_source_code_of_this_project_on_the_github">13. Source code of this project on the github</a></li>
+<li><a href="#_multiple_configuration_of_state_machines_in_one_project">10. Multiple configuration of state machines in one project</a></li>
+<li><a href="#_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</a>
+<ul class="sectlevel2">
+<li><a href="#_you_can_hardcode_your_business_logic">11.1. You can hardcode your business logic</a></li>
+<li><a href="#_the_second_alternative_you_can_use_any_bpm_engine">11.2. The second alternative - you can use any BPM engine</a></li>
+</ul>
+</li>
+<li><a href="#_source_code_of_this_project_on_the_github">12. Source code of this project on the github</a></li>
 </ul>
 </div>
 </div>
@@ -983,7 +987,7 @@ transitions.withExternal()
 <div class="sectionbody">
 <div class="paragraph">
 <p>Next we will add the ability to run deploying from <code>BACKLOG</code> and <code>IN_PROGRESS</code> states.
-We will make <code>DEPLOY</code> a separate event so that the developers themselves can decide when to do it.
+We will make <code>DEPLOY</code> as a separate event so that a developers can decide when to do it themselves.
 But before going to <code>TESTING</code>, we will verify that the deployment event was called.
 For this we will create a guard on transitions to <code>TESTING</code> state.</p>
 </div>
@@ -1049,7 +1053,7 @@ For this we will create a guard on transitions to <code>TESTING</code> state.</p
 </table>
 </div>
 <div class="paragraph">
-<p>Then we make guard implementation based on state machine variables.
+<p>Then we make guard implementation based on the state machine variables.
 You can write in extend state a lot of useful things that will be shared in process.</p>
 </div>
 <div class="listingblock">
@@ -1107,13 +1111,36 @@ public void testGuard() {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_persist_state_machine_in_memory">9. Persist State machine in-memory</h2>
+<h2 id="_persisting_state_machine">9. Persisting State machine</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We need to write an implementation of StateMachinePersist.</p>
+<p>In this section, we will look at how to save and load the current state of the state machine in different storages.</p>
 </div>
 <div class="paragraph">
-<p>To start we make a simple (in-memory) implementation:</p>
+<p>The process of creating a state machine immediately in a certain state is not easy,
+so that not to keep all the created state machines in memory all the time,
+we need a tool to save and load the state of the state machine by identifier.</p>
+</div>
+<div class="sect2">
+<h3 id="_persisting_state_machine_in_memory">9.1. Persisting state machine in-memory</h3>
+<div class="paragraph">
+<p>To start we make a simple (in-memory) implementation.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+We used this kind of storage just for a demonstration.
+For a real application you need to prefer more stable and complexity storage system.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>We need to write an implementation of StateMachinePersist.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1141,7 +1168,7 @@ public void testGuard() {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>to save the state machine we use the HashMap</td>
+<td>to save a state machine we using the HashMap</td>
 </tr>
 </table>
 </div>
@@ -1228,10 +1255,8 @@ public void testPersist() throws Exception {
 </table>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_persist_state_machine_in_mongodb">10. Persist state machine in MongoDb</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_persisting_state_machine_in_mongodb">9.2. Persisting state machine in MongoDb</h3>
 <div class="paragraph">
 <p>We need add some dependencies for work with MongoDb.
 Also we will write integration tests with TestContainers framework.</p>
@@ -1357,8 +1382,9 @@ public abstract class BaseMongoIT {
 </div>
 </div>
 </div>
+</div>
 <div class="sect1">
-<h2 id="_multiple_configuration_of_state_machines_in_one_project">11. Multiple configuration of state machines in one project</h2>
+<h2 id="_multiple_configuration_of_state_machines_in_one_project">10. Multiple configuration of state machines in one project</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>We sometimes need to use a several different state machines in single project.
@@ -1392,13 +1418,13 @@ private StateMachineFactory&lt;States, Events&gt; secondStateMachineFactory;</co
 </div>
 </div>
 <div class="sect1">
-<h2 id="_live_without_state_machines_seems_boring">12. Live without state machines seems boring.</h2>
+<h2 id="_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Let&#8217;s look at several alternative solutions, without using the state machines and consider the pros and cons of them.</p>
 </div>
 <div class="sect2">
-<h3 id="_you_can_hardcode_your_business_logic">12.1. You can hardcode your business logic</h3>
+<h3 id="_you_can_hardcode_your_business_logic">11.1. You can hardcode your business logic</h3>
 <div class="paragraph">
 <p>It looks like a spaghetti code:</p>
 </div>
@@ -1493,7 +1519,7 @@ It is difficult to track the logic of the transitions and their availability.</p
 </div>
 </div>
 <div class="sect2">
-<h3 id="_the_second_alternative_you_can_use_any_bpm_engine">12.2. The second alternative - you can use any BPM engine</h3>
+<h3 id="_the_second_alternative_you_can_use_any_bpm_engine">11.2. The second alternative - you can use any BPM engine</h3>
 <div class="paragraph">
 <p>This is a good alternative, but quite expensive.
 I will shortly discuss the cost of using the BPM in the project.
@@ -1550,7 +1576,7 @@ such as: messages, subprocesses, signals, conditions on any transitions, etc.</p
 </div>
 </div>
 <div class="sect1">
-<h2 id="_source_code_of_this_project_on_the_github">13. Source code of this project on the github</h2>
+<h2 id="_source_code_of_this_project_on_the_github">12. Source code of this project on the github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
@@ -1607,7 +1633,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-07 09:26:54 +10
+Last updated 2018-06-08 00:02:03 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
