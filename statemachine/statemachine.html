@@ -459,10 +459,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#_multiple_configuration_of_state_machines_in_one_project">10. Multiple configuration of state machines in one project</a></li>
-<li><a href="#_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</a>
+<li><a href="#_life_seems_boring_without_state_machines">11. Life seems boring without state machines</a>
 <ul class="sectlevel2">
-<li><a href="#_you_can_hardcode_your_business_logic">11.1. You can hardcode your business logic</a></li>
-<li><a href="#_the_second_alternative_you_can_use_any_bpm_engine">11.2. The second alternative - you can use any BPM engine</a></li>
+<li><a href="#_first_alternative_is_you_can_hardcode_your_business_logic">11.1. First Alternative is - You can hardcode your business logic</a></li>
+<li><a href="#_the_second_alternative_is_you_can_use_any_bpm_engine">11.2. The second alternative is - You can use any BPM engine</a></li>
 </ul>
 </li>
 <li><a href="#_source_code_of_this_project_on_the_github">12. Source code of this project on the github</a></li>
@@ -497,15 +497,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p>For example, consider the business process that is known to most developers.
-If you didn&#8217;t hear about kanban before, then you should read about this methodology.
-You can find many articles about it on the Internet.</p>
+If you didn&#8217;t hear about Kanban before, then you should read about this methodology.
+You can find a many articles about it on the Internet.</p>
 </div>
 <div class="paragraph">
 <p>Let&#8217;s see the following scheme:</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="diag-f57902c9697a281e923d1bdf65d798c2.png" alt="diag f57902c9697a281e923d1bdf65d798c2" width="504" height="632">
+<img src="diag-05d34481834169834088965a2f052d11.png" alt="diag 05d34481834169834088965a2f052d11" width="529" height="632">
 </div>
 </div>
 <div class="paragraph">
@@ -519,7 +519,7 @@ Also we need extracting set of events from scheme:
 </div>
 <div class="paragraph">
 <p>Spring state machine provides the ability to configure itself through enums.
-You can describe states and events in enumeration:</p>
+You can describe the states and the events in enumeration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -546,7 +546,7 @@ public enum  Events {
 <h2 id="_configuration">3. Configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We will consider an example of using a statemachine through the use of standard spring DI.
+<p>We will consider an example of using a state machine through the use of standard spring DI.
 We need to make a spring configuration for the state machine:</p>
 </div>
 <div class="listingblock">
@@ -636,7 +636,8 @@ then the state machine will start immediately in the initialization state.</p>
 When the state machine is start, the transition to this point will be the first.</p>
 </div>
 <div class="paragraph">
-<p>It is important to understand that the transition to the <code>BACKLOG</code> state from "nowhere" is also a transition, a little later we will see it more clearly.</p>
+<p>It is important to understand that the transition to the <code>BACKLOG</code> state from "nowhere" is also a transition,
+a little later we will see it more clearly.</p>
 </div>
 <div class="paragraph">
 <p>Also, we specify the exit point (end state) in the configuration of states.
@@ -644,7 +645,7 @@ Transition to this state will stop the state machine.</p>
 </div>
 <div class="paragraph">
 <p>The configuration of the transitional looks pretty intuitive,
-for each transition you need to specify the initial state,
+for each transition you need to specify the source state,
 the target state, and the event that will triggered this transition.</p>
 </div>
 </div>
@@ -1168,7 +1169,7 @@ For a real application you need to prefer more stable and complexity storage sys
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>to save a state machine we using the HashMap</td>
+<td>We using the HashMap to save a state machines</td>
 </tr>
 </table>
 </div>
@@ -1179,7 +1180,8 @@ For a real application you need to prefer more stable and complexity storage sys
 <i class="fa icon-warning" title="Warning"></i>
 </td>
 <td class="content">
-note that the context of the state machine is saved, not the state machine.
+We need to store the context of the state machine,
+not an instance of the state machine.
 The <code>StateMachineContext</code> contains not only the current state,
 there are also stored variables that we write to the context.
 It provide ability to restore a completely identical state of the state machine.
@@ -1246,11 +1248,11 @@ public void testPersist() throws Exception {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>save first state machine context</td>
+<td>Saving a context of the first state machine.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>load first state machine context to second</td>
+<td>Loading the context of the first state machine to the second state machine instance.</td>
 </tr>
 </table>
 </div>
@@ -1258,7 +1260,10 @@ public void testPersist() throws Exception {
 <div class="sect2">
 <h3 id="_persisting_state_machine_in_mongodb">9.2. Persisting state machine in MongoDb</h3>
 <div class="paragraph">
-<p>We need add some dependencies for work with MongoDb.
+<p>Let&#8217;s consider an example of a real repository for the state machines.</p>
+</div>
+<div class="paragraph">
+<p>We need to add some dependencies for working with the MongoDb.
 Also we will write integration tests with TestContainers framework.</p>
 </div>
 <div class="listingblock">
@@ -1302,7 +1307,7 @@ public StateMachineRuntimePersister&lt;States, Events, UUID&gt; mongoPersist(
 </div>
 <div class="paragraph">
 <p>I have abstract class for testing mongodb application in spring framework.
-The TestContainers library allows us to run the mongodb in docker and use it as a target data base:</p>
+The TestContainers library allows us to run the mongodb in docker and use it as a target database:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1380,6 +1385,9 @@ public abstract class BaseMongoIT {
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>In the specific asserts, we checked that the save was exactly in the MongoDB.</p>
+</div>
 </div>
 </div>
 </div>
@@ -1391,7 +1399,7 @@ public abstract class BaseMongoIT {
 These state machines can have their own sets of states and events.</p>
 </div>
 <div class="paragraph">
-<p>In order to make several state machines, you need to use a name on the state machine factory declaration:</p>
+<p>In order to make a several state machines, you need to use a name on the declaration of the state machine factory.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1403,7 +1411,7 @@ public class SecondStateMachineConfig extends EnumStateMachineConfigurerAdapter&
 </div>
 </div>
 <div class="paragraph">
-<p>Now you can inject the state machine by using this name in qualifier:</p>
+<p>Now you can inject the state machine by using this name in the qualifier above the factory:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1413,18 +1421,19 @@ private StateMachineFactory&lt;States, Events&gt; secondStateMachineFactory;</co
 </div>
 </div>
 <div class="paragraph">
-<p>So, you can use several state machines at the same time.</p>
+<p>So, you can use a several state machines at the same time.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_live_without_state_machines_seems_boring">11. Live without state machines seems boring.</h2>
+<h2 id="_life_seems_boring_without_state_machines">11. Life seems boring without state machines</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Let&#8217;s look at several alternative solutions, without using the state machines and consider the pros and cons of them.</p>
+<p>Let&#8217;s look at the several alternative solutions without using the state machines.
+And consider their pros and cons.</p>
 </div>
 <div class="sect2">
-<h3 id="_you_can_hardcode_your_business_logic">11.1. You can hardcode your business logic</h3>
+<h3 id="_first_alternative_is_you_can_hardcode_your_business_logic">11.1. First Alternative is - You can hardcode your business logic</h3>
 <div class="paragraph">
 <p>It looks like a spaghetti code:</p>
 </div>
@@ -1493,7 +1502,7 @@ private StateMachineFactory&lt;States, Events&gt; secondStateMachineFactory;</co
 </div>
 <div class="paragraph">
 <p>Of course, you can work on the organization of this code,
-you can replace the repeating logic and make strategies for processing events, etc.
+you can replace the repeating logic and make a strategies for processing events, etc.
 But in the first approximation it is very difficult to maintain this code.
 It is difficult to track the logic of the transitions and their availability.</p>
 </div>
@@ -1503,7 +1512,7 @@ It is difficult to track the logic of the transitions and their availability.</p
 <div class="ulist">
 <ul>
 <li>
-<p>Speed of implementation, you don&#8217;t need to create an infrastructure for working with business processes</p>
+<p>Speed of implementation, you don&#8217;t need to create an infrastructure for working with a business processes</p>
 </li>
 </ul>
 </div>
@@ -1513,19 +1522,19 @@ It is difficult to track the logic of the transitions and their availability.</p
 <div class="ulist">
 <ul>
 <li>
-<p>Very poor further code maintenance</p>
+<p>Very poor code maintenance in the future.</p>
 </li>
 </ul>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_the_second_alternative_you_can_use_any_bpm_engine">11.2. The second alternative - you can use any BPM engine</h3>
+<h3 id="_the_second_alternative_is_you_can_use_any_bpm_engine">11.2. The second alternative is - You can use any BPM engine</h3>
 <div class="paragraph">
-<p>This is a good alternative, but quite expensive.
-I will shortly discuss the cost of using the BPM in the project.
-First, you will need to deploy a full-fledged framework for BPM processes in the project.
-These frameworks are not lightweight, not all of them work natively in java.
-Secondly, you need to know BPMN notation and be able to describe your business process using this notation.</p>
+<p>This is a good alternative, but a quite expensive.
+I will shortly discuss the cost of using the BPM in a project.
+First, you will need to deploy a full-fledged framework for a BPM processes in the project.
+These frameworks are not lightweight, not all of them work natively in the java.
+Secondly, you need to know a BPMN notation and be able to describing your business process by using this notation.</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="bpm.png" alt="bpmn"></span></p>
@@ -1539,17 +1548,17 @@ Secondly, you need to know BPMN notation and be able to describe your business p
 <p>If you have very complex business processes.</p>
 </li>
 <li>
-<p>When you need a lot of opportunities provided by the BPM notation,
+<p>When you need a lot of opportunities that provided by the BPM notation,
 such as: messages, subprocesses, signals, conditions on any transitions, etc.</p>
 </li>
 <li>
-<p>If you need process versioning.</p>
+<p>If you need a process versioning.</p>
 </li>
 <li>
-<p>When you need to visualize the processes by their code.</p>
+<p>When you need to visualize a processes by their code.</p>
 </li>
 <li>
-<p>When you need tools to view and debug all current processes and their states.</p>
+<p>When you need a tools to view and debug of all current processes and their states.</p>
 </li>
 </ul>
 </div>
@@ -1559,16 +1568,16 @@ such as: messages, subprocesses, signals, conditions on any transitions, etc.</p
 <div class="ulist">
 <ul>
 <li>
-<p>If you have very simple processes and a set of system states is obvious.</p>
+<p>If you have a very simple processes and a set of system states is obvious.</p>
 </li>
 <li>
-<p>If you have little time to develop and(or) you don&#8217;t have specialists in this subject area.</p>
+<p>If you have a little time to develop and(or) you don&#8217;t have a specialists in this subject area.</p>
 </li>
 <li>
-<p>If you do not need to versioning the processes.</p>
+<p>If you do not need to manage a versioning of the processes.</p>
 </li>
 <li>
-<p>There is no way to deploy a full-fledged BPM framework in production.</p>
+<p>There is no way to deploy a full-fledged BPM framework in production. (you do not have a required resources or a infrastructure for this or a specialists for support)</p>
 </li>
 </ul>
 </div>
@@ -1633,7 +1642,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-08 00:02:03 +10
+Last updated 2018-06-08 09:16:19 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

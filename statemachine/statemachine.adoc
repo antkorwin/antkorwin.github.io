@@ -27,16 +27,16 @@ One starter made all the magic
 ## States & Events
 
 For example, consider the business process that is known to most developers.
-If you didn't hear about kanban before, then you should read about this methodology.
-You can find many articles about it on the Internet.
+If you didn't hear about Kanban before, then you should read about this methodology.
+You can find a many articles about it on the Internet.
 
 Let's see the following scheme:
 
 [plantuml]
 ....
-[*] --> BACKLOG : business team gave new tasks
-BACKLOG --> INPROGRESS : developer started feature
-INPROGRESS --> TESTING : developer finished feature
+[*] --> BACKLOG : business team gave us a new tasks
+BACKLOG --> INPROGRESS : developer started the feature
+INPROGRESS --> TESTING : developer finished the feature
 TESTING -->DONE : QA-team checked the use case and marked it as successful
 TESTING --> INPROGRESS : QA-team found a bugs and rejected the use case
 DONE --> [*]
@@ -50,7 +50,7 @@ Also we need extracting set of events from scheme:
 `START_FEATURE`, `FINISH_FEATURE`, `QA_REJECTED_UC`, `ROCK_STAR_DOUBLE_TASK`, `DEPLOY`, `QA_CHECKED_UC`.
 
 Spring state machine provides the ability to configure itself through enums.
-You can describe states and events in enumeration:
+You can describe the states and the events in enumeration:
 
 [source, java]
 ----
@@ -73,7 +73,7 @@ public enum  Events {
 
 ## Configuration
 
-We will consider an example of using a statemachine through the use of standard spring DI.
+We will consider an example of using a state machine through the use of standard spring DI.
 We need to make a spring configuration for the state machine:
 
 [source, java]
@@ -144,13 +144,14 @@ then the state machine will start immediately in the initialization state.
 You need to specify the entry point to the state machine (the initial state) in the settings of states.
 When the state machine is start, the transition to this point will be the first.
 
-It is important to understand that the transition to the `BACKLOG` state from "nowhere" is also a transition, a little later we will see it more clearly.
+It is important to understand that the transition to the `BACKLOG` state from "nowhere" is also a transition,
+a little later we will see it more clearly.
 
 Also, we specify the exit point (end state) in the configuration of states.
 Transition to this state will stop the state machine.
 
 The configuration of the transitional looks pretty intuitive,
-for each transition you need to specify the initial state,
+for each transition you need to specify the source state,
 the target state, and the event that will triggered this transition.
 
 
@@ -574,9 +575,10 @@ public class InMemoryPersist
     }
 }
 ----
-<1> to save a state machine we using the HashMap
+<1> We using the HashMap to save a state machines
 
-WARNING: note that the context of the state machine is saved, not the state machine.
+WARNING: We need to store the context of the state machine,
+not an instance of the state machine.
 The `StateMachineContext` contains not only the current state,
 there are also stored variables that we write to the context.
 It provide ability to restore a completely identical state of the state machine.
@@ -633,12 +635,14 @@ public void testPersist() throws Exception {
 						 .isEqualTo(States.IN_PROGRESS);
 }
 ----
-<1> save first state machine context
-<2> load first state machine context to second
+<1> Saving a context of the first state machine.
+<2> Loading the context of the first state machine to the second state machine instance.
 
 ### Persisting state machine in MongoDb
 
-We need add some dependencies for work with MongoDb.
+Let's consider an example of a real repository for the state machines.
+
+We need to add some dependencies for working with the MongoDb.
 Also we will write integration tests with TestContainers framework.
 
 [source, mvn]
@@ -679,7 +683,7 @@ public StateMachineRuntimePersister<States, Events, UUID> mongoPersist(
 Now we can make integration test.
 
 I have abstract class for testing mongodb application in spring framework.
-The TestContainers library allows us to run the mongodb in docker and use it as a target data base:
+The TestContainers library allows us to run the mongodb in docker and use it as a target database:
 
 [source, java]
 ----
@@ -755,13 +759,15 @@ public class MongoPersistTest extends BaseMongoIT {
     }
 }
 ----
+In the specific asserts, we checked that the save was exactly in the MongoDB.
+
 
 ## Multiple configuration of state machines in one project
 
 We sometimes need to use a several different state machines in single project.
 These state machines can have their own sets of states and events.
 
-In order to make several state machines, you need to use a name on the state machine factory declaration:
+In order to make a several state machines, you need to use a name on the declaration of the state machine factory.
 
 [source, java]
 ----
@@ -772,7 +778,7 @@ public class SecondStateMachineConfig extends EnumStateMachineConfigurerAdapter<
 }
 ----
 
-Now you can inject the state machine by using this name in qualifier:
+Now you can inject the state machine by using this name in the qualifier above the factory:
 
 [source, java]
 ----
@@ -781,15 +787,16 @@ Now you can inject the state machine by using this name in qualifier:
 private StateMachineFactory<States, Events> secondStateMachineFactory;
 ----
 
-So, you can use several state machines at the same time.
+So, you can use a several state machines at the same time.
 
 
-## Live without state machines seems boring.
+## Life seems boring without state machines
 
-Let's look at several alternative solutions, without using the state machines and consider the pros and cons of them.
+Let's look at the several alternative solutions without using the state machines.
+And consider their pros and cons.
 
 
-### You can hardcode your business logic
+### First Alternative is - You can hardcode your business logic
 
 It looks like a spaghetti code:
 
@@ -857,26 +864,26 @@ It looks like a spaghetti code:
 ----
 
 Of course, you can work on the organization of this code,
-you can replace the repeating logic and make strategies for processing events, etc.
+you can replace the repeating logic and make a strategies for processing events, etc.
 But in the first approximation it is very difficult to maintain this code.
 It is difficult to track the logic of the transitions and their availability.
 
 icon:plus[] Pros:
 
-- Speed of implementation, you don't need to create an infrastructure for working with business processes
+- Speed of implementation, you don't need to create an infrastructure for working with a business processes
 
 icon:minus[] Cons:
 
-- Very poor further code maintenance
+- Very poor code maintenance in the future.
 
 
-### The second alternative - you can use any BPM engine
+### The second alternative is - You can use any BPM engine
 
-This is a good alternative, but quite expensive.
-I will shortly discuss the cost of using the BPM in the project.
-First, you will need to deploy a full-fledged framework for BPM processes in the project.
-These frameworks are not lightweight, not all of them work natively in java.
-Secondly, you need to know BPMN notation and be able to describe your business process using this notation.
+This is a good alternative, but a quite expensive.
+I will shortly discuss the cost of using the BPM in a project.
+First, you will need to deploy a full-fledged framework for a BPM processes in the project.
+These frameworks are not lightweight, not all of them work natively in the java.
+Secondly, you need to know a BPMN notation and be able to describing your business process by using this notation.
 
 image:bpm.png[bpmn]
 
@@ -884,24 +891,24 @@ icon:plus[] You should use BPMN-engine:
 
 - If you have very complex business processes.
 
-- When you need a lot of opportunities provided by the BPM notation,
+- When you need a lot of opportunities that provided by the BPM notation,
 such as: messages, subprocesses, signals, conditions on any transitions, etc.
 
-- If you need process versioning.
+- If you need a process versioning.
 
-- When you need to visualize the processes by their code.
+- When you need to visualize a processes by their code.
 
-- When you need tools to view and debug all current processes and their states.
+- When you need a tools to view and debug of all current processes and their states.
 
 icon:minus[] You should not use BPMN-engine:
 
-- If you have very simple processes and a set of system states is obvious.
+- If you have a very simple processes and a set of system states is obvious.
 
-- If you have little time to develop and(or) you don't have specialists in this subject area.
+- If you have a little time to develop and(or) you don't have a specialists in this subject area.
 
-- If you do not need to versioning the processes.
+- If you do not need to manage a versioning of the processes.
 
-- There is no way to deploy a full-fledged BPM framework in production.
+- There is no way to deploy a full-fledged BPM framework in production. (you do not have a required resources or a infrastructure for this or a specialists for support)
 
 
 
