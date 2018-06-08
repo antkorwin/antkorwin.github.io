@@ -10,11 +10,11 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Dependencies
 
-Create a new SpringBoot project and add statemachine in dependencies.
+Create a new Spring Boot project and add the `statemachine` in dependencies.
 
 image:./spring-init.png[state machine]
 
-One starter made all the magic
+The one starter made all the magic
 
 [source, xml]
 ----
@@ -26,8 +26,8 @@ One starter made all the magic
 
 ## States & Events
 
-For example, consider the business process that is known to most developers.
-If you didn't hear about Kanban before, then you should read about this methodology.
+For example, consider the business process that is known to most developers - software development lifecycle and Kanban methodology.
+If you didn't hear about the Kanban before, then you should read about this methodology.
 You can find a many articles about it on the Internet.
 
 Let's see the following scheme:
