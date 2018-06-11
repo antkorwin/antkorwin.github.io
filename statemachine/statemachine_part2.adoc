@@ -1,4 +1,4 @@
-= Exception Handling in Spring State Machine
+= Exception Handling in the Spring State Machine
 :source-highlighter: prettify
 :icons: font
 :toc:
