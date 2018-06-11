@@ -446,13 +446,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel1">
 <li><a href="#_exception_handling">1. Exception handling</a>
 <ul class="sectlevel2">
-<li><a href="#_error_in_action">1.1. Error in action</a></li>
-<li><a href="#_error_in_guard_check">1.2. Error in guard check</a></li>
-<li><a href="#_indication_of_state_machine_errors">1.3. Indication of state machine errors</a></li>
+<li><a href="#_error_in_an_action">1.1. Error in an action</a></li>
+<li><a href="#_error_in_a_guard_check">1.2. Error in a guard check</a></li>
+<li><a href="#_indication_of_a_state_machine_errors">1.3. Indication of a state machine errors</a></li>
 </ul>
 </li>
 <li><a href="#_how_to_resolve_available_events_from_the_current_state">2. How to resolve available events from the current state</a></li>
-<li><a href="#_how_to_guarantee_consistency_of_transactions_within_using_of_state_machine">3. How to guarantee consistency of transactions within using of state machine</a></li>
+<li><a href="#_how_to_guarantee_a_consistency_of_transactions_within_using_of_a_state_machine">3. How to guarantee a consistency of transactions within using of a state machine</a></li>
 <li><a href="#_source_code_of_this_project_on_the_github">4. Source code of this project on the github</a></li>
 </ul>
 </div>
@@ -462,10 +462,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_exception_handling">1. Exception handling</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>When you work with state machines, you often take care of errors, which may happen in business logic layer.</p>
+<p>When you work with a state machine, you often take care of an errors, which may happen on the business logic layer.</p>
 </div>
 <div class="sect2">
-<h3 id="_error_in_action">1.1. Error in action</h3>
+<h3 id="_error_in_an_action">1.1. Error in an action</h3>
 <div class="paragraph">
 <p>Let&#8217;s consider what happens if an error occurs during the execution of the action:</p>
 </div>
@@ -512,13 +512,13 @@ public void failInActionTest() {
 <p>We are trying to make a transition with failed action.
 And we see this exception in log,
 but it not thrown to the place of the call.
-Because spring state machine handle all runtime exceptions.</p>
+Because the spring state machine handle all of the runtime exceptions.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_error_in_guard_check">1.2. Error in guard check</h3>
+<h3 id="_error_in_a_guard_check">1.2. Error in a guard check</h3>
 <div class="paragraph">
-<p>Let&#8217;s try to make exception in the guard.</p>
+<p>Let&#8217;s try to make exception in a guard.</p>
 </div>
 <div class="paragraph">
 <p>Add a new transition:</p>
@@ -533,7 +533,7 @@ Because spring state machine handle all runtime exceptions.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>and failed guard:</p>
+<p>and the failed guard:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -560,26 +560,26 @@ public void failInGuardTest() {
 </div>
 </div>
 <div class="paragraph">
-<p>After that we seeing in log the same behavior:</p>
+<p>After that we seeing in the log a same behavior:</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="failed_guard.png" alt="failed guard"></span></p>
 </div>
 <div class="paragraph">
-<p>Exception thrown, but we can&#8217;t catch it on the place of the call.
-The state machine didn&#8217;t move to the target state, this is expected behavior.
-The throw of exception while checking guard condition is equals to returned false by guard.</p>
+<p>The exception thrown, but we can&#8217;t catch it on the place of the call.
+The state machine didn&#8217;t move to a target state, this is expected behavior.
+The throw of an exception while checking a guard condition - is equals to returned false by guard.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_indication_of_state_machine_errors">1.3. Indication of state machine errors</h3>
+<h3 id="_indication_of_a_state_machine_errors">1.3. Indication of a state machine errors</h3>
 <div class="paragraph">
-<p>Spring state machine have a not rich functionality for working with errors.
-We can set error in actions or guards, but we can&#8217;t get type of error later.
+<p>The spring state machine have a not rich functionality for working with errors.
+We can set an error in actions or guards, but we can&#8217;t get type of the error later.
 We can only check for an error, but not the type of exception.</p>
 </div>
 <div class="paragraph">
-<p>let&#8217;s see example:</p>
+<p>Let&#8217;s see example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -591,7 +591,7 @@ We can only check for an error, but not the type of exception.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>We set error in this action, by creating concrete type of exception:</p>
+<p>We set the error in this action, by creating a concrete type of an exception:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -631,8 +631,8 @@ And after this transition we got an error by using <code>hasStateMachineError</c
 However, the state machine successfully moved to the target state.</p>
 </div>
 <div class="paragraph">
-<p>The interface of StateMachine is not provide any methods for the getting type of exception.
-It is strange, but you can make workaround for this by using variables of state machine.</p>
+<p>The interface of StateMachine is not provide any methods for a getting type of exception.
+It is strange, but you can make workaround for this by using variables of a state machine.</p>
 </div>
 </div>
 </div>
@@ -704,17 +704,17 @@ public void testResolverWithoutGuard() {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_how_to_guarantee_consistency_of_transactions_within_using_of_state_machine">3. How to guarantee consistency of transactions within using of state machine</h2>
+<h2 id="_how_to_guarantee_a_consistency_of_transactions_within_using_of_a_state_machine">3. How to guarantee a consistency of transactions within using of a state machine</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Often, we have a business domain model separately from the state machine.
-In ours projects a state machines used just for organization of a business workflows.
-We store an all domain-specific data in other object.
+<p>Often, we have a business domain model that separate from the state machine.
+In ours projects state machines used just for an organization of a business workflow.
+We store an all domain-specific data in the other object.
 Usually, we store this model in its own database and operate with it by using transactions.</p>
 </div>
 <div class="paragraph">
-<p>In this chapter we will consider how to safety work with a state machines.
-And how to guarantee a consistency of a state machine and another systems.</p>
+<p>In this chapter we will consider how to safety work with a state machine.
+And how to guarantee a consistency between the state machine and other systems.</p>
 </div>
 </div>
 </div>
@@ -776,7 +776,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-11 22:50:36 +10
+Last updated 2018-06-12 00:32:50 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

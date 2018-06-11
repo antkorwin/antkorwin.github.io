@@ -11,9 +11,9 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Exception handling
 
-When you work with state machines, you often take care of errors, which may happen in business logic layer.
+When you work with a state machine, you often take care of an errors, which may happen on the business logic layer.
 
-### Error in action
+### Error in an action
 
 Let's consider what happens if an error occurs during the execution of the action:
 
@@ -56,11 +56,11 @@ image:failed_action.png[failed action test result]
 We are trying to make a transition with failed action.
 And we see this exception in log,
 but it not thrown to the place of the call.
-Because spring state machine handle all runtime exceptions.
+Because the spring state machine handle all of the runtime exceptions.
 
-### Error in guard check
+### Error in a guard check
 
-Let's try to make exception in the guard.
+Let's try to make exception in a guard.
 
 Add a new transition:
 
@@ -73,7 +73,7 @@ transitions.withExternal()
            .guard(failGuard());
 ----
 
-and failed guard:
+and the failed guard:
 
 [source, java]
 ----
@@ -98,21 +98,21 @@ public void failInGuardTest() {
 }
 ----
 
-After that we seeing in log the same behavior:
+After that we seeing in the log a same behavior:
 
 image:failed_guard.png[failed guard]
 
-Exception thrown, but we can't catch it on the place of the call.
-The state machine didn't move to the target state, this is expected behavior.
-The throw of exception while checking guard condition is equals to returned false by guard.
+The exception thrown, but we can't catch it on the place of the call.
+The state machine didn't move to a target state, this is expected behavior.
+The throw of an exception while checking a guard condition - is equals to returned false by guard.
 
-### Indication of state machine errors
+### Indication of a state machine errors
 
-Spring state machine have a not rich functionality for working with errors.
-We can set error in actions or guards, but we can't get type of error later.
+The spring state machine have a not rich functionality for working with errors.
+We can set an error in actions or guards, but we can't get type of the error later.
 We can only check for an error, but not the type of exception.
 
-let's see example:
+Let's see example:
 
 [source, java]
 ----
@@ -123,7 +123,7 @@ transitions.withExternal()
            .event(Events.FINISH_FEATURE);
 ----
 
-We set error in this action, by creating concrete type of exception:
+We set the error in this action, by creating a concrete type of an exception:
 
 [source, java]
 ----
@@ -159,8 +159,8 @@ Before we sent the event in the state machine, it did not have errors.
 And after this transition we got an error by using `hasStateMachineError` method.
 However, the state machine successfully moved to the target state.
 
-The interface of StateMachine is not provide any methods for the getting type of exception.
-It is strange, but you can make workaround for this by using variables of state machine.
+The interface of StateMachine is not provide any methods for a getting type of exception.
+It is strange, but you can make workaround for this by using variables of a state machine.
 
 
 
@@ -228,15 +228,15 @@ public void testResolverWithoutGuard() {
 ----
 
 
-## How to guarantee consistency of transactions within using of state machine
+## How to guarantee a consistency of transactions within using of a state machine
 
-Often, we have a business domain model separately from the state machine.
-In ours projects a state machines used just for organization of a business workflows.
-We store an all domain-specific data in other object.
+Often, we have a business domain model that separate from the state machine.
+In ours projects state machines used just for an organization of a business workflow.
+We store an all domain-specific data in the other object.
 Usually, we store this model in its own database and operate with it by using transactions.
 
-In this chapter we will consider how to safety work with a state machines.
-And how to guarantee a consistency of a state machine and another systems.
+In this chapter we will consider how to safety work with a state machine.
+And how to guarantee a consistency between the state machine and other systems.
 
 
 
