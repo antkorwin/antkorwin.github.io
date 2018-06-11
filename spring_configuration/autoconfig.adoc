@@ -1,0 +1,170 @@
+= Spring auto-configuration with conditional on bean
+:source-highlighter: prettify
+:icons: font
+:toc:
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+
+## Preamble
+
+The CTO of our company sent me an interesting case of a configuration, last night.
+He not fears coding something unusual, this is a good trait for a chief.
+
+He wanted to make a one bean depends on another,
+and the first of them should created only if he set a certain property.
+Of course in this case the second bean should not be created.
+
+## Let's try to code this.
+
+We need to define a two objects:
+
+[source, java]
+----
+@Slf4j
+@Getter
+public class Foo {
+
+    private String value = "ops";
+
+    public Foo() {
+        log.warn("new Foo()");
+    }
+}
+
+@Slf4j
+@Getter
+public class Bar {
+
+    private Foo foo;
+    private String value = "dev";
+
+    public Bar(Foo foo) {
+        this.foo = foo;
+        this.value += foo.getValue();
+        log.warn("new Bar({})", foo);
+    }
+}
+----
+
+Then we make a first configuration file:
+
+[source, java]
+----
+@Configuration
+public class FooConfig {
+
+    @Bean
+    public Foo foo() {
+        return new Foo();
+    }
+}
+----
+
+And a second config, which depends on the first:
+
+[source, java]
+----
+@Configuration
+@ConditionalOnBean(name = "foo")
+public class BarConfig {
+
+    @Bean
+    public Bar bar(Foo foo) {
+        return new Bar(foo);
+    }
+}
+----
+
+Write a simple test for this configuration:
+
+[source, java]
+----
+@SpringBootTest
+@RunWith(SpringRunner.class)
+public class ConfigTest {
+
+    @Autowired
+    private Foo foo;
+
+    @Autowired
+    private Bar bar;
+
+    @Test
+    public void simpleTest() {
+        Assertions.assertThat(foo).isNotNull();
+        Assertions.assertThat(bar).isNotNull();
+    }
+}
+----
+
+And what we got as a result - `No qualifying bean of type 'Bar'`
+
+image:first_test_result.png[Result of the first test]
+
+## Read the documentation
+
+It's boring, but this is the simplest way to know how to do what you want.
+Open a javadoc about the `ConditionalOnBean`:
+link:https://docs.spring.io/spring-boot/docs/current/api/org/springframework/boot/autoconfigure/condition/ConditionalOnBean.html[https://docs.spring.io/ConditionalOnBean.html]
+
+And what we see?
+
+[quote, Phillip Webb]
+`The condition can only match the bean definitions that have been processed by the
+application context so far and, as such, it is *strongly recommended* to use this
+condition on *auto-configuration classes only*. If a candidate bean may be created by
+another auto-configuration, make sure that the one *using this condition runs after*.`
+
+What does it mean for us:
+
+- we need to make our configuration classes as auto-configuration
+
+- the `BarConfig` must be processed after the `FooConfig`.
+
+## How to make auto-configuration class
+
+You need to ...
+
+## How to change the order of processing a configurations
+
+We have an ability to define a dependency between two configuration files.
+We can do this by using one of the following annotations:
+
+* `@AutoConfigureAfter`
+
+* `@AutoConfigureBefore`
+
+
+## Source code of this project on the github
+
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/autoconfig-demo[github.com/antkorwin/autoconfig-demo]
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'autoconfig'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++

@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>Exception Handling in Spring State Machine</title>
+<title>Spring auto-configuration with conditional on bean</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,7 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Exception Handling in Spring State Machine</h1>
+<h1>Spring auto-configuration with conditional on bean</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
@@ -444,285 +444,195 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_exception_handling">1. Exception handling</a>
-<ul class="sectlevel2">
-<li><a href="#_error_in_action">1.1. Error in action</a></li>
-<li><a href="#_error_in_guard_check">1.2. Error in guard check</a></li>
-<li><a href="#_indication_of_state_machine_errors">1.3. Indication of state machine errors</a></li>
-</ul>
-</li>
-<li><a href="#_how_to_resolve_available_events_from_the_current_state">2. How to resolve available events from the current state</a></li>
-<li><a href="#_how_to_guarantee_consistency_of_transactions_within_using_of_state_machine">3. How to guarantee consistency of transactions within using of state machine</a></li>
-<li><a href="#_source_code_of_this_project_on_the_github">4. Source code of this project on the github</a></li>
+<li><a href="#_preamble">1. Preamble</a></li>
+<li><a href="#_lets_try_to_code_this">2. Let&#8217;s try to code this.</a></li>
+<li><a href="#_read_the_documentation">3. Read the documentation</a></li>
+<li><a href="#_how_to_make_auto_configuration_class">4. How to make auto-configuration class</a></li>
+<li><a href="#_how_to_change_the_order_of_processing_a_configurations">5. How to change the order of processing a configurations</a></li>
+<li><a href="#_source_code_of_this_project_on_the_github">6. Source code of this project on the github</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_exception_handling">1. Exception handling</h2>
+<h2 id="_preamble">1. Preamble</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>When you work with state machines, you often take care of errors, which may happen in business logic layer.</p>
+<p>The CTO of our company sent me an interesting case of a configuration, last night.
+He not fears coding something unusual, this is a good trait for a chief.</p>
 </div>
-<div class="sect2">
-<h3 id="_error_in_action">1.1. Error in action</h3>
 <div class="paragraph">
-<p>Let&#8217;s consider what happens if an error occurs during the execution of the action:</p>
+<p>He wanted to make a one bean depends on another,
+and the first of them should created only if he set a certain property.
+Of course in this case the second bean should not be created.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_lets_try_to_code_this">2. Let&#8217;s try to code this.</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We need to define a two objects:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Override
-public void configure(StateMachineTransitionConfigurer&lt;States, Events&gt; transitions) throws Exception {
-		transitions.withExternal()
-				.source(States.BACKLOG)
-				.target(States.DONE)
-				.action(failAction())
-				.event(Events.ROCK_STAR_DOUBLE_TASK);
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Slf4j
+@Getter
+public class Foo {
+
+    private String value = "ops";
+
+    public Foo() {
+        log.warn("new Foo()");
+    }
 }
 
-private Action&lt;States, Events&gt; failAction() {
-		return context -&gt; {
-				throw new RuntimeException("fail in action");
-		};
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Then we make a test:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
-public void failInActionTest() {
-    // Act
-    stateMachine.sendEvent(ROCK_STAR_DOUBLE_TASK);
-    // Asserts
-    Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.BACKLOG);
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Result of the test:</p>
-</div>
-<div class="paragraph">
-<p><span class="image"><img src="failed_action.png" alt="failed action test result"></span></p>
-</div>
-<div class="paragraph">
-<p>We are trying to make a transition with failed action.
-And we see this exception in log,
-but it not thrown to the place of the call.
-Because spring state machine handle all runtime exceptions.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_error_in_guard_check">1.2. Error in guard check</h3>
-<div class="paragraph">
-<p>Let&#8217;s try to make exception in the guard.</p>
-</div>
-<div class="paragraph">
-<p>Add a new transition:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">transitions.withExternal()
-           .source(States.BACKLOG)
-           .target(States.DONE)
-           .event(Events.START_FEATURE)
-           .guard(failGuard());</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>and failed guard:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private Guard&lt;States, Events&gt; failGuard() {
-    return context -&gt; {
-        throw new RuntimeException("fail in Guard");
-    };
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Now we can write a test:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
-public void failInGuardTest() {
-    // Act
-    stateMachine.sendEvent(START_FEATURE);
-    // Asserts
-    Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.BACKLOG);
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>After that we seeing in log the same behavior:</p>
-</div>
-<div class="paragraph">
-<p><span class="image"><img src="failed_guard.png" alt="failed guard"></span></p>
-</div>
-<div class="paragraph">
-<p>Exception thrown, but we can&#8217;t catch it on the place of the call.
-The state machine didn&#8217;t move to the target state, this is expected behavior.
-The throw of exception while checking guard condition is equals to returned false by guard.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_indication_of_state_machine_errors">1.3. Indication of state machine errors</h3>
-<div class="paragraph">
-<p>Spring state machine have a not rich functionality for working with errors.
-We can set error in actions or guards, but we can&#8217;t get type of error later.
-We can only check for an error, but not the type of exception.</p>
-</div>
-<div class="paragraph">
-<p>let&#8217;s see example:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">transitions.withExternal()
-           .source(States.BACKLOG)
-           .target(States.DONE)
-           .action(actionWithInternalError())
-           .event(Events.FINISH_FEATURE);</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>We set error in this action, by creating concrete type of exception:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private Action&lt;States, Events&gt; actionWithInternalError() {
-    return context -&gt; {
-        context.getStateMachine()
-               .setStateMachineError(new RuntimeException("fail in Action"));
-    };
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s try to check it:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
-public void internalFailTest() {
-    // Check precondition
-    Assertions.assertThat(stateMachine.hasStateMachineError()).isFalse();
-    // Act
-    stateMachine.sendEvent(FINISH_FEATURE);
-    // Asserts
-    Assertions.assertThat(stateMachine.getState().getId())
-              .isEqualTo(States.DONE);
+@Slf4j
+@Getter
+public class Bar {
 
-    Assertions.assertThat(stateMachine.hasStateMachineError()).isTrue();
+    private Foo foo;
+    private String value = "dev";
+
+    public Bar(Foo foo) {
+        this.foo = foo;
+        this.value += foo.getValue();
+        log.warn("new Bar({})", foo);
+    }
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>This test was successfully passed.</p>
+<p>Then we make a first configuration file:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+public class FooConfig {
+
+    @Bean
+    public Foo foo() {
+        return new Foo();
+    }
+}</code></pre>
+</div>
 </div>
 <div class="paragraph">
-<p>Before we sent the event in the state machine, it did not have errors.
-And after this transition we got an error by using <code>hasStateMachineError</code> method.
-However, the state machine successfully moved to the target state.</p>
+<p>And a second config, which depends on the first:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+@ConditionalOnBean(name = "foo")
+public class BarConfig {
+
+    @Bean
+    public Bar bar(Foo foo) {
+        return new Bar(foo);
+    }
+}</code></pre>
+</div>
 </div>
 <div class="paragraph">
-<p>The interface of StateMachine is not provide any methods for the getting type of exception.
-It is strange, but you can make workaround for this by using variables of state machine.</p>
+<p>Write a simple test for this configuration:</p>
 </div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@SpringBootTest
+@RunWith(SpringRunner.class)
+public class ConfigTest {
+
+    @Autowired
+    private Foo foo;
+
+    @Autowired
+    private Bar bar;
+
+    @Test
+    public void simpleTest() {
+        Assertions.assertThat(foo).isNotNull();
+        Assertions.assertThat(bar).isNotNull();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And what we got as a result - <code>No qualifying bean of type 'Bar'</code></p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="first_test_result.png" alt="Result of the first test"></span></p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_how_to_resolve_available_events_from_the_current_state">2. How to resolve available events from the current state</h2>
+<h2 id="_read_the_documentation">3. Read the documentation</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Sometimes you need to evaluate a list of available transitions from the current state of the state machine.
-Unfortunately, the spring state machine has not internal methods for this case.
-But you can solve this problem yourself:</p>
+<p>It&#8217;s boring, but this is the simplest way to know how to do what you want.
+Open a javadoc about the <code>ConditionalOnBean</code>:
+<a href="https://docs.spring.io/spring-boot/docs/current/api/org/springframework/boot/autoconfigure/condition/ConditionalOnBean.html">https://docs.spring.io/ConditionalOnBean.html</a></p>
 </div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public List&lt;EventsT&gt; getAvailableEvents(StateMachine&lt;StatesT, EventsT&gt; stateMachine) {
-
-    return stateMachine.getTransitions()
-                       .stream()
-                       .filter(t -&gt; isTransitionSourceFromCurrentState(t, stateMachine))
-                       .filter(t -&gt; evaluateGuardCondition(stateMachine, t))
-                       .map(Transition::getTrigger)
-                       .map(Trigger::getEvent)
-                       .collect(toList());
-}</code></pre>
+<div class="paragraph">
+<p>And what we see?</p>
+</div>
+<div class="quoteblock">
+<blockquote>
+<code>The condition can only match the bean definitions that have been processed by the
+application context so far and, as such, it is <strong>strongly recommended</strong> to use this
+condition on <strong>auto-configuration classes only</strong>. If a candidate bean may be created by
+another auto-configuration, make sure that the one <strong>using this condition runs after</strong>.</code>
+</blockquote>
+<div class="attribution">
+&#8212; Phillip Webb
 </div>
 </div>
 <div class="paragraph">
-<p>In this code we find all transitions from the current state
-and trying to check guards on this transitions.
-If the guard returns false or throws the exception
-then we skip this event.</p>
+<p>What does it mean for us:</p>
 </div>
-<div class="paragraph">
-<p>You can find the full source code on github
-(<a href="https://github.com/antkorwin/statemachine/blob/master/src/main/java/com/antkorwin/statemachine/statemachine/resolver/StateMachineResolverImpl.java">StateMachineResolverImpl.java</a>)</p>
-</div>
-<div class="paragraph">
-<p>for example:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="diag-2dee050e2216a0927abf990aebd55bef.png" alt="diag 2dee050e2216a0927abf990aebd55bef" width="256" height="376">
-</div>
-</div>
-<div class="paragraph">
-<p>if we request the list of available events in the <code>CROSSROADS</code> state
-then we got a list consist of the <code>LEFT</code>, <code>RIGHT</code>.
-In addition the list will contain the event <code>FLY_UP</code> if condition <code>flyingGuard</code> is true.</p>
-</div>
-<div class="paragraph">
-<p>Example of using the <code>StateMachineResolver</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
-private StateMachineResolver&lt;States, Events&gt; stateMachineResolver;
-
-@Test
-public void testResolverWithoutGuard() {
-    // Act
-    List&lt;Events&gt; availableEvents = stateMachineResolver.getAvailableEvents(stateMachine);
-    // Asserts
-    Assertions.assertThat(availableEvents)
-              .containsOnly(Events.LEFT,
-                            Events.RIGHT);
-}</code></pre>
-</div>
+<div class="ulist">
+<ul>
+<li>
+<p>we need to make our configuration classes as auto-configuration</p>
+</li>
+<li>
+<p>the <code>BarConfig</code> must be processed after the <code>FooConfig</code>.</p>
+</li>
+</ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_how_to_guarantee_consistency_of_transactions_within_using_of_state_machine">3. How to guarantee consistency of transactions within using of state machine</h2>
+<h2 id="_how_to_make_auto_configuration_class">4. How to make auto-configuration class</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Often, we have a business domain model separately from the state machine.
-In ours projects a state machines used just for organization of a business workflows.
-We store an all domain-specific data in other object.
-Usually, we store this model in its own database and operate with it by using transactions.</p>
-</div>
-<div class="paragraph">
-<p>In this chapter we will consider how to safety work with a state machines.
-And how to guarantee a consistency of a state machine and another systems.</p>
+<p>You need to &#8230;&#8203;</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_source_code_of_this_project_on_the_github">4. Source code of this project on the github</h2>
+<h2 id="_how_to_change_the_order_of_processing_a_configurations">5. How to change the order of processing a configurations</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
+<p>We have an ability to define a dependency between two configuration files.
+We can do this by using one of the following annotations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>@AutoConfigureAfter</code></p>
+</li>
+<li>
+<p><code>@AutoConfigureBefore</code></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_source_code_of_this_project_on_the_github">6. Source code of this project on the github</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/autoconfig-demo">github.com/antkorwin/autoconfig-demo</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -760,7 +670,7 @@ And how to guarantee a consistency of a state machine and another systems.</p>
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'statemachine_part2'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'autoconfig'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
@@ -776,7 +686,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-11 22:50:36 +10
+Last updated 2018-06-10 19:19:40 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

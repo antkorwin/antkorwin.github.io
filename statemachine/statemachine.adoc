@@ -26,7 +26,7 @@ The one starter made all the magic
 
 ## States & Events
 
-For example, consider the business process that is known to most developers - software development lifecycle and Kanban methodology.
+For example, consider the business process that is known to most developers - a software development lifecycle and Kanban methodology.
 If you didn't hear about the Kanban before, then you should read about this methodology.
 You can find a many articles about it on the Internet.
 
@@ -38,7 +38,7 @@ Let's see the following scheme:
 BACKLOG --> INPROGRESS : developer started the feature
 INPROGRESS --> TESTING : developer finished the feature
 TESTING -->DONE : QA-team checked the use case and marked it as successful
-TESTING --> INPROGRESS : QA-team found a bugs and rejected the use case
+TESTING --> INPROGRESS : QA-team found bugs and rejected the use case
 DONE --> [*]
 ....
 
@@ -46,11 +46,11 @@ We can extract the following states from this business-process: `BACKLOG`,
 `IN_PROGRESS`, `TESTING`, `DONE`. This will be our set of states.
 
 The transition from one state to another passes by a certain event.
-Also we need extracting set of events from scheme:
+Also we need extracting set of events from the scheme:
 `START_FEATURE`, `FINISH_FEATURE`, `QA_REJECTED_UC`, `ROCK_STAR_DOUBLE_TASK`, `DEPLOY`, `QA_CHECKED_UC`.
 
-Spring state machine provides the ability to configure itself through enums.
-You can describe the states and the events in enumeration:
+The spring state machine provides the ability to configure itself through enums.
+You can describe states and events in enumeration:
 
 [source, java]
 ----
@@ -138,14 +138,14 @@ so these types will be declared in the configuration.
 <3> description of states
 <4> description of transitions
 
-We set the autostart setting in the base configuration,
-then the state machine will start immediately in the initialization state.
-
 You need to specify the entry point to the state machine (the initial state) in the settings of states.
 When the state machine is start, the transition to this point will be the first.
 
+We set the autostart setting in the base configuration,
+then the state machine will start immediately in the initialization state.
+
 It is important to understand that the transition to the `BACKLOG` state from "nowhere" is also a transition,
-a little later we will see it more clearly.
+a little later, we will see it more clearly.
 
 Also, we specify the exit point (end state) in the configuration of states.
 Transition to this state will stop the state machine.
@@ -157,7 +157,7 @@ the target state, and the event that will triggered this transition.
 
 ## Try to use it
 
-Test successful DI & initialization of state machine
+Test successful DI & initialization of the state machine
 
 [source, java]
 ----
@@ -178,8 +178,7 @@ public class StatesFirstApplicationTests {
 }
 ----
 
-We test the main flow of the application, when execution is on a positive way ("green way"):
-
+Let's try to test a main flow of the application, when execution is on a positive way ("green way"):
 
 [source, java]
 ----
@@ -195,8 +194,7 @@ public void testGreenFlow() {
               .isEqualTo(States.DONE); <1>
 }
 ----
-<1> The main criterion for the successful completion of all transitions
-is the achievement by the state machine of state DONE.
+<1> the main criterion for the successful completion of this test is the achievement of the "DONE" state.
 In a real test, it would be worthwhile to check each transition,
 not only the final state after a series of transitions,
 but for our research purposes this will be enough.
@@ -204,7 +202,7 @@ but for our research purposes this will be enough.
 
 ## Intercept the events of the state machine
 
-Add state machine listener in configuration:
+Add a state machine listener in the configuration:
 
 [source, java]
 ----
@@ -240,11 +238,11 @@ private StateMachineListener<States, Events> listener() {
 		};
 }
 ----
-<1> declaration of listener
+<1> declaration of the listener
 <2> override a callback for intercept any transitions
 <3> override a callback for attempt of unacceptable transitions
 
-After that we can make "wrong way" test:
+After that we can make a "wrong way" test:
 
 [source, java]
 ----
@@ -260,11 +258,11 @@ public void testWrongWay() {
 }
 ----
 
-then we look at logout error:
+then look at the error in the logs:
 
 image::wrong_way_test.png[wrong way test result]
 
-This is a clear example of what I said before,
+This is a clear example of what I said before:
 the starting transition from "nowhere" to `BACKLOG` is also a transition.
 We should use the method `ofNullableState`
 because the source state in this transition is `null`.
@@ -272,9 +270,9 @@ because the source state in this transition is `null`.
 
 ## More than one state machine? No problem!
 
-change annotation `@EnableStateMachine` to `@EnableStateMachineFactory`,
-this provide us the ability to create state machine from factory
-and we can inject factory instead of concrete instance.
+Change annotation `@EnableStateMachine` to `@EnableStateMachineFactory`,
+this provide us the ability to create a state machines from factory
+and we can inject the factory instead of a concrete instance.
 
 [source, java]
 ----
@@ -305,16 +303,18 @@ public class StatesFirstApplicationTests {
 
     @Before
     public void setUp() throws Exception {
-        stateMachine = stateMachineFactory.getStateMachine();
+        stateMachine = stateMachineFactory.getStateMachine(); <1>
     }
 
 		...
 }
 ----
+<1> obtain an instance of the state machine from the factory
+
 
 ## Actions - add some business logic
 
-Let's make auto-deploy after the finished feature.
+Let's run the auto-deploy action after a feature finished.
 
 We can do this as follows:
 
@@ -337,14 +337,14 @@ private Action<States, Events> deployAction() {  <2>
 		};
 }
 ----
-<1> add the deploy action in the configuration of states after enter in the `TESTING` state
-<2> implementation of deploy action
+<1> add the deploy action in the configuration of the states, after entering in the `TESTING` state
+<2> implementation of the deploy action
 
 This approach has a one problem.
 If we slightly complicate our business process, then this action can be performed when it is unnecessary.
-For example, if the developer finished a two features in one pull-request,
-then he can transfer the second task to `TESTING` without run additional deployment.
-We hope that he did it because he is super efficient, so we can call him a "Rock Star".
+For example, if a developer finished two features in the one pull-request,
+then he can transfer the second task to the `TESTING` state without run additional deployment.
+We hope that he did it because he is a super efficient, so we can call him a "Rock Star".
 
 [plantuml]
 ....
@@ -373,10 +373,10 @@ transitions.withExternal()
            .target(States.TESTING)
            .event(Events.ROCK_STAR_MAKE_ALL_IN_ONE);
 ----
-Now if we move task from backlog to testing then will be run deploy.
+Now if we move a task from backlog to testing then will be run deploy.
 But we don't want this behavior.
 
-check this proposition in the test:
+Check this proposition in the test:
 
 [source,java]
 ----
@@ -419,15 +419,15 @@ transitions.withExternal()
            .and()
            	...
 ----
-<1> remove deploying action from the configuration of states
-<2> past the action on transition from IN_PROGRESS to FINISH_FEATURE
+<1> remove the deploying action from the configuration of states
+<2> past the action on the transition from `IN_PROGRESS` to `FINISH_FEATURE`
 
 It provides us a more flexibility and allows to run actions by making a certain transitions.
 
 ## Guards - use conditions in flow.
 
 Next we will add the ability to run deploying from `BACKLOG` and `IN_PROGRESS` states.
-We will make `DEPLOY` as a separate event so that a developers can decide when to do it themselves.
+We will make `DEPLOY` as a separate event so that developers can decide when to do it themselves.
 But before going to `TESTING`, we will verify that the deployment event was called.
 For this we will create a guard on transitions to `TESTING` state.
 
@@ -443,7 +443,7 @@ BACKLOG --> BACKLOG : deploy
 IN_PROGRESS --> IN_PROGRESS : deploy
 ....
 
-Add transitions for internal `DEPLOY` and guards for transitions to `TESTING`
+Add transitions for internal `DEPLOY` and guards for transitions to the `TESTING` state.
 
 [source, java]
 ----
@@ -485,11 +485,11 @@ transitions.withExternal()
            .event(Events.DEPLOY) <2>
            .action(deployAction());
 ----
-<1> guards on transitions to `TESTING`
+<1> guards on transitions to the `TESTING` state
 <2> internal `DEPLOY` events
 
-Then we make guard implementation based on the state machine variables.
-You can write in extend state a lot of useful things that will be shared in process.
+Then we make a guard implementation based on the state machine variables.
+You can write in the extend state a lot of useful things that will be shared in a process.
 
 [source, java]
 ----
@@ -517,7 +517,7 @@ private Action<States, Events> deployAction() {
 }
 ----
 
-Now we can make unit test for this case
+Now we can make a unit test for this case
 
 [source, java]
 ----
@@ -539,20 +539,20 @@ image::guard_test_result.png[guard test result]
 
 ## Persisting State machine
 
-In this section, we will look at how to save and load the current state of the state machine in different storages.
+In this section, we will look at how to save and load a current state of the state machine in different storages.
 
 The process of creating a state machine immediately in a certain state is not easy,
 so that not to keep all the created state machines in memory all the time,
-we need a tool to save and load the state of the state machine by identifier.
+we need a tool to save and load a state of the state machine by identifier.
 
 ### Persisting state machine in-memory
 
-To start we make a simple (in-memory) implementation.
+To start we make a simple (in-memory) implementation of the storage system.
 
 WARNING: We used this kind of storage just for a demonstration.
-For a real application you need to prefer more stable and complexity storage system.
+For a real application you need to prefer a more stable and complexity storage system.
 
-We need to write an implementation of StateMachinePersist.
+We need to write an implementation of StateMachinePersist:
 
 [source, java]
 ----
@@ -578,7 +578,7 @@ public class InMemoryPersist
 <1> We using the HashMap to save a state machines
 
 WARNING: We need to store the context of the state machine,
-not an instance of the state machine.
+not the instance of the state machine.
 The `StateMachineContext` contains not only the current state,
 there are also stored variables that we write to the context.
 It provide ability to restore a completely identical state of the state machine.
@@ -622,7 +622,7 @@ public void testPersist() throws Exception {
 	 firstStateMachine.sendEvent(Events.START_FEATURE);
 	 firstStateMachine.sendEvent(Events.DEPLOY);
 
-	 // precondition
+	 // Precondition
 	 Assertions.assertThat(secondStateMachine.getState().getId())
 						 .isEqualTo(States.BACKLOG);
 
@@ -635,14 +635,14 @@ public void testPersist() throws Exception {
 						 .isEqualTo(States.IN_PROGRESS);
 }
 ----
-<1> Saving a context of the first state machine.
+<1> Save the context of the first state machine.
 <2> Loading the context of the first state machine to the second state machine instance.
 
 ### Persisting state machine in MongoDb
 
-Let's consider an example of a real repository for the state machines.
+Let's consider an example of a real storage system for the state machines.
 
-We need to add some dependencies for working with the MongoDb.
+We need to add a some dependencies for working with the MongoDb.
 Also we will write integration tests with TestContainers framework.
 
 [source, mvn]
@@ -668,7 +668,7 @@ Also we will write integration tests with TestContainers framework.
 <!-- TestContainers -->
 ----
 
-Then we make MongoDb persist
+Then we make a MongoDb persist
 
 [source, java]
 ----
@@ -680,10 +680,10 @@ public StateMachineRuntimePersister<States, Events, UUID> mongoPersist(
 }
 ----
 
-Now we can make integration test.
+Now we can make the integration test.
 
-I have abstract class for testing mongodb application in spring framework.
-The TestContainers library allows us to run the mongodb in docker and use it as a target database:
+I have the abstract class for a testing mongodb applications in spring framework projects.
+The TestContainers library allows us to run the mongodb in the docker container and use it as a target database:
 
 [source, java]
 ----
@@ -764,7 +764,7 @@ In the specific asserts, we checked that the save was exactly in the MongoDB.
 
 ## Multiple configuration of state machines in one project
 
-We sometimes need to use a several different state machines in single project.
+We sometimes need to use a several different state machines in a single project.
 These state machines can have their own sets of states and events.
 
 In order to make a several state machines, you need to use a name on the declaration of the state machine factory.
@@ -864,7 +864,7 @@ It looks like a spaghetti code:
 ----
 
 Of course, you can work on the organization of this code,
-you can replace the repeating logic and make a strategies for processing events, etc.
+you can replace the repeating logic and make a strategy for processing events, etc.
 But in the first approximation it is very difficult to maintain this code.
 It is difficult to track the logic of the transitions and their availability.
 
@@ -883,7 +883,7 @@ This is a good alternative, but a quite expensive.
 I will shortly discuss the cost of using the BPM in a project.
 First, you will need to deploy a full-fledged framework for a BPM processes in the project.
 These frameworks are not lightweight, not all of them work natively in the java.
-Secondly, you need to know a BPMN notation and be able to describing your business process by using this notation.
+Secondly, you need to know the BPMN notation and be able to describing your business process by using this notation.
 
 image:bpm.png[bpmn]
 
@@ -908,7 +908,7 @@ icon:minus[] You should not use BPMN-engine:
 
 - If you do not need to manage a versioning of the processes.
 
-- There is no way to deploy a full-fledged BPM framework in production. (you do not have a required resources or a infrastructure for this or a specialists for support)
+- There is no way to deploy a full-fledged BPM framework in production. (you do not have a required resources, or a infrastructure for this, or a specialists for support)
 
 
 

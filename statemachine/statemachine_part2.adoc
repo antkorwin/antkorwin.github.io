@@ -238,6 +238,8 @@ Usually, we store this model in its own database and operate with it by using tr
 In this chapter we will consider how to safety work with a state machines.
 And how to guarantee a consistency of a state machine and another systems.
 
+
+
 ## Source code of this project on the github
 
 image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]

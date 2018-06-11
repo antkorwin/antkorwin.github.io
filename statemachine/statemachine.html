@@ -496,7 +496,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_states_events">2. States &amp; Events</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>For example, consider the business process that is known to most developers - software development lifecycle and Kanban methodology.
+<p>For example, consider the business process that is known to most developers - a software development lifecycle and Kanban methodology.
 If you didn&#8217;t hear about the Kanban before, then you should read about this methodology.
 You can find a many articles about it on the Internet.</p>
 </div>
@@ -505,7 +505,7 @@ You can find a many articles about it on the Internet.</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="diag-05d34481834169834088965a2f052d11.png" alt="diag 05d34481834169834088965a2f052d11" width="529" height="632">
+<img src="diag-4d22a67f96c34edf24636c2297cbd2d7.png" alt="diag 4d22a67f96c34edf24636c2297cbd2d7" width="518" height="632">
 </div>
 </div>
 <div class="paragraph">
@@ -514,12 +514,12 @@ You can find a many articles about it on the Internet.</p>
 </div>
 <div class="paragraph">
 <p>The transition from one state to another passes by a certain event.
-Also we need extracting set of events from scheme:
+Also we need extracting set of events from the scheme:
 <code>START_FEATURE</code>, <code>FINISH_FEATURE</code>, <code>QA_REJECTED_UC</code>, <code>ROCK_STAR_DOUBLE_TASK</code>, <code>DEPLOY</code>, <code>QA_CHECKED_UC</code>.</p>
 </div>
 <div class="paragraph">
-<p>Spring state machine provides the ability to configure itself through enums.
-You can describe the states and the events in enumeration:</p>
+<p>The spring state machine provides the ability to configure itself through enums.
+You can describe states and events in enumeration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -628,16 +628,16 @@ so these types will be declared in the configuration.</td>
 </table>
 </div>
 <div class="paragraph">
-<p>We set the autostart setting in the base configuration,
-then the state machine will start immediately in the initialization state.</p>
-</div>
-<div class="paragraph">
 <p>You need to specify the entry point to the state machine (the initial state) in the settings of states.
 When the state machine is start, the transition to this point will be the first.</p>
 </div>
 <div class="paragraph">
+<p>We set the autostart setting in the base configuration,
+then the state machine will start immediately in the initialization state.</p>
+</div>
+<div class="paragraph">
 <p>It is important to understand that the transition to the <code>BACKLOG</code> state from "nowhere" is also a transition,
-a little later we will see it more clearly.</p>
+a little later, we will see it more clearly.</p>
 </div>
 <div class="paragraph">
 <p>Also, we specify the exit point (end state) in the configuration of states.
@@ -654,7 +654,7 @@ the target state, and the event that will triggered this transition.</p>
 <h2 id="_try_to_use_it">4. Try to use it</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Test successful DI &amp; initialization of state machine</p>
+<p>Test successful DI &amp; initialization of the state machine</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -676,7 +676,7 @@ public class StatesFirstApplicationTests {
 </div>
 </div>
 <div class="paragraph">
-<p>We test the main flow of the application, when execution is on a positive way ("green way"):</p>
+<p>Let&#8217;s try to test a main flow of the application, when execution is on a positive way ("green way"):</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -697,8 +697,7 @@ public void testGreenFlow() {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>The main criterion for the successful completion of all transitions
-is the achievement by the state machine of state DONE.
+<td>the main criterion for the successful completion of this test is the achievement of the "DONE" state.
 In a real test, it would be worthwhile to check each transition,
 not only the final state after a series of transitions,
 but for our research purposes this will be enough.</td>
@@ -711,7 +710,7 @@ but for our research purposes this will be enough.</td>
 <h2 id="_intercept_the_events_of_the_state_machine">5. Intercept the events of the state machine</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Add state machine listener in configuration:</p>
+<p>Add a state machine listener in the configuration:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -752,7 +751,7 @@ private StateMachineListener&lt;States, Events&gt; listener() {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>declaration of listener</td>
+<td>declaration of the listener</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -765,7 +764,7 @@ private StateMachineListener&lt;States, Events&gt; listener() {
 </table>
 </div>
 <div class="paragraph">
-<p>After that we can make "wrong way" test:</p>
+<p>After that we can make a "wrong way" test:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -782,7 +781,7 @@ public void testWrongWay() {
 </div>
 </div>
 <div class="paragraph">
-<p>then we look at logout error:</p>
+<p>then look at the error in the logs:</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -790,7 +789,7 @@ public void testWrongWay() {
 </div>
 </div>
 <div class="paragraph">
-<p>This is a clear example of what I said before,
+<p>This is a clear example of what I said before:
 the starting transition from "nowhere" to <code>BACKLOG</code> is also a transition.
 We should use the method <code>ofNullableState</code>
 because the source state in this transition is <code>null</code>.</p>
@@ -801,9 +800,9 @@ because the source state in this transition is <code>null</code>.</p>
 <h2 id="_more_than_one_state_machine_no_problem">6. More than one state machine? No problem!</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>change annotation <code>@EnableStateMachine</code> to <code>@EnableStateMachineFactory</code>,
-this provide us the ability to create state machine from factory
-and we can inject factory instead of concrete instance.</p>
+<p>Change annotation <code>@EnableStateMachine</code> to <code>@EnableStateMachineFactory</code>,
+this provide us the ability to create a state machines from factory
+and we can inject the factory instead of a concrete instance.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -835,12 +834,20 @@ public class StatesFirstApplicationTests {
 
     @Before
     public void setUp() throws Exception {
-        stateMachine = stateMachineFactory.getStateMachine();
+        stateMachine = stateMachineFactory.getStateMachine(); <i class="conum" data-value="1"></i><b>(1)</b>
     }
 
 		...
 }</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>obtain an instance of the state machine from the factory</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -848,7 +855,7 @@ public class StatesFirstApplicationTests {
 <h2 id="_actions_add_some_business_logic">7. Actions - add some business logic</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Let&#8217;s make auto-deploy after the finished feature.</p>
+<p>Let&#8217;s run the auto-deploy action after a feature finished.</p>
 </div>
 <div class="paragraph">
 <p>We can do this as follows:</p>
@@ -877,20 +884,20 @@ private Action&lt;States, Events&gt; deployAction() {  <i class="conum" data-val
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>add the deploy action in the configuration of states after enter in the <code>TESTING</code> state</td>
+<td>add the deploy action in the configuration of the states, after entering in the <code>TESTING</code> state</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>implementation of deploy action</td>
+<td>implementation of the deploy action</td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
 <p>This approach has a one problem.
 If we slightly complicate our business process, then this action can be performed when it is unnecessary.
-For example, if the developer finished a two features in one pull-request,
-then he can transfer the second task to <code>TESTING</code> without run additional deployment.
-We hope that he did it because he is super efficient, so we can call him a "Rock Star".</p>
+For example, if a developer finished two features in the one pull-request,
+then he can transfer the second task to the <code>TESTING</code> state without run additional deployment.
+We hope that he did it because he is a super efficient, so we can call him a "Rock Star".</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -912,11 +919,11 @@ We hope that he did it because he is super efficient, so we can call him a "Rock
 </div>
 </div>
 <div class="paragraph">
-<p>Now if we move task from backlog to testing then will be run deploy.
+<p>Now if we move a task from backlog to testing then will be run deploy.
 But we don&#8217;t want this behavior.</p>
 </div>
 <div class="paragraph">
-<p>check this proposition in the test:</p>
+<p>Check this proposition in the test:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -970,11 +977,11 @@ transitions.withExternal()
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>remove deploying action from the configuration of states</td>
+<td>remove the deploying action from the configuration of states</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>past the action on transition from IN_PROGRESS to FINISH_FEATURE</td>
+<td>past the action on the transition from <code>IN_PROGRESS</code> to <code>FINISH_FEATURE</code></td>
 </tr>
 </table>
 </div>
@@ -988,7 +995,7 @@ transitions.withExternal()
 <div class="sectionbody">
 <div class="paragraph">
 <p>Next we will add the ability to run deploying from <code>BACKLOG</code> and <code>IN_PROGRESS</code> states.
-We will make <code>DEPLOY</code> as a separate event so that a developers can decide when to do it themselves.
+We will make <code>DEPLOY</code> as a separate event so that developers can decide when to do it themselves.
 But before going to <code>TESTING</code>, we will verify that the deployment event was called.
 For this we will create a guard on transitions to <code>TESTING</code> state.</p>
 </div>
@@ -998,7 +1005,7 @@ For this we will create a guard on transitions to <code>TESTING</code> state.</p
 </div>
 </div>
 <div class="paragraph">
-<p>Add transitions for internal <code>DEPLOY</code> and guards for transitions to <code>TESTING</code></p>
+<p>Add transitions for internal <code>DEPLOY</code> and guards for transitions to the <code>TESTING</code> state.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1045,7 +1052,7 @@ For this we will create a guard on transitions to <code>TESTING</code> state.</p
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>guards on transitions to <code>TESTING</code></td>
+<td>guards on transitions to the <code>TESTING</code> state</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -1054,8 +1061,8 @@ For this we will create a guard on transitions to <code>TESTING</code> state.</p
 </table>
 </div>
 <div class="paragraph">
-<p>Then we make guard implementation based on the state machine variables.
-You can write in extend state a lot of useful things that will be shared in process.</p>
+<p>Then we make a guard implementation based on the state machine variables.
+You can write in the extend state a lot of useful things that will be shared in a process.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1085,7 +1092,7 @@ You can write in extend state a lot of useful things that will be shared in proc
 </div>
 </div>
 <div class="paragraph">
-<p>Now we can make unit test for this case</p>
+<p>Now we can make a unit test for this case</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1115,17 +1122,17 @@ public void testGuard() {
 <h2 id="_persisting_state_machine">9. Persisting State machine</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>In this section, we will look at how to save and load the current state of the state machine in different storages.</p>
+<p>In this section, we will look at how to save and load a current state of the state machine in different storages.</p>
 </div>
 <div class="paragraph">
 <p>The process of creating a state machine immediately in a certain state is not easy,
 so that not to keep all the created state machines in memory all the time,
-we need a tool to save and load the state of the state machine by identifier.</p>
+we need a tool to save and load a state of the state machine by identifier.</p>
 </div>
 <div class="sect2">
 <h3 id="_persisting_state_machine_in_memory">9.1. Persisting state machine in-memory</h3>
 <div class="paragraph">
-<p>To start we make a simple (in-memory) implementation.</p>
+<p>To start we make a simple (in-memory) implementation of the storage system.</p>
 </div>
 <div class="admonitionblock warning">
 <table>
@@ -1135,13 +1142,13 @@ we need a tool to save and load the state of the state machine by identifier.</p
 </td>
 <td class="content">
 We used this kind of storage just for a demonstration.
-For a real application you need to prefer more stable and complexity storage system.
+For a real application you need to prefer a more stable and complexity storage system.
 </td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>We need to write an implementation of StateMachinePersist.</p>
+<p>We need to write an implementation of StateMachinePersist:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1181,7 +1188,7 @@ For a real application you need to prefer more stable and complexity storage sys
 </td>
 <td class="content">
 We need to store the context of the state machine,
-not an instance of the state machine.
+not the instance of the state machine.
 The <code>StateMachineContext</code> contains not only the current state,
 there are also stored variables that we write to the context.
 It provide ability to restore a completely identical state of the state machine.
@@ -1230,7 +1237,7 @@ public void testPersist() throws Exception {
 	 firstStateMachine.sendEvent(Events.START_FEATURE);
 	 firstStateMachine.sendEvent(Events.DEPLOY);
 
-	 // precondition
+	 // Precondition
 	 Assertions.assertThat(secondStateMachine.getState().getId())
 						 .isEqualTo(States.BACKLOG);
 
@@ -1248,7 +1255,7 @@ public void testPersist() throws Exception {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Saving a context of the first state machine.</td>
+<td>Save the context of the first state machine.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -1260,10 +1267,10 @@ public void testPersist() throws Exception {
 <div class="sect2">
 <h3 id="_persisting_state_machine_in_mongodb">9.2. Persisting state machine in MongoDb</h3>
 <div class="paragraph">
-<p>Let&#8217;s consider an example of a real repository for the state machines.</p>
+<p>Let&#8217;s consider an example of a real storage system for the state machines.</p>
 </div>
 <div class="paragraph">
-<p>We need to add some dependencies for working with the MongoDb.
+<p>We need to add a some dependencies for working with the MongoDb.
 Also we will write integration tests with TestContainers framework.</p>
 </div>
 <div class="listingblock">
@@ -1290,7 +1297,7 @@ Also we will write integration tests with TestContainers framework.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Then we make MongoDb persist</p>
+<p>Then we make a MongoDb persist</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1303,11 +1310,11 @@ public StateMachineRuntimePersister&lt;States, Events, UUID&gt; mongoPersist(
 </div>
 </div>
 <div class="paragraph">
-<p>Now we can make integration test.</p>
+<p>Now we can make the integration test.</p>
 </div>
 <div class="paragraph">
-<p>I have abstract class for testing mongodb application in spring framework.
-The TestContainers library allows us to run the mongodb in docker and use it as a target database:</p>
+<p>I have the abstract class for a testing mongodb applications in spring framework projects.
+The TestContainers library allows us to run the mongodb in the docker container and use it as a target database:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1395,7 +1402,7 @@ public abstract class BaseMongoIT {
 <h2 id="_multiple_configuration_of_state_machines_in_one_project">10. Multiple configuration of state machines in one project</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We sometimes need to use a several different state machines in single project.
+<p>We sometimes need to use a several different state machines in a single project.
 These state machines can have their own sets of states and events.</p>
 </div>
 <div class="paragraph">
@@ -1502,7 +1509,7 @@ And consider their pros and cons.</p>
 </div>
 <div class="paragraph">
 <p>Of course, you can work on the organization of this code,
-you can replace the repeating logic and make a strategies for processing events, etc.
+you can replace the repeating logic and make a strategy for processing events, etc.
 But in the first approximation it is very difficult to maintain this code.
 It is difficult to track the logic of the transitions and their availability.</p>
 </div>
@@ -1534,7 +1541,7 @@ It is difficult to track the logic of the transitions and their availability.</p
 I will shortly discuss the cost of using the BPM in a project.
 First, you will need to deploy a full-fledged framework for a BPM processes in the project.
 These frameworks are not lightweight, not all of them work natively in the java.
-Secondly, you need to know a BPMN notation and be able to describing your business process by using this notation.</p>
+Secondly, you need to know the BPMN notation and be able to describing your business process by using this notation.</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="bpm.png" alt="bpmn"></span></p>
@@ -1577,7 +1584,7 @@ such as: messages, subprocesses, signals, conditions on any transitions, etc.</p
 <p>If you do not need to manage a versioning of the processes.</p>
 </li>
 <li>
-<p>There is no way to deploy a full-fledged BPM framework in production. (you do not have a required resources or a infrastructure for this or a specialists for support)</p>
+<p>There is no way to deploy a full-fledged BPM framework in production. (you do not have a required resources, or a infrastructure for this, or a specialists for support)</p>
 </li>
 </ul>
 </div>
@@ -1642,7 +1649,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-09 08:50:07 +10
+Last updated 2018-06-11 23:44:25 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
