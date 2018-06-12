@@ -5,8 +5,8 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
-<meta name="author" content="Korovin Anatoliy">
-<title>Java Architect&#8217;s Blog</title>
+<meta name="author" content="Korovin Anatoliy, Home">
+<title>Persisiting Spring State Machine</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,128 +434,312 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Java Architect&#8217;s Blog</h1>
+<h1>Persisiting Spring State Machine</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
+<span id="author2" class="author">Home</span><br>
+<span id="email2" class="email"><a href="http://antkorwin.com" class="bare">http://antkorwin.com</a></span><br>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_persisting_state_machine_in_memory">1. Persisting state machine in-memory</a></li>
+<li><a href="#_persisting_state_machine_in_mongodb">2. Persisting state machine in MongoDb</a></li>
+<li><a href="#_source_code_of_this_project_on_the_github">3. Source code of this project on the github</a></li>
+</ul>
 </div>
 </div>
 <div id="content">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>My thoughts about Java application development, Spring Framework, TDD and other&#8230;&#8203;</p>
+<p>In this article, we will look at how to save and load a current state of the state machine in a different kinds of storages.
+The process of creating a state machine immediately in a certain state is not easy,
+so that not to keep all the created state machines in memory all the time,
+we need a tool to save and load a state of the state machine by identifier.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_my_articles_and_blog_posts">My Articles and Blog Posts:</h2>
+<h2 id="_persisting_state_machine_in_memory">1. Persisting state machine in-memory</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_spring_state_machine">Spring State Machine:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./statemachine/statemachine.html">Spring State machine workshop</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>Example of using a spring state machine for an automatization of a different kinds of business process.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_rus.html">Spring State machine workshop</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span> </dt>
-<dd>
-<p>Использование spring state machine для автоматизации бизнес-процессов</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_persisting.html">Persisting a spring state machine</a> (English)  <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to store a current state of a state machine in the MongoDb and how to test it with the Docker by the testcontainers framework.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_exception_handling.html">Error handling</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to work with errors that occur in a different parts of the state machine logics.</p>
-</dd>
-</dl>
+<div class="paragraph">
+<p>To start we make a simple (in-memory) implementation of the storage system.</p>
 </div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+We used this kind of storage just for a demonstration.
+For a real application you need to prefer a more stable and complexity storage system.
+</td>
+</tr>
+</table>
 </div>
-<div class="sect2">
-<h3 id="_spring_cloud">Spring Cloud:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./cloud/micros.html">Spring cloud stack</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Example of using an infrastructure for a microservices application, based on spring cloud stack.</p>
-</dd>
-</dl>
+<div class="paragraph">
+<p>We need to write an implementation of StateMachinePersist:</p>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_spring_configuration">Spring Configuration:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./spring_configuration/autoconfig.html">Spring auto-configuration &amp; conditional</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Write you own auto-configuration classes with a ConditionalOnBean dependency</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hibernate">Hibernate</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./hibernate/entity_init.html">Choosing the right way to initialize a fields of the entity</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Варианты инициализации полей сущности, значениями поумолчанию, а так же типичные ошибки при работе с ними. Эта статья послужила материалом для
-Детективной истории от Баруха Садогурского и Евгения Борисова на конференции jpoint 2018.</p>
-</dd>
-<dt class="hdlist1"><a href="./hibernate/unproxy.html">разворачиваем прокси (hibernate покажи личико)</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как получить из hibernate proxy сам объект.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_reflection">Reflection</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./reflection/make_new_instance.html">создаем новый объект через reflection</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Тонкости implicit параметров при создании нового экземпляра объекта.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_code_conventions">Code conventions:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="http://antkorwin.com/codestyle.html">Code style conventions</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Code style conventions</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_annotation_processing">Annotation processing</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./annotation_processor/lombok_mapstruct.html">Как подружить lombok и mapstruct</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как использовать сразу два кодо-генератора, да так чтобы задать определенную последовательность их запуска.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_public_talks">Public Talks:</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_state_machine_workshop_live_video_18_05_2018">State machine workshop live video - 18.05.2018</h3>
-<div class="videoblock">
+<div class="listingblock">
 <div class="content">
-<iframe width="520" height="390" src="https://www.youtube.com/embed/J56_t5lny9c?rel=0" frameborder="0" allowfullscreen></iframe>
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class InMemoryPersist
+        implements StateMachinePersist&lt;States, Events, UUID&gt; {
+
+    private HashMap&lt;UUID, StateMachineContext&lt;States, Events&gt;&gt; storage
+            = new HashMap&lt;&gt;(); <i class="conum" data-value="1"></i><b>(1)</b>
+
+    @Override
+    public void write(StateMachineContext&lt;States, Events&gt; context,
+                      UUID contextObj) throws Exception {
+
+        storage.put(contextObj, context);
+    }
+
+    @Override
+    public StateMachineContext&lt;States, Events&gt; read(UUID contextObj) throws Exception {
+        return storage.get(contextObj);
+    }
+}</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>We using the HashMap to save a state machines</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+We need to store the context of the state machine,
+not the instance of the state machine.
+The <code>StateMachineContext</code> contains not only the current state,
+there are also stored variables that we write to the context.
+It provide ability to restore a completely identical state of the state machine.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Than we make a persist configuration:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Bean
+public StateMachinePersist&lt;States, Events, UUID&gt; inMemoryPersist() {
+    return new InMemoryPersist();
+}
+
+@Bean
+public StateMachinePersister&lt;States, Events, UUID&gt; persister(
+        StateMachinePersist&lt;States, Events, UUID&gt; defaultPersist) {
+
+    return new DefaultStateMachinePersister&lt;&gt;(defaultPersist);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we can use it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
+private StateMachineFactory&lt;States, Events&gt; stateMachineFactory;
+
+@Autowired
+private StateMachinePersister&lt;States, Events, UUID&gt; persister;
+
+@Test
+public void testPersist() throws Exception {
+	 // Arrange
+	 StateMachine&lt;States, Events&gt; firstStateMachine =
+					 stateMachineFactory.getStateMachine();
+
+	 StateMachine&lt;States, Events&gt; secondStateMachine =
+					 stateMachineFactory.getStateMachine();
+
+	 firstStateMachine.sendEvent(Events.START_FEATURE);
+	 firstStateMachine.sendEvent(Events.DEPLOY);
+
+	 // Precondition
+	 Assertions.assertThat(secondStateMachine.getState().getId())
+						 .isEqualTo(States.BACKLOG);
+
+	 // Act
+	 persister.persist(firstStateMachine, firstStateMachine.getUuid()); <i class="conum" data-value="1"></i><b>(1)</b>
+	 persister.restore(secondStateMachine, firstStateMachine.getUuid()); <i class="conum" data-value="2"></i><b>(2)</b>
+
+	 // Asserts
+	 Assertions.assertThat(secondStateMachine.getState().getId())
+						 .isEqualTo(States.IN_PROGRESS);
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Save the context of the first state machine.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Loading the context of the first state machine to the second state machine instance.</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_persisting_state_machine_in_mongodb">2. Persisting state machine in MongoDb</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s consider an example of a real storage system for the state machines.</p>
+</div>
+<div class="paragraph">
+<p>We need to add a some dependencies for working with the MongoDb.
+Also we will write integration tests with TestContainers framework.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./tc_logo.png" alt="test containers" width="500"></span></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-mvn" data-lang="mvn">&lt;!-- MongoDB --&gt;
+&lt;dependency&gt;
+	&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+	&lt;artifactId&gt;spring-boot-starter-data-mongodb&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+	&lt;groupId&gt;org.springframework.statemachine&lt;/groupId&gt;
+	&lt;artifactId&gt;spring-statemachine-data-mongodb&lt;/artifactId&gt;
+	&lt;version&gt;2.0.0.RELEASE&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;!-- MongoDB --&gt;
+
+&lt;!-- TestContainers --&gt;
+&lt;dependency&gt;
+	&lt;groupId&gt;org.testcontainers&lt;/groupId&gt;
+	&lt;artifactId&gt;testcontainers&lt;/artifactId&gt;
+	&lt;version&gt;1.4.3&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;!-- TestContainers --&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then we make a MongoDb persist</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Bean
+public StateMachineRuntimePersister&lt;States, Events, UUID&gt; mongoPersist(
+        MongoDbStateMachineRepository mongoRepository) {
+
+    return new MongoDbPersistingStateMachineInterceptor&lt;States,Events,UUID&gt;(mongoRepository);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we can make the integration test.</p>
+</div>
+<div class="paragraph">
+<p>I have the abstract class for a testing mongodb applications in spring framework projects.
+The TestContainers library allows us to run the mongodb in the docker container and use it as a target database:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@SpringBootTest
+@RunWith(SpringRunner.class)
+public abstract class BaseMongoIT {
+
+    private static final Integer MONGO_PORT = 27017;
+    private static GenericContainer mongo =
+            new GenericContainer("mongo:latest")
+            .withExposedPorts(MONGO_PORT);
+
+    static {
+        mongo.start();
+        System.setProperty("spring.data.mongodb.host", mongo.getContainerIpAddress());
+        System.setProperty("spring.data.mongodb.port", mongo.getMappedPort(MONGO_PORT).toString());
+    }
+
+    @Autowired
+    protected MongoTemplate mongoTemplate;
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and test case:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class MongoPersistTest extends BaseMongoIT {
+
+    @Autowired
+    private StateMachinePersister&lt;States, Events, UUID&gt; persister;
+    @Autowired
+    private StateMachineFactory&lt;States, Events&gt; stateMachineFactory;
+
+	@Test
+    public void testMongoPersist() throws Exception {
+        // Arrange
+        StateMachine&lt;States, Events&gt; firstStateMachine = stateMachineFactory.getStateMachine();
+        StateMachine&lt;States, Events&gt; secondStateMachine = stateMachineFactory.getStateMachine();
+
+        firstStateMachine.sendEvent(Events.START_FEATURE);
+        firstStateMachine.sendEvent(Events.DEPLOY);
+
+        // Act
+        persister.persist(firstStateMachine, firstStateMachine.getUuid());
+        persister.persist(secondStateMachine, secondStateMachine.getUuid());
+        persister.restore(secondStateMachine, firstStateMachine.getUuid());
+
+        // Asserts
+        Assertions.assertThat(secondStateMachine.getState().getId())
+                  .isEqualTo(States.IN_PROGRESS);
+
+        boolean deployed = (boolean) secondStateMachine.getExtendedState()
+                                                       .getVariables()
+                                                       .get("deployed");
+
+        Assertions.assertThat(deployed).isEqualTo(true);
+
+        // Mongo specific asserts:
+        Assertions.assertThat(mongoTemplate.getCollectionNames())
+                  .isNotEmpty();
+
+        List&lt;Document&gt; documents = mongoTemplate.findAll(Document.class,
+                                                         "MongoDbRepositoryStateMachine");
+
+        Assertions.assertThat(documents).hasSize(2);
+        Assertions.assertThat(documents)
+                  .flatExtracting(Document::values)
+                  .contains(firstStateMachine.getUuid().toString(),
+                            secondStateMachine.getUuid().toString())
+                  .contains(firstStateMachine.getState().getId().toString(),
+                            secondStateMachine.getState().getId().toString());
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the specific asserts, we checked that the save was exactly in the MongoDB.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_source_code_of_this_project_on_the_github">3. Source code of this project on the github</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -585,13 +769,31 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/47919536" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
-</div>
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'statemachine'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-12 23:10:13 +10
+Last updated 2018-06-12 14:35:35 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

@@ -1,0 +1,267 @@
+= Persisiting Spring State Machine
+:source-highlighter: prettify
+:icons: font
+:toc:
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+
+In this article, we will look at how to save and load a current state of the state machine in a different kinds of storages.
+The process of creating a state machine immediately in a certain state is not easy,
+so that not to keep all the created state machines in memory all the time,
+we need a tool to save and load a state of the state machine by identifier.
+
+## Persisting state machine in-memory
+
+To start we make a simple (in-memory) implementation of the storage system.
+
+WARNING: We used this kind of storage just for a demonstration.
+For a real application you need to prefer a more stable and complexity storage system.
+
+We need to write an implementation of StateMachinePersist:
+
+[source, java]
+----
+public class InMemoryPersist
+        implements StateMachinePersist<States, Events, UUID> {
+
+    private HashMap<UUID, StateMachineContext<States, Events>> storage
+            = new HashMap<>(); <1>
+
+    @Override
+    public void write(StateMachineContext<States, Events> context,
+                      UUID contextObj) throws Exception {
+
+        storage.put(contextObj, context);
+    }
+
+    @Override
+    public StateMachineContext<States, Events> read(UUID contextObj) throws Exception {
+        return storage.get(contextObj);
+    }
+}
+----
+<1> We using the HashMap to save a state machines
+
+WARNING: We need to store the context of the state machine,
+not the instance of the state machine.
+The `StateMachineContext` contains not only the current state,
+there are also stored variables that we write to the context.
+It provide ability to restore a completely identical state of the state machine.
+
+Than we make a persist configuration:
+
+[source, java]
+----
+@Bean
+public StateMachinePersist<States, Events, UUID> inMemoryPersist() {
+    return new InMemoryPersist();
+}
+
+@Bean
+public StateMachinePersister<States, Events, UUID> persister(
+        StateMachinePersist<States, Events, UUID> defaultPersist) {
+
+    return new DefaultStateMachinePersister<>(defaultPersist);
+}
+----
+
+Now we can use it:
+
+[source, java]
+----
+@Autowired
+private StateMachineFactory<States, Events> stateMachineFactory;
+
+@Autowired
+private StateMachinePersister<States, Events, UUID> persister;
+
+@Test
+public void testPersist() throws Exception {
+	 // Arrange
+	 StateMachine<States, Events> firstStateMachine =
+					 stateMachineFactory.getStateMachine();
+
+	 StateMachine<States, Events> secondStateMachine =
+					 stateMachineFactory.getStateMachine();
+
+	 firstStateMachine.sendEvent(Events.START_FEATURE);
+	 firstStateMachine.sendEvent(Events.DEPLOY);
+
+	 // Precondition
+	 Assertions.assertThat(secondStateMachine.getState().getId())
+						 .isEqualTo(States.BACKLOG);
+
+	 // Act
+	 persister.persist(firstStateMachine, firstStateMachine.getUuid()); <1>
+	 persister.restore(secondStateMachine, firstStateMachine.getUuid()); <2>
+
+	 // Asserts
+	 Assertions.assertThat(secondStateMachine.getState().getId())
+						 .isEqualTo(States.IN_PROGRESS);
+}
+----
+<1> Save the context of the first state machine.
+<2> Loading the context of the first state machine to the second state machine instance.
+
+## Persisting state machine in MongoDb
+
+Let's consider an example of a real storage system for the state machines.
+
+We need to add a some dependencies for working with the MongoDb.
+Also we will write integration tests with TestContainers framework.
+
+image:./tc_logo.png[test containers, 500]
+
+
+[source, mvn]
+----
+<!-- MongoDB -->
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-data-mongodb</artifactId>
+</dependency>
+<dependency>
+	<groupId>org.springframework.statemachine</groupId>
+	<artifactId>spring-statemachine-data-mongodb</artifactId>
+	<version>2.0.0.RELEASE</version>
+</dependency>
+<!-- MongoDB -->
+
+<!-- TestContainers -->
+<dependency>
+	<groupId>org.testcontainers</groupId>
+	<artifactId>testcontainers</artifactId>
+	<version>1.4.3</version>
+</dependency>
+<!-- TestContainers -->
+----
+
+Then we make a MongoDb persist
+
+[source, java]
+----
+@Bean
+public StateMachineRuntimePersister<States, Events, UUID> mongoPersist(
+        MongoDbStateMachineRepository mongoRepository) {
+
+    return new MongoDbPersistingStateMachineInterceptor<States,Events,UUID>(mongoRepository);
+}
+----
+
+Now we can make the integration test.
+
+I have the abstract class for a testing mongodb applications in spring framework projects.
+The TestContainers library allows us to run the mongodb in the docker container and use it as a target database:
+
+[source, java]
+----
+@SpringBootTest
+@RunWith(SpringRunner.class)
+public abstract class BaseMongoIT {
+
+    private static final Integer MONGO_PORT = 27017;
+    private static GenericContainer mongo =
+            new GenericContainer("mongo:latest")
+            .withExposedPorts(MONGO_PORT);
+
+    static {
+        mongo.start();
+        System.setProperty("spring.data.mongodb.host", mongo.getContainerIpAddress());
+        System.setProperty("spring.data.mongodb.port", mongo.getMappedPort(MONGO_PORT).toString());
+    }
+
+    @Autowired
+    protected MongoTemplate mongoTemplate;
+}
+----
+
+and test case:
+
+[source, java]
+----
+public class MongoPersistTest extends BaseMongoIT {
+
+    @Autowired
+    private StateMachinePersister<States, Events, UUID> persister;
+    @Autowired
+    private StateMachineFactory<States, Events> stateMachineFactory;
+
+	@Test
+    public void testMongoPersist() throws Exception {
+        // Arrange
+        StateMachine<States, Events> firstStateMachine = stateMachineFactory.getStateMachine();
+        StateMachine<States, Events> secondStateMachine = stateMachineFactory.getStateMachine();
+
+        firstStateMachine.sendEvent(Events.START_FEATURE);
+        firstStateMachine.sendEvent(Events.DEPLOY);
+
+        // Act
+        persister.persist(firstStateMachine, firstStateMachine.getUuid());
+        persister.persist(secondStateMachine, secondStateMachine.getUuid());
+        persister.restore(secondStateMachine, firstStateMachine.getUuid());
+
+        // Asserts
+        Assertions.assertThat(secondStateMachine.getState().getId())
+                  .isEqualTo(States.IN_PROGRESS);
+
+        boolean deployed = (boolean) secondStateMachine.getExtendedState()
+                                                       .getVariables()
+                                                       .get("deployed");
+
+        Assertions.assertThat(deployed).isEqualTo(true);
+
+        // Mongo specific asserts:
+        Assertions.assertThat(mongoTemplate.getCollectionNames())
+                  .isNotEmpty();
+
+        List<Document> documents = mongoTemplate.findAll(Document.class,
+                                                         "MongoDbRepositoryStateMachine");
+
+        Assertions.assertThat(documents).hasSize(2);
+        Assertions.assertThat(documents)
+                  .flatExtracting(Document::values)
+                  .contains(firstStateMachine.getUuid().toString(),
+                            secondStateMachine.getUuid().toString())
+                  .contains(firstStateMachine.getState().getId().toString(),
+                            secondStateMachine.getState().getId().toString());
+    }
+}
+----
+In the specific asserts, we checked that the save was exactly in the MongoDB.
+
+
+
+
+## Source code of this project on the github
+
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'statemachine'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++

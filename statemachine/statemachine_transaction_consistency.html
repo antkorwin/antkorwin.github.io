@@ -5,8 +5,8 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
-<meta name="author" content="Korovin Anatoliy">
-<title>Java Architect&#8217;s Blog</title>
+<meta name="author" content="Korovin Anatoliy, Home">
+<title>Transactions and consistency between the state machine and other systems.</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,129 +434,40 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Java Architect&#8217;s Blog</h1>
+<h1>Transactions and consistency between the state machine and other systems.</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
+<span id="author2" class="author">Home</span><br>
+<span id="email2" class="email"><a href="http://antkorwin.com" class="bare">http://antkorwin.com</a></span><br>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_how_to_guarantee_a_consistency_of_transactions_within_using_of_a_state_machine">1. How to guarantee a consistency of transactions within using of a state machine</a></li>
+<li><a href="#_source_code_of_this_project_on_the_github">2. Source code of this project on the github</a></li>
+</ul>
 </div>
 </div>
 <div id="content">
-<div id="preamble">
+<div class="sect1">
+<h2 id="_how_to_guarantee_a_consistency_of_transactions_within_using_of_a_state_machine">1. How to guarantee a consistency of transactions within using of a state machine</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>My thoughts about Java application development, Spring Framework, TDD and other&#8230;&#8203;</p>
+<p>Often, we have a business domain model that separate from the state machine.
+In ours projects state machines used just for an organization of a business workflow.
+We store an all domain-specific data in other objects.
+Usually, we store this objects in its own database and operate with it by using transactions.</p>
+</div>
+<div class="paragraph">
+<p>In this chapter we will consider how to safety work with a state machine.
+And how to guarantee a consistency between the state machine and other systems.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_my_articles_and_blog_posts">My Articles and Blog Posts:</h2>
+<h2 id="_source_code_of_this_project_on_the_github">2. Source code of this project on the github</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="_spring_state_machine">Spring State Machine:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./statemachine/statemachine.html">Spring State machine workshop</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>Example of using a spring state machine for an automatization of a different kinds of business process.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_rus.html">Spring State machine workshop</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span> </dt>
-<dd>
-<p>Использование spring state machine для автоматизации бизнес-процессов</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_persisting.html">Persisting a spring state machine</a> (English)  <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to store a current state of a state machine in the MongoDb and how to test it with the Docker by the testcontainers framework.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_exception_handling.html">Error handling</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to work with errors that occur in a different parts of the state machine logics.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_spring_cloud">Spring Cloud:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./cloud/micros.html">Spring cloud stack</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Example of using an infrastructure for a microservices application, based on spring cloud stack.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_spring_configuration">Spring Configuration:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./spring_configuration/autoconfig.html">Spring auto-configuration &amp; conditional</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Write you own auto-configuration classes with a ConditionalOnBean dependency</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hibernate">Hibernate</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./hibernate/entity_init.html">Choosing the right way to initialize a fields of the entity</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Варианты инициализации полей сущности, значениями поумолчанию, а так же типичные ошибки при работе с ними. Эта статья послужила материалом для
-Детективной истории от Баруха Садогурского и Евгения Борисова на конференции jpoint 2018.</p>
-</dd>
-<dt class="hdlist1"><a href="./hibernate/unproxy.html">разворачиваем прокси (hibernate покажи личико)</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как получить из hibernate proxy сам объект.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_reflection">Reflection</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./reflection/make_new_instance.html">создаем новый объект через reflection</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Тонкости implicit параметров при создании нового экземпляра объекта.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_code_conventions">Code conventions:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="http://antkorwin.com/codestyle.html">Code style conventions</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Code style conventions</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_annotation_processing">Annotation processing</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./annotation_processor/lombok_mapstruct.html">Как подружить lombok и mapstruct</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как использовать сразу два кодо-генератора, да так чтобы задать определенную последовательность их запуска.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_public_talks">Public Talks:</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_state_machine_workshop_live_video_18_05_2018">State machine workshop live video - 18.05.2018</h3>
-<div class="videoblock">
-<div class="content">
-<iframe width="520" height="390" src="https://www.youtube.com/embed/J56_t5lny9c?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
-</div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
     (function (d, w, c) {
@@ -585,13 +496,31 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/47919536" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
-</div>
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'statemachine_transactions_consistency'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-12 23:10:13 +10
+Last updated 2018-06-12 10:10:38 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

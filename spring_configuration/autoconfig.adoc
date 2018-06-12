@@ -12,11 +12,11 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 ## Preamble
 
 The CTO of our company sent me an interesting case of a configuration, last night.
-He not fears coding something unusual, this is a good trait for a chief.
+He not fears coding something unusual, this is a good habit for a chief.
 
 He wanted to make a one bean depends on another,
 and the first of them should created only if he set a certain property.
-Of course in this case the second bean should not be created.
+Of course, in this case the second bean should not be created.
 
 ## Let's try to code this.
 
@@ -121,22 +121,126 @@ another auto-configuration, make sure that the one *using this condition runs af
 
 What does it mean for us:
 
-- we need to make our configuration classes as auto-configuration
+- We need to make our configuration classes as auto-configuration
 
-- the `BarConfig` must be processed after the `FooConfig`.
+- The `BarConfig` must be processed after the `FooConfig`.
 
 ## How to make auto-configuration class
 
-You need to ...
+Under the hood, auto-configuration files are the simple `@Configuration` classes
+that using conditional annotations such as `@Conditional`, `@ConditionalOnClass`, `@ConditionalOnMissingBean`, etc.
+
+These annotations allow us to specify constraints and dependencies between the beans in the configuration.
+
+IMPORTANT: In order for our configuration will be loaded by the Spring,
+we need to add a path to configuration classes into the `spring.factories` property file.
+This file must be located in the `META-INF` folder of the resources of your's project.
+
+This properties is processing by `SpringFactoriesLoader` which loads and
+instantiates factories of a given type from `META-INF/spring.factories`.
+
+WARNING: Be careful, it is dangerous to use extra spaces or line breaks
+in the contents of the file `spring.factories`.
+You must use a key-value format:
+
+`[interface | abstract class]` = `[comma-separated list of implementation or configuration class names]`
+
+For example:
+
+image:./META-INF.png[spring.factories sample]
 
 ## How to change the order of processing a configurations
 
-We have an ability to define a dependency between two configuration files.
+Now we have an ability to define a dependency between two configuration files.
 We can do this by using one of the following annotations:
 
 * `@AutoConfigureAfter`
 
 * `@AutoConfigureBefore`
+
+
+For our task, we need to mark the `BarConfig` with the annotation `AutoConfigureAfter`
+and specify dependency on the `FooConfig` class:
+
+[source, java]
+----
+@Configuration
+@AutoConfigureAfter(FooConfig.class)
+@ConditionalOnBean(name = "foo")
+public class BarConfig {
+
+    @Bean
+    public Bar bar(Foo foo) {
+        return new Bar(foo);
+    }
+}
+----
+
+For the testing a bean conditional we set a profile for the FooConfig:
+
+[source, java]
+----
+@Profile("foo")
+@Configuration
+public class FooConfig {
+
+    @Bean
+    public Foo foo() {
+        return new Foo();
+    }
+}
+----
+
+And modify test a bit:
+
+[source, java]
+----
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@ActiveProfiles("foo")
+public class ConfigTest {
+
+    @Autowired
+    private Foo foo;
+
+    @Autowired
+    private Bar bar;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Test
+    public void contextLoads() {
+        Assertions.assertThat(foo).isNotNull();
+        Assertions.assertThat(bar).isNotNull();
+    }
+}
+----
+
+If you don't set active profile to `foo` in test
+then you will not find both of the beans in the context:
+
+[source, java]
+----
+@SpringBootTest
+@RunWith(SpringRunner.class)
+public class ConditionOnBeanTest {
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Test
+    public void beanNotFoundTest() {
+        Assertions.assertThat(applicationContext.containsBean("foo")).isFalse();
+        Assertions.assertThat(applicationContext.containsBean("bar")).isFalse();
+    }
+}
+----
+
+All tests passed:
+
+image:./all_test_pass.png[all test passed]
+
 
 
 ## Source code of this project on the github

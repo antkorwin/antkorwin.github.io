@@ -1,48 +1,74 @@
-= Java Software Design
+= Java Architect's Blog
 :source-highlighter: prettify
 :icons: font
 :experimental:
 Korovin Anatoliy <antkorwin@gmail.com>
 
-My thoughts about java application development, spring framework, TDD and other...
+My thoughts about Java application development, Spring Framework, TDD and other...
 
-## State machine workshop video
+## My Articles and Blog Posts:
+
+### Spring State Machine:
+
+link:./statemachine/statemachine.html[Spring State machine workshop] (English) image:./statemachine/eng.png[english,25] ::
+Example of using a spring state machine for an automatization of a different kinds of business process.
+
+link:./statemachine/statemachine_rus.html[Spring State machine workshop] (Russian) image:./statemachine/rus.png[russian,25] ::
+Использование spring state machine для автоматизации бизнес-процессов
+
+link:./statemachine/statemachine_persisting.html[Persisting a spring state machine] (English)  image:./statemachine/eng.png[english,25]::
+How to store a current state of a state machine in the MongoDb and how to test it with the Docker by the testcontainers framework.
+
+link:./statemachine/statemachine_exception_handling.html[Error handling] (English) image:./statemachine/eng.png[english,25]::
+How to work with errors that occur in a different parts of the state machine logics.
+
+// TODO: complete this article
+// link:./statemachine/statemachine_transaction_consistency.html[Transactions support of the state machine] (English) image:./statemachine/eng.png[english,25]::
+// How to provide consistency between the state machine and other systems
+
+
+### Spring Cloud:
+
+link:./cloud/micros.html[Spring cloud stack] (English) image:./statemachine/eng.png[english,25]::
+Example of using an infrastructure for a microservices application, based on spring cloud stack.
+
+### Spring Configuration:
+
+link:./spring_configuration/autoconfig.html[Spring auto-configuration & conditional] (English) image:./statemachine/eng.png[english,25]::
+Write you own auto-configuration classes with a ConditionalOnBean dependency
+
+### Hibernate
+
+link:./hibernate/entity_init.html[Choosing the right way to initialize a fields of the entity] (Russian) image:./statemachine/rus.png[english,25]::
+Варианты инициализации полей сущности, значениями поумолчанию, а так же типичные ошибки при работе с ними. Эта статья послужила материалом для
+Детективной истории от Баруха Садогурского и Евгения Борисова на конференции jpoint 2018.
+
+link:./hibernate/unproxy.html[разворачиваем прокси (hibernate покажи личико)] (Russian) image:./statemachine/rus.png[english,25]::
+Как получить из hibernate proxy сам объект.
+
+### Reflection
+
+link:./reflection/make_new_instance.html[создаем новый объект через reflection] (Russian) image:./statemachine/rus.png[english,25]::
+Тонкости implicit параметров при создании нового экземпляра объекта.
+
+
+### Code conventions:
+
+http://antkorwin.com/codestyle.html[Code style conventions] (English) image:./statemachine/eng.png[english,25]::
+Code style conventions
+
+### Annotation processing
+
+link:./annotation_processor/lombok_mapstruct.html[Как подружить lombok и mapstruct] (Russian) image:./statemachine/rus.png[english,25]::
+Как использовать сразу два кодо-генератора, да так чтобы задать определенную последовательность их запуска.
+
+
+## Public Talks:
+
+### State machine workshop live video - 18.05.2018
 
 video::J56_t5lny9c[youtube, width=520, height=390]
 
-
-## Spring State Machine
-
-image::./statemachine/ssm_logo.png[statemachine, 520, 300]
-
-This article explains how to create a spring state machine.
-We will look the configuration of various business cases.
-Also we will write several custom implementations for persisting the state machine.
-
-link:./statemachine/statemachine.html[English version] image:./statemachine/eng.png[english,25]
-
-link:./statemachine/statemachine_rus.html[Russian version] image:./statemachine/rus.png[russian,25]
-
-## Spring cloud infrastructure
-
-image::bear_pipeline.gif[pipeline, 520, 300]
-
-Here, we discussed the building of an infrastructure for a microservice application,
-based on spring cloud stack. link:./cloud/micros.html[Read more]
-
-## Traps, Pitfalls, Strangenesses...
-
-image::truble.jpg[double truble, 520,200]
-
-different problems and difficulties that often occur in the development process
-link:sherlock.html[Read more]
-
-
-## Code style conventions
-
-image::conventions.png[arrange_1]
-
-In our development team, we use the following http://antkorwin.com/codestyle.html[code style conventions]
 
 
 include::metrica.adoc[]

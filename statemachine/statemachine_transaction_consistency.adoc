@@ -1,0 +1,51 @@
+= Transactions and consistency between the state machine and other systems.
+:source-highlighter: prettify
+:icons: font
+:toc:
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+
+## How to guarantee a consistency of transactions within using of a state machine
+
+Often, we have a business domain model that separate from the state machine.
+In ours projects state machines used just for an organization of a business workflow.
+We store an all domain-specific data in other objects.
+Usually, we store this objects in its own database and operate with it by using transactions.
+
+In this chapter we will consider how to safety work with a state machine.
+And how to guarantee a consistency between the state machine and other systems.
+
+
+## Source code of this project on the github
+
+//image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'statemachine_transactions_consistency'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++

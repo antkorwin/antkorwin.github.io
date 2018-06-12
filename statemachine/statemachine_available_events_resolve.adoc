@@ -1,0 +1,107 @@
+= How to resolve available events from the current state of the state machine
+:source-highlighter: prettify
+:icons: font
+:toc:
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+
+## Write you own resolver
+
+Sometimes you need to evaluate a list of available transitions from the current state of the state machine.
+Unfortunately, the spring state machine has not internal methods for this case.
+But you can solve this problem yourself:
+
+[source, java]
+----
+public List<EventsT> getAvailableEvents(StateMachine<StatesT, EventsT> stateMachine) {
+
+    return stateMachine.getTransitions()
+                       .stream()
+                       .filter(t -> isTransitionSourceFromCurrentState(t, stateMachine))
+                       .filter(t -> evaluateGuardCondition(stateMachine, t))
+                       .map(Transition::getTrigger)
+                       .map(Trigger::getEvent)
+                       .collect(toList());
+}
+----
+
+In this code we find all transitions from the current state
+and trying to check guards on this transitions.
+If the guard returns false or throws the exception
+then we skip this event.
+
+You can find the full source code on github
+(link:https://github.com/antkorwin/statemachine/blob/master/src/main/java/com/antkorwin/statemachine/statemachine/resolver/StateMachineResolverImpl.java[StateMachineResolverImpl.java])
+
+
+
+## Example of usage
+
+Let's consider the next scheme of the state machine for evaluating an available events:
+
+[plantuml]
+....
+[*] --> CROSSROADS
+CROSSROADS --> TARGET : LEFT
+CROSSROADS --> TARGET : RIGHT     \n
+CROSSROADS --> TARGET : FLY_UP  \n**flyingGuard()**
+
+TARGET --> [*]
+....
+
+If we request the list of available events in the `CROSSROADS` state
+then we got a list that consist of the `LEFT` and `RIGHT`.
+In addition the list will contain the event `FLY_UP` if the condition `flyingGuard` is true.
+
+Example of using the `StateMachineResolver`:
+
+[source, java]
+----
+@Autowired
+private StateMachineResolver<States, Events> stateMachineResolver;
+
+@Test
+public void testResolverWithoutGuard() {
+    // Act
+    List<Events> availableEvents = stateMachineResolver.getAvailableEvents(stateMachine);
+    // Asserts
+    Assertions.assertThat(availableEvents)
+              .containsOnly(Events.LEFT,
+                            Events.RIGHT);
+}
+----
+
+
+## You can find the source code on the github
+
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'statemachine_available_events_resolve'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++

@@ -762,7 +762,7 @@ public class MongoPersistTest extends BaseMongoIT {
 In the specific asserts, we checked that the save was exactly in the MongoDB.
 
 
-## Multiple configuration of state machines in one project
+## A Multiple configuration of state machines in one project
 
 We sometimes need to use a several different state machines in a single project.
 These state machines can have their own sets of states and events.

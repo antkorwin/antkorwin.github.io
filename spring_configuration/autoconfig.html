@@ -459,12 +459,12 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="paragraph">
 <p>The CTO of our company sent me an interesting case of a configuration, last night.
-He not fears coding something unusual, this is a good trait for a chief.</p>
+He not fears coding something unusual, this is a good habit for a chief.</p>
 </div>
 <div class="paragraph">
 <p>He wanted to make a one bean depends on another,
 and the first of them should created only if he set a certain property.
-Of course in this case the second bean should not be created.</p>
+Of course, in this case the second bean should not be created.</p>
 </div>
 </div>
 </div>
@@ -592,10 +592,10 @@ another auto-configuration, make sure that the one <strong>using this condition 
 <div class="ulist">
 <ul>
 <li>
-<p>we need to make our configuration classes as auto-configuration</p>
+<p>We need to make our configuration classes as auto-configuration</p>
 </li>
 <li>
-<p>the <code>BarConfig</code> must be processed after the <code>FooConfig</code>.</p>
+<p>The <code>BarConfig</code> must be processed after the <code>FooConfig</code>.</p>
 </li>
 </ul>
 </div>
@@ -605,7 +605,52 @@ another auto-configuration, make sure that the one <strong>using this condition 
 <h2 id="_how_to_make_auto_configuration_class">4. How to make auto-configuration class</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>You need to &#8230;&#8203;</p>
+<p>Under the hood, auto-configuration files are the simple <code>@Configuration</code> classes
+that using conditional annotations such as <code>@Conditional</code>, <code>@ConditionalOnClass</code>, <code>@ConditionalOnMissingBean</code>, etc.</p>
+</div>
+<div class="paragraph">
+<p>These annotations allow us to specify constraints and dependencies between the beans in the configuration.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+In order for our configuration will be loaded by the Spring,
+we need to add a path to configuration classes into the <code>spring.factories</code> property file.
+This file must be located in the <code>META-INF</code> folder of the resources of your&#8217;s project.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>This properties is processing by <code>SpringFactoriesLoader</code> which loads and
+instantiates factories of a given type from <code>META-INF/spring.factories</code>.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Be careful, it is dangerous to use extra spaces or line breaks
+in the contents of the file <code>spring.factories</code>.
+You must use a key-value format:
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><code>[interface | abstract class]</code> = <code>[comma-separated list of implementation or configuration class names]</code></p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./META-INF.png" alt="spring.factories sample"></span></p>
 </div>
 </div>
 </div>
@@ -613,7 +658,7 @@ another auto-configuration, make sure that the one <strong>using this condition 
 <h2 id="_how_to_change_the_order_of_processing_a_configurations">5. How to change the order of processing a configurations</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We have an ability to define a dependency between two configuration files.
+<p>Now we have an ability to define a dependency between two configuration files.
 We can do this by using one of the following annotations:</p>
 </div>
 <div class="ulist">
@@ -625,6 +670,94 @@ We can do this by using one of the following annotations:</p>
 <p><code>@AutoConfigureBefore</code></p>
 </li>
 </ul>
+</div>
+<div class="paragraph">
+<p>For our task, we need to mark the <code>BarConfig</code> with the annotation <code>AutoConfigureAfter</code>
+and specify dependency on the <code>FooConfig</code> class:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+@AutoConfigureAfter(FooConfig.class)
+@ConditionalOnBean(name = "foo")
+public class BarConfig {
+
+    @Bean
+    public Bar bar(Foo foo) {
+        return new Bar(foo);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For the testing a bean conditional we set a profile for the FooConfig:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Profile("foo")
+@Configuration
+public class FooConfig {
+
+    @Bean
+    public Foo foo() {
+        return new Foo();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And modify test a bit:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@RunWith(SpringRunner.class)
+@SpringBootTest
+@ActiveProfiles("foo")
+public class ConfigTest {
+
+    @Autowired
+    private Foo foo;
+
+    @Autowired
+    private Bar bar;
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Test
+    public void contextLoads() {
+        Assertions.assertThat(foo).isNotNull();
+        Assertions.assertThat(bar).isNotNull();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you don&#8217;t set active profile to <code>foo</code> in test
+then you will not find both of the beans in the context:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@SpringBootTest
+@RunWith(SpringRunner.class)
+public class ConditionOnBeanTest {
+
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Test
+    public void beanNotFoundTest() {
+        Assertions.assertThat(applicationContext.containsBean("foo")).isFalse();
+        Assertions.assertThat(applicationContext.containsBean("bar")).isFalse();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>All tests passed:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./all_test_pass.png" alt="all test passed"></span></p>
 </div>
 </div>
 </div>
@@ -686,7 +819,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-10 19:19:40 +10
+Last updated 2018-06-13 09:02:25 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

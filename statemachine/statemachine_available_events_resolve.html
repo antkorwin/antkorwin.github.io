@@ -5,8 +5,8 @@
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
-<meta name="author" content="Korovin Anatoliy">
-<title>Java Architect&#8217;s Blog</title>
+<meta name="author" content="Korovin Anatoliy, Home">
+<title>How to resolve available events from the current state of the state machine</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,128 +434,99 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Java Architect&#8217;s Blog</h1>
+<h1>How to resolve available events from the current state of the state machine</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
+<span id="author2" class="author">Home</span><br>
+<span id="email2" class="email"><a href="http://antkorwin.com" class="bare">http://antkorwin.com</a></span><br>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_write_you_own_resolver">1. Write you own resolver</a></li>
+<li><a href="#_example_of_usage">2. Example of usage</a></li>
+<li><a href="#_you_can_find_the_source_code_on_the_github">3. You can find the source code on the github</a></li>
+</ul>
 </div>
 </div>
 <div id="content">
-<div id="preamble">
+<div class="sect1">
+<h2 id="_write_you_own_resolver">1. Write you own resolver</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>My thoughts about Java application development, Spring Framework, TDD and other&#8230;&#8203;</p>
+<p>Sometimes you need to evaluate a list of available transitions from the current state of the state machine.
+Unfortunately, the spring state machine has not internal methods for this case.
+But you can solve this problem yourself:</p>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_my_articles_and_blog_posts">My Articles and Blog Posts:</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_spring_state_machine">Spring State Machine:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./statemachine/statemachine.html">Spring State machine workshop</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>Example of using a spring state machine for an automatization of a different kinds of business process.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_rus.html">Spring State machine workshop</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span> </dt>
-<dd>
-<p>Использование spring state machine для автоматизации бизнес-процессов</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_persisting.html">Persisting a spring state machine</a> (English)  <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to store a current state of a state machine in the MongoDb and how to test it with the Docker by the testcontainers framework.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_exception_handling.html">Error handling</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to work with errors that occur in a different parts of the state machine logics.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_spring_cloud">Spring Cloud:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./cloud/micros.html">Spring cloud stack</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Example of using an infrastructure for a microservices application, based on spring cloud stack.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_spring_configuration">Spring Configuration:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./spring_configuration/autoconfig.html">Spring auto-configuration &amp; conditional</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Write you own auto-configuration classes with a ConditionalOnBean dependency</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hibernate">Hibernate</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./hibernate/entity_init.html">Choosing the right way to initialize a fields of the entity</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Варианты инициализации полей сущности, значениями поумолчанию, а так же типичные ошибки при работе с ними. Эта статья послужила материалом для
-Детективной истории от Баруха Садогурского и Евгения Борисова на конференции jpoint 2018.</p>
-</dd>
-<dt class="hdlist1"><a href="./hibernate/unproxy.html">разворачиваем прокси (hibernate покажи личико)</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как получить из hibernate proxy сам объект.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_reflection">Reflection</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./reflection/make_new_instance.html">создаем новый объект через reflection</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Тонкости implicit параметров при создании нового экземпляра объекта.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_code_conventions">Code conventions:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="http://antkorwin.com/codestyle.html">Code style conventions</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Code style conventions</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_annotation_processing">Annotation processing</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./annotation_processor/lombok_mapstruct.html">Как подружить lombok и mapstruct</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как использовать сразу два кодо-генератора, да так чтобы задать определенную последовательность их запуска.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_public_talks">Public Talks:</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_state_machine_workshop_live_video_18_05_2018">State machine workshop live video - 18.05.2018</h3>
-<div class="videoblock">
+<div class="listingblock">
 <div class="content">
-<iframe width="520" height="390" src="https://www.youtube.com/embed/J56_t5lny9c?rel=0" frameborder="0" allowfullscreen></iframe>
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public List&lt;EventsT&gt; getAvailableEvents(StateMachine&lt;StatesT, EventsT&gt; stateMachine) {
+
+    return stateMachine.getTransitions()
+                       .stream()
+                       .filter(t -&gt; isTransitionSourceFromCurrentState(t, stateMachine))
+                       .filter(t -&gt; evaluateGuardCondition(stateMachine, t))
+                       .map(Transition::getTrigger)
+                       .map(Trigger::getEvent)
+                       .collect(toList());
+}</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>In this code we find all transitions from the current state
+and trying to check guards on this transitions.
+If the guard returns false or throws the exception
+then we skip this event.</p>
+</div>
+<div class="paragraph">
+<p>You can find the full source code on github
+(<a href="https://github.com/antkorwin/statemachine/blob/master/src/main/java/com/antkorwin/statemachine/statemachine/resolver/StateMachineResolverImpl.java">StateMachineResolverImpl.java</a>)</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_example_of_usage">2. Example of usage</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s consider the next scheme of the state machine for evaluating an available events:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="diag-2dee050e2216a0927abf990aebd55bef.png" alt="diag 2dee050e2216a0927abf990aebd55bef" width="256" height="376">
+</div>
+</div>
+<div class="paragraph">
+<p>If we request the list of available events in the <code>CROSSROADS</code> state
+then we got a list that consist of the <code>LEFT</code> and <code>RIGHT</code>.
+In addition the list will contain the event <code>FLY_UP</code> if the condition <code>flyingGuard</code> is true.</p>
+</div>
+<div class="paragraph">
+<p>Example of using the <code>StateMachineResolver</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
+private StateMachineResolver&lt;States, Events&gt; stateMachineResolver;
+
+@Test
+public void testResolverWithoutGuard() {
+    // Act
+    List&lt;Events&gt; availableEvents = stateMachineResolver.getAvailableEvents(stateMachine);
+    // Asserts
+    Assertions.assertThat(availableEvents)
+              .containsOnly(Events.LEFT,
+                            Events.RIGHT);
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_you_can_find_the_source_code_on_the_github">3. You can find the source code on the github</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -585,13 +556,31 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/47919536" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
-</div>
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'statemachine_available_events_resolve'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-12 23:10:13 +10
+Last updated 2018-06-12 10:06:02 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
