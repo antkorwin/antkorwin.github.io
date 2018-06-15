@@ -39,7 +39,10 @@ Then we make a test:
 ----
 @Test
 public void failInActionTest() {
-    // Act
+ 	// Precondition
+ 	Assertions.assertThat(stateMachine.getState().getId())
+					 	.isEqualTo(States.BACKLOG);
+	// Act
     stateMachine.sendEvent(ROCK_STAR_DOUBLE_TASK);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())
@@ -52,9 +55,9 @@ Result of the test:
 image:failed_action.png[failed action test result]
 
 We are trying to make a transition with failed action.
-And we see this exception in log,
-but it not thrown to the place of the call.
+And we see this exception in log, but it not thrown to the place of the call.
 Because the spring state machine handle all of the runtime exceptions.
+However, the state-machine is still keeps in the source state.
 
 ## Error in a guard check
 

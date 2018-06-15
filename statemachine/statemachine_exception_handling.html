@@ -490,7 +490,10 @@ private Action&lt;States, Events&gt; failAction() {
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
 public void failInActionTest() {
-    // Act
+ 	// Precondition
+ 	Assertions.assertThat(stateMachine.getState().getId())
+					 	.isEqualTo(States.BACKLOG);
+	// Act
     stateMachine.sendEvent(ROCK_STAR_DOUBLE_TASK);
     // Asserts
     Assertions.assertThat(stateMachine.getState().getId())
@@ -506,9 +509,9 @@ public void failInActionTest() {
 </div>
 <div class="paragraph">
 <p>We are trying to make a transition with failed action.
-And we see this exception in log,
-but it not thrown to the place of the call.
-Because the spring state machine handle all of the runtime exceptions.</p>
+And we see this exception in log, but it not thrown to the place of the call.
+Because the spring state machine handle all of the runtime exceptions.
+However, the state-machine is still keeps in the source state.</p>
 </div>
 </div>
 </div>
@@ -694,7 +697,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-12 09:42:28 +10
+Last updated 2018-06-15 23:12:24 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
