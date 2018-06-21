@@ -15,15 +15,35 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 * WeakReference
 
-If the object is accessible only through weak references then the garbage collector will delete it.
-
 * SoftReference
 
 * PhantomReference
 
+## StrongReference
+
+StrongReference is the most common kind of reference.
+We use this kind of reference every day.
+
+For example:
+[source, java]
+----
+Foo firstReference = new Foo();
+Foo secondReference = firstReference;
+----
+
+The created instance of the Foo class is not available for the garbage collector
+while there is at least one link to this object.
+
 ## WeakReference
 
-Let's try to testing weak reference behavior:
+If the object is accessible only through weak references
+then the garbage collector will delete it.
+
+WeakReference - this is the type of references
+that will be removed by the garbage collector on the next pass,
+if there are no other type references to the object.
+
+Let's try to testing WeakReference behavior:
 
 [source, java]
 ----
@@ -42,7 +62,84 @@ public void testWeakAfterGC() {
 }
 ----
 
+Java provide us a WeakHashMap data structure,
+which uses the WeakReference as a key of the Map
+and when this reference was finalized(released),
+its entry is remove from the Map automatically.
 
+How we can test a WeakHashMap behavior:
+
+[source, java]
+----
+@Test
+public void testWeakMap() throws InterruptedException {
+    // Arrange
+    WeakHashMap<String, Boolean> map = new WeakHashMap<>();
+    String instance = new String("123");
+    map.put(instance, true);
+
+    // Act
+    instance = null;
+    System.gc();
+
+    // Asserts
+    Thread.sleep(1000);
+
+    Assertions.assertThat(map).isEmpty();
+}
+----
+
+You might think that this is a good solution for creating a cache,
+but you should understand what kind of behavior you need.
+Because if we are talking about a cache that removes data from a storage
+only when we reached a memory limit, then you should looking at the using of SoftReferences.
+
+
+## SoftReference
+
+The behavior of SoftReference is similar to WeakReference,
+but GC collect this kind of reference only when
+our application does not have enough of memory.
+
+Let's try to test it:
+
+[source, java]
+----
+@Test
+public void name() {
+    // Arrange
+    String instance = new String("1234567");
+    SoftReference<String> softReference = new SoftReference<>(instance);
+    instance = null;
+    Assertions.assertThat(softReference).isNotNull();
+    Assertions.assertThat(softReference.get()).isNotNull();
+
+    // Act
+    allocateAllMemory();
+
+    // Asserts
+    Assertions.assertThat(softReference.get()).isNull();
+}
+
+private void allocateAllMemory() {
+    try {
+        Object[] ignored = new Object[(int) Runtime.getRuntime().maxMemory()];
+    } catch (OutOfMemoryError e) {
+        log.error("exception: ", e);
+    }
+}
+----
+
+GC collect our SoftReference before we get the OutOfMemoryError.
+This behavior is a good reason to use SoftReferences as a cache for a
+data that is difficult to build in memory.
+
+For example, reading video or graphics data from the slow file system.
+While the application has enough memory, you can receive this data from
+the cache, but if you reach of a memory limit then the cache is cleaned.
+And now, you need restore this data on the next request.
+
+However in many cases you need to prefer LRU.
 
 ## Source code of this project on the github
 
