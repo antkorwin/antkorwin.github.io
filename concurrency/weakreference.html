@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>Java WeakReference</title>
+<title>Soft, Weak and Phantom references in Java</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,7 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Java WeakReference</h1>
+<h1>Soft, Weak and Phantom references in Java</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
@@ -444,41 +444,20 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_java_reference_types">1. Java reference types</a></li>
-<li><a href="#_strongreference">2. StrongReference</a></li>
-<li><a href="#_weakreference">3. WeakReference</a></li>
-<li><a href="#_softreference">4. SoftReference</a></li>
+<li><a href="#_strong_reference">1. Strong Reference</a></li>
+<li><a href="#_weakreference">2. WeakReference</a></li>
+<li><a href="#_softreference">3. SoftReference</a></li>
+<li><a href="#_phantomreference">4. PhantomReference</a></li>
 <li><a href="#_source_code_of_this_project_on_the_github">5. Source code of this project on the github</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_java_reference_types">1. Java reference types</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>StrongReference</p>
-</li>
-<li>
-<p>WeakReference</p>
-</li>
-<li>
-<p>SoftReference</p>
-</li>
-<li>
-<p>PhantomReference</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_strongreference">2. StrongReference</h2>
+<h2 id="_strong_reference">1. Strong Reference</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>StrongReference is the most common kind of reference.
+<p>Strong reference is the most common kind of reference.
 We use this kind of reference every day.</p>
 </div>
 <div class="paragraph">
@@ -487,7 +466,11 @@ We use this kind of reference every day.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">Foo firstReference = new Foo();
-Foo secondReference = firstReference;</code></pre>
+Foo secondReference = firstReference;
+
+firstReference = null;
+secondReference = null;
+//Now the GC can collect an instance of the Foo, which created in the first line.</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -497,19 +480,24 @@ while there is at least one link to this object.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_weakreference">3. WeakReference</h2>
+<h2 id="_weakreference">2. WeakReference</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>If the object is accessible only through weak references
-then the garbage collector will delete it.</p>
-</div>
-<div class="paragraph">
-<p>WeakReference - this is the type of references
+<p><code>WeakReference</code> - this is the type of references
 that will be removed by the garbage collector on the next pass,
 if there are no other type references to the object.</p>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s try to testing WeakReference behavior:</p>
+<p>You can get an object value from the <code>WeakReference</code>
+until the GC decides to collect the object.
+As soon as the GC decides to do it (not after the GC finalize the object and clear an allocated memory),
+you will get the NULL from the <code>WeakReference</code>.
+This happens when the GC is only marking the object for a further processing.
+It is important to understand, that all finalization actions are executed only after this.
+When we look at the <code>PhantomReference</code>, we&#8217;ll return to this point.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s try to testing <code>WeakReference</code> behavior:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -517,25 +505,25 @@ if there are no other type references to the object.</p>
 public void testWeakAfterGC() {
     // Arrange
     String instance = new String("123");
-    WeakReference&lt;String&gt; ref = new WeakReference&lt;&gt;(instance);
+    WeakReference&lt;String&gt; reference = new WeakReference&lt;&gt;(instance);
 
     // Act
     instance = null;
     System.gc();
 
     // Asserts
-    Assertions.assertThat(ref.get()).isNull();
+    Assertions.assertThat(reference.get()).isNull();
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Java provide us a WeakHashMap data structure,
-which uses the WeakReference as a key of the Map
-and when this reference was finalized(released),
-its entry is remove from the Map automatically.</p>
+<p>Java provides us the <code>WeakHashMap</code> data structure.
+It&#8217;s a something like a <code>HashMap</code>,
+which uses the <code>WeakReference</code> as a key of the Map.
+If a key of the <code>WeakHashMap</code> becomes garbage, its entry is removed automatically.</p>
 </div>
 <div class="paragraph">
-<p>How we can test a WeakHashMap behavior:</p>
+<p>How we can test a <code>WeakHashMap</code> behavior:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -561,15 +549,15 @@ public void testWeakMap() throws InterruptedException {
 <p>You might think that this is a good solution for creating a cache,
 but you should understand what kind of behavior you need.
 Because if we are talking about a cache that removes data from a storage
-only when we reached a memory limit, then you should looking at the using of SoftReferences.</p>
+only when we reached a memory limit, then you should looking at the using of <code>SoftReferences</code>.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_softreference">4. SoftReference</h2>
+<h2 id="_softreference">3. SoftReference</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The behavior of SoftReference is similar to WeakReference,
+<p>The behavior of <code>SoftReference</code> is similar to <code>WeakReference</code>,
 but GC collect this kind of reference only when
 our application does not have enough of memory.</p>
 </div>
@@ -604,18 +592,162 @@ private void allocateAllMemory() {
 </div>
 </div>
 <div class="paragraph">
-<p>GC collect our SoftReference before we get the OutOfMemoryError.
+<p>The GC collects our <code>SoftReference</code> before we get the <code>OutOfMemoryError</code>.
 This behavior is a good reason to use SoftReferences as a cache for a
 data that is difficult to build in memory.</p>
 </div>
 <div class="paragraph">
-<p>For example, reading video or graphics data from the slow file system.
-While the application has enough memory, you can receive this data from
-the cache, but if you reach of a memory limit then the cache is cleaned.
+<p>For example, a reading video or graphics data from a slow file storage.
+When your application has enough of memory,
+you can receive this data from the cache,
+but if application reaches of a memory limit, then the cache cleans.
 And now, you need restore this data on the next request.</p>
 </div>
 <div class="paragraph">
-<p>However in many cases you need to prefer LRU.</p>
+<p>However in many cases you need to prefer a cache based on the LRU algorithm.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_phantomreference">4. PhantomReference</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <code>PhantomReferences</code> are enqueued only when the object is physically removed from memory.</p>
+</div>
+<div class="paragraph">
+<p>The <code>get()</code> method of the PhantomReference always returns <code>NULL</code>,
+specially to prevent you from being able to resurrect an almost removed object.</p>
+</div>
+<div class="paragraph">
+<p>The <code>PhantomReference</code> provides you an ability to determine exactly when an object was removed from memory.
+In order for implementation this we need to work with a <code>ReferenceQueue</code>.
+When the referent object of a <code>PhantomReference</code> removes from a memory
+then the GC enqueues the phantomReference in the referenceQueue
+and we can poll this reference from this queue.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s look at the code:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
+public void testQueuePollAfterFinalizationGC() {
+  // Arrange
+  Foo foo = new Foo();
+  ReferenceQueue&lt;Foo&gt; referenceQueue = new ReferenceQueue&lt;&gt;();
+  PhantomReference&lt;Foo&gt; phantomReference = new PhantomReference&lt;&gt;(foo, referenceQueue);
+
+  // Act
+  foo = null;
+  GcUtils.fullFinalization();
+
+  // Asserts
+  Assertions.assertThat(phantomReference.isEnqueued()).isTrue();
+  Assertions.assertThat(referenceQueue.poll()).isEqualTo(phantomReference);
+}
+
+private class Foo {
+    @Override
+    protected void finalize() throws Throwable {
+        System.out.println("FIN!");
+        super.finalize();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+I use my utility-class, to test the behavior of phantom references.
+This tools are ensure that the GC accurately performs a full cycle of cleaning and finalization.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For example, if you need to allocate memory for processing of a large video file,
+only after finished processing of a previous file and released allocated memory,
+then using a <code>PhantomReference</code> is the right decision. Because you can request new memory
+after the GC are really release a previous used part and this reduces a chance to get an <code>OutOfMemoryError</code>.</p>
+</div>
+<div class="paragraph">
+<p>Finalization may does not happened in a timely fashion,
+it is difficult to predict the number of garbage collection cycles
+while the object was waiting for finalization.
+It can lead to serious delay in actually cleaning up garbage objects,
+and become the reason of you can get an <code>OutOfMemoryErrors</code> even when most of the heap is garbage.</p>
+</div>
+<div class="paragraph">
+<p>We can write own utility to checking for memory leaks, using phantom references:</p>
+</div>
+<div class="paragraph">
+<p>Example of using this tool:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
+public void testWithoutLeaks() {
+    // Arrange
+    Foo foo = new Foo();
+    LeakDetector leakDetector = new LeakDetector(foo);
+
+    // Act
+    foo = null;
+
+    // Asserts
+    leakDetector.assertLeaksExist();
+}
+
+@Test
+public void testWithLeak() {
+    // Arrange
+    Foo foo = new Foo();
+    Foo bar = foo;
+    LeakDetector leakDetector = new LeakDetector(foo);
+
+    // Act
+    foo = null;
+
+    // Asserts
+    leakDetector.assertLeaksExist();
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s look at the code of the memory leaks detector:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class LeakDetector extends PhantomReference&lt;Object&gt; {
+
+    private final String description;
+
+    /**
+     * Initialization of the memory leaks detector.
+     * @param referent the object(resource) for which we are looking for leaks.
+     */
+    public LeakDetector(Object referent) {
+        super(referent, new ReferenceQueue&lt;&gt;());
+        this.description = String.valueOf(referent);
+    }
+
+    /**
+     * You must run this method after delete all references on the checkable object(resource)
+     * If exists memory leaks then throws a fail.
+     */
+    public void assertLeaksExist() {
+        GcUtils.fullFinalization();
+
+        Assertions.assertThat(isEnqueued())
+                  .as("Object: " + description + " was leaked")
+                  .isTrue();
+    }
+}</code></pre>
+</div>
 </div>
 </div>
 </div>
@@ -623,7 +755,7 @@ And now, you need restore this data on the next request.</p>
 <h2 id="_source_code_of_this_project_on_the_github">5. Source code of this project on the github</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/autoconfig-demo">github.com/antkorwin/autoconfig-demo</a></p>
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/strong-soft-weak">github.com/antkorwin/strong-soft-weak</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -661,7 +793,7 @@ And now, you need restore this data on the next request.</p>
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'autoconfig'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'soft-weak-phantom'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
@@ -677,7 +809,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-22 09:50:18 +10
+Last updated 2018-06-24 14:52:50 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
