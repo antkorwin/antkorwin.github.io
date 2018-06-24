@@ -184,8 +184,9 @@ private class Foo {
 }
 ----
 
-NOTE: I use my utility-class, to test the behavior of phantom references.
+NOTE: I use my utility class (`GcUtils`), to test the behavior of phantom references.
 This tools are ensure that the GC accurately performs a full cycle of cleaning and finalization.
+You can find source code of this utility on the github: link:https://github.com/antkorwin/strong-soft-weak/blob/master/src/main/java/com/antkorwin/strongsoftweak/GcUtils.java[GcUtils.java]
 
 For example, if you need to allocate memory for processing of a large video file,
 only after finished processing of a previous file and released allocated memory,
