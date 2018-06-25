@@ -1,4 +1,4 @@
-= Java WeakReference
+= Multithreading concurrency tests in JUnit
 :source-highlighter: prettify
 :icons: font
 :toc:
@@ -9,37 +9,55 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
 
-## Java reference types
-
-* StrongReference
-
-* WeakReference
-
-If the object is accessible only through weak references then the garbage collector will delete it.
-
-* SoftReference
-
-* PhantomReference
-
-## WeakReference
-
-Let's try to testing weak reference behavior:
+## Example
 
 [source, java]
 ----
-@Test
-public void testWeakAfterGC() {
-    // Arrange
-    String instance = new String("123");
-    WeakReference<String> ref = new WeakReference<>(instance);
+public static final int ITERATION_NUMBER = 10000;
 
-    // Act
-    instance = null;
-    System.gc();
+    @Test
+    public void testConcurrencyThroughExecutorService() {
+        // Arrange
+        NonAtomicInt nonAtomicInt = new NonAtomicInt(0);
+        ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    // Asserts
-    Assertions.assertThat(ref.get()).isNull();
-}
+        // Act
+        IntStream.range(0, ITERATION_NUMBER)
+                 .boxed()
+                 .forEach(i -> {
+                     executorService.submit(nonAtomicInt::incr);
+                 });
+
+        // Assert
+        Assertions.assertThat(nonAtomicInt.getValue())
+                  .isNotEqualTo(ITERATION_NUMBER);
+    }
+
+    @Test
+    public void testConcurrencyThroughParallelStream() {
+        // Arrange
+        NonAtomicInt nonAtomicInt = new NonAtomicInt(0);
+
+        // Act
+        IntStream.range(0, ITERATION_NUMBER)
+                 .boxed()
+                 .parallel()
+                 .forEach(i -> nonAtomicInt.incr());
+
+        // Assert
+        Assertions.assertThat(nonAtomicInt.getValue())
+                  .isNotEqualTo(ITERATION_NUMBER);
+    }
+
+    @AllArgsConstructor
+    @Getter
+    class NonAtomicInt {
+        private int value;
+
+        public void incr() {
+            this.value++;
+        }
+    }
 ----
 
 

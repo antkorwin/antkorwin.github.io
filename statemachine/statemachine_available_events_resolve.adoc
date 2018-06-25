@@ -1,4 +1,4 @@
-= How to resolve available events from the current state of the state machine
+= How to resolve available events from the current state of the Spring State Machine
 :source-highlighter: prettify
 :icons: font
 :toc:
@@ -29,14 +29,34 @@ public List<EventsT> getAvailableEvents(StateMachine<StatesT, EventsT> stateMach
 }
 ----
 
-In this code we find all transitions from the current state
-and trying to check guards on this transitions.
-If the guard returns false or throws the exception
-then we skip this event.
+In this code, we find all transitions from the current state
+and try to check guards on this transitions.
+If a guard returns a false or throws an exception then we skip this event.
 
-You can find the full source code on github
-(link:https://github.com/antkorwin/statemachine/blob/master/src/main/java/com/antkorwin/statemachine/statemachine/resolver/StateMachineResolverImpl.java[StateMachineResolverImpl.java])
+I collected this resolver in my statemachine utility,
+and you can use this solution in your projects by
+add the next repository & dependency:
 
+[source, java]
+----
+<dependency>
+	<groupId>com.github.antkorwin</groupId>
+	<artifactId>statemachine-utils</artifactId>
+	<version>0.2</version>
+</dependency>
+----
+
+Also, you need to declare jitpack repository:
+
+[source, java]
+----
+<repositories>
+	<repository>
+		<id>jitpack.io</id>
+		<url>https://jitpack.io</url>
+	</repository>
+</repositories>
+----
 
 
 ## Example of usage
@@ -78,7 +98,7 @@ public void testResolverWithoutGuard() {
 
 ## You can find the source code on the github
 
-image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine-utils-example[github.com/antkorwin/statemachine-utils-example]
 
 
 // END OF CONTENT

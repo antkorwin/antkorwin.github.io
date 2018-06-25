@@ -270,6 +270,9 @@ public class LeakDetector extends PhantomReference<Object> {
 image:../icons/git.png[github,64,64] https://github.com/antkorwin/strong-soft-weak[github.com/antkorwin/strong-soft-weak]
 
 
+
+
+
 // END OF CONTENT
 include::../metrica.adoc[]
 

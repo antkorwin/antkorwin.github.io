@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>How to resolve available events from the current state of the state machine</title>
+<title>How to resolve available events from the current state of the Spring State Machine</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,7 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>How to resolve available events from the current state of the state machine</h1>
+<h1>How to resolve available events from the current state of the Spring State Machine</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
@@ -474,14 +474,36 @@ But you can solve this problem yourself:</p>
 </div>
 </div>
 <div class="paragraph">
-<p>In this code we find all transitions from the current state
-and trying to check guards on this transitions.
-If the guard returns false or throws the exception
-then we skip this event.</p>
+<p>In this code, we find all transitions from the current state
+and try to check guards on this transitions.
+If a guard returns a false or throws an exception then we skip this event.</p>
 </div>
 <div class="paragraph">
-<p>You can find the full source code on github
-(<a href="https://github.com/antkorwin/statemachine/blob/master/src/main/java/com/antkorwin/statemachine/statemachine/resolver/StateMachineResolverImpl.java">StateMachineResolverImpl.java</a>)</p>
+<p>I collected this resolver in my statemachine utility,
+and you can use this solution in your projects by
+add the next repository &amp; dependency:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">&lt;dependency&gt;
+	&lt;groupId&gt;com.github.antkorwin&lt;/groupId&gt;
+	&lt;artifactId&gt;statemachine-utils&lt;/artifactId&gt;
+	&lt;version&gt;0.2&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Also, you need to declare jitpack repository:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">&lt;repositories&gt;
+	&lt;repository&gt;
+		&lt;id&gt;jitpack.io&lt;/id&gt;
+		&lt;url&gt;https://jitpack.io&lt;/url&gt;
+	&lt;/repository&gt;
+&lt;/repositories&gt;</code></pre>
+</div>
 </div>
 </div>
 </div>
@@ -526,7 +548,7 @@ public void testResolverWithoutGuard() {
 <h2 id="_you_can_find_the_source_code_on_the_github">3. You can find the source code on the github</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine-utils-example">github.com/antkorwin/statemachine-utils-example</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -580,7 +602,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-12 10:06:02 +10
+Last updated 2018-06-25 23:49:59 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
