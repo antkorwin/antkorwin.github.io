@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>How to resolve available events from the current state of the Spring State Machine</title>
+<title>Synchronization by instance of the class</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,7 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>How to resolve available events from the current state of the Spring State Machine</h1>
+<h1>Synchronization by instance of the class</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
@@ -444,111 +444,86 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_write_you_own_resolver">1. Write you own resolver</a></li>
-<li><a href="#_example_of_usage">2. Example of usage</a></li>
-<li><a href="#_you_can_find_the_source_code_on_the_github">3. You can find the source code on the github</a></li>
+<li><a href="#_intro">1. Intro</a></li>
+<li><a href="#_wrong_ways_to_solve_this_issue">2. Wrong ways to solve this issue</a>
+<ul class="sectlevel2">
+<li><a href="#_synchronization_on_methods">2.1. synchronization on methods</a></li>
+<li><a href="#_string_intern">2.2. String.intern</a></li>
+</ul>
+</li>
+<li><a href="#_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</a>
+<ul class="sectlevel2">
+<li><a href="#_weakreference_map_concurrency">3.1. WeakReference map + concurrency</a></li>
+</ul>
+</li>
+<li><a href="#_concurrency_tests">4. Concurrency tests</a></li>
+<li><a href="#_xsync_library_on_github_issue_requests_are_welcome">5. XSync library on github, issue requests are welcome</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_write_you_own_resolver">1. Write you own resolver</h2>
+<h2 id="_intro">1. Intro</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Sometimes you need to evaluate a list of available transitions from the current state of the state machine.
-Unfortunately, the spring state machine has not internal methods for this case.
-But you can solve this problem yourself:</p>
+<p>Sometimes we need to synchronization some blocks of code by the value of variable, for example Id of the entity.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s look at the next example:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public List&lt;EventsT&gt; getAvailableEvents(StateMachine&lt;StatesT, EventsT&gt; stateMachine) {
-
-    return stateMachine.getTransitions()
-                       .stream()
-                       .filter(t -&gt; isTransitionSourceFromCurrentState(t, stateMachine))
-                       .filter(t -&gt; evaluateGuardCondition(stateMachine, t))
-                       .map(Transition::getTrigger)
-                       .map(Trigger::getEvent)
-                       .collect(toList());
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public void withdrawMoney(UUID userId, int amountOfMoney) {
+  synchronized (userId) {
+      Result result = externalPolicySystem.validateTransfer(userId, amountOfMoney, WITHDRAW);
+      if(result.getStatus() != OK) {
+        throw new UnreachableTransfer(result);
+      }
+      accountService.transfer(userId, amountOfMoney, WITHDRAW);
+  }
 }</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>In this code, we find all transitions from the current state
-and try to check guards on this transitions.
-If a guard returns a false or throws an exception then we skip this event.</p>
-</div>
-<div class="paragraph">
-<p>I collected this resolver in my statemachine utility,
-and you can use this solution in your projects by
-add the next repository &amp; dependency:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;dependency&gt;
-	&lt;groupId&gt;com.github.antkorwin&lt;/groupId&gt;
-	&lt;artifactId&gt;statemachine-utils&lt;/artifactId&gt;
-	&lt;version&gt;0.2&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Also, you need to declare jitpack repository:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;repositories&gt;
-	&lt;repository&gt;
-		&lt;id&gt;jitpack.io&lt;/id&gt;
-		&lt;url&gt;https://jitpack.io&lt;/url&gt;
-	&lt;/repository&gt;
-&lt;/repositories&gt;</code></pre>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_example_of_usage">2. Example of usage</h2>
+<h2 id="_wrong_ways_to_solve_this_issue">2. Wrong ways to solve this issue</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>Let&#8217;s consider the next scheme of the state machine for evaluating an available events:</p>
+<div class="sect2">
+<h3 id="_synchronization_on_methods">2.1. synchronization on methods</h3>
+
 </div>
+<div class="sect2">
+<h3 id="_string_intern">2.2. String.intern</h3>
+
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</h2>
+<div class="sectionbody">
 <div class="imageblock">
 <div class="content">
-<img src="diag-2dee050e2216a0927abf990aebd55bef.png" alt="diag 2dee050e2216a0927abf990aebd55bef" width="256" height="376">
+<img src="diag-47aaa9f329b4ba5c3057efab96e7d56e.png" alt="diag 47aaa9f329b4ba5c3057efab96e7d56e" width="410" height="378">
 </div>
 </div>
-<div class="paragraph">
-<p>If we request the list of available events in the <code>CROSSROADS</code> state
-then we got a list that consist of the <code>LEFT</code> and <code>RIGHT</code>.
-In addition the list will contain the event <code>FLY_UP</code> if the condition <code>flyingGuard</code> is true.</p>
-</div>
-<div class="paragraph">
-<p>Example of using the <code>StateMachineResolver</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
-private StateMachineResolver&lt;States, Events&gt; stateMachineResolver;
+<div class="sect2">
+<h3 id="_weakreference_map_concurrency">3.1. WeakReference map + concurrency</h3>
 
-@Test
-public void testResolverWithoutGuard() {
-    // Act
-    List&lt;Events&gt; availableEvents = stateMachineResolver.getAvailableEvents(stateMachine);
-    // Asserts
-    Assertions.assertThat(availableEvents)
-              .containsOnly(Events.LEFT,
-                            Events.RIGHT);
-}</code></pre>
-</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_you_can_find_the_source_code_on_the_github">3. You can find the source code on the github</h2>
+<h2 id="_concurrency_tests">4. Concurrency tests</h2>
+<div class="sectionbody">
+
+</div>
+</div>
+<div class="sect1">
+<h2 id="_xsync_library_on_github_issue_requests_are_welcome">5. XSync library on github, issue requests are welcome</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine-utils-example">github.com/antkorwin/statemachine-utils-example</a></p>
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/xsync">github.com/antkorwin/xsync</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -586,7 +561,7 @@ public void testResolverWithoutGuard() {
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'statemachine_available_events_resolve'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'sync_by_instance'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
@@ -602,7 +577,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-26 23:40:27 +10
+Last updated 2018-06-26 23:39:55 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

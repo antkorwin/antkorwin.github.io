@@ -37,7 +37,7 @@ I collected this resolver in my statemachine utility,
 and you can use this solution in your projects by
 add the next repository & dependency:
 
-[source, java]
+[source, xml]
 ----
 <dependency>
 	<groupId>com.github.antkorwin</groupId>
@@ -48,7 +48,7 @@ add the next repository & dependency:
 
 Also, you need to declare jitpack repository:
 
-[source, java]
+[source, xml]
 ----
 <repositories>
 	<repository>

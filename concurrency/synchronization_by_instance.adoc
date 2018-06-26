@@ -1,0 +1,105 @@
+= Synchronization by instance of the class
+:source-highlighter: prettify
+:icons: font
+:toc:
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+## Intro
+
+Sometimes we need to synchronization some blocks of code by the value of variable, for example Id of the entity.
+
+Let's look at the next example:
+
+[source, java]
+----
+public void withdrawMoney(UUID userId, int amountOfMoney) {
+  synchronized (userId) {
+      Result result = externalPolicySystem.validateTransfer(userId, amountOfMoney, WITHDRAW);
+      if(result.getStatus() != OK) {
+        throw new UnreachableTransfer(result);
+      }
+      accountService.transfer(userId, amountOfMoney, WITHDRAW);
+  }
+}
+----
+
+
+## Wrong ways to solve this issue
+
+### synchronization on methods
+
+### String.intern
+
+## Create your own synchronization primitive
+
+
+
+[plantuml]
+....
+
+A -> XSync : locked mutex
+activate XSync #11DD41
+||35|
+XSync -> A : released mutex
+deactivate XSync
+
+B -> XSync : locked mutex
+activate XSync #11DD41
+
+A [#red]--> XSync : try to lock
+activate A #DD3311
+note left: wait for the \n\
+release of \nthe mutex
+
+'A -> A : waiting
+
+XSync -> B : released mutex
+deactivate XSync
+
+A -> XSync :\tlocked mutex
+deactivate A
+activate XSync #11DD41
+
+XSync -> A : released mutex
+deactivate XSync
+....
+
+### WeakReference map + concurrency
+
+## Concurrency tests
+
+## XSync library on github, issue requests are welcome
+
+image:../icons/git.png[github,64,64] https://github.com/antkorwin/xsync[github.com/antkorwin/xsync]
+
+
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'sync_by_instance'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
