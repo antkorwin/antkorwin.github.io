@@ -491,21 +491,102 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_synchronization_on_methods">2.1. synchronization on methods</h3>
-
+<div class="paragraph">
+<p>you can move synchronized on method:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public synchronized void withdrawMoney(UUID userId, int amountOfMoney) {
+    ..
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This solution has bad performance.
+You will block the money transfer for absolutely all users.</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_string_intern">2.2. String.intern</h3>
-
+<div class="paragraph">
+<p>In order to ensure that the instance of the class with the user ID
+is the same in all synchronized blocks,
+we can serialize it into a String and use the String.intern().</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public void withdrawMoney(UUID userId, int amountOfMoney) {
+  synchronized (userId.toString().intern()) {
+      ..
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Using intern is not good practice, because the pool of Strings is difficult to clean with the GC.
+And with the active use of such synchronizations, your application can consume too many resources.</p>
+</div>
+<div class="paragraph">
+<p>Also, there is a chance that foreign code blocks is synchronized on
+the same instance of the string as your application.
+This can lead to deadlocks.</p>
+</div>
+<div class="paragraph">
+<p>In general, the use of intern is better left to the libraries of the JDK,
+there are good articles by Aleksey Shipilev about this point.</p>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
 <h2 id="_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>We need to implementation of the next diagram:</p>
+</div>
 <div class="imageblock">
 <div class="content">
-<img src="diag-47aaa9f329b4ba5c3057efab96e7d56e.png" alt="diag 47aaa9f329b4ba5c3057efab96e7d56e" width="410" height="378">
+<img src="diag-0672834a7737bb323990aabe3bcb5ce6.png" alt="diag 0672834a7737bb323990aabe3bcb5ce6" width="486" height="378">
 </div>
+</div>
+<div class="paragraph">
+<p>At the first we need to make a synchronization primitive - the custom mutex.
+Which will work by the value of the variable, and not by the reference to the object.</p>
+</div>
+<div class="paragraph">
+<p>Something like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public void withdrawMoney(UUID userId, int amountOfMoney) {
+  synchronized (XMutex.of(userId)) {
+      ..
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In order to ensure that the same mutexes are obtained
+for equal values of variables, we will make the mutex factory.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public void withdrawMoney(UUID userId, int amountOfMoney) {
+  synchronized (XMutexFactory.get(userId)) {
+      ..
+  }
+}
+
+public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
+  synchronized (XMutexFactory.get(userId)) {
+      ..
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In order to implementation this behavior we used WeakReference and WeakHashMap.
+I wrote an article about this type of references a month ago, you can consider this in more details here: http&#8230;&#8203;</p>
 </div>
 <div class="sect2">
 <h3 id="_weakreference_map_concurrency">3.1. WeakReference map + concurrency</h3>
@@ -577,7 +658,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-26 23:39:55 +10
+Last updated 2018-06-27 09:50:15 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

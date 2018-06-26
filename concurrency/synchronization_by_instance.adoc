@@ -27,46 +27,120 @@ public void withdrawMoney(UUID userId, int amountOfMoney) {
 }
 ----
 
-
 ## Wrong ways to solve this issue
 
 ### synchronization on methods
 
+you can move synchronized on method:
+
+[source, java]
+----
+public synchronized void withdrawMoney(UUID userId, int amountOfMoney) {
+    ..
+}
+----
+
+This solution has bad performance.
+You will block the money transfer for absolutely all users.
+
+
 ### String.intern
+
+In order to ensure that the instance of the class with the user ID
+is the same in all synchronized blocks,
+we can serialize it into a String and use the String.intern().
+
+[source, java]
+----
+public void withdrawMoney(UUID userId, int amountOfMoney) {
+  synchronized (userId.toString().intern()) {
+      ..
+  }
+}
+----
+
+Using intern is not good practice, because the pool of Strings is difficult to clean with the GC.
+And with the active use of such synchronizations, your application can consume too many resources.
+
+Also, there is a chance that foreign code blocks is synchronized on
+the same instance of the string as your application.
+This can lead to deadlocks.
+
+In general, the use of intern is better left to the libraries of the JDK,
+there are good articles by Aleksey Shipilev about this point.
+
+
 
 ## Create your own synchronization primitive
 
-
+We need to implementation of the next diagram:
 
 [plantuml]
 ....
-
-A -> XSync : locked mutex
+A -> XSync : lock mutex by **userId **
 activate XSync #11DD41
 ||35|
-XSync -> A : released mutex
+XSync -> A : release mutex
 deactivate XSync
 
-B -> XSync : locked mutex
+B -> XSync : lock mutex by **userId**
 activate XSync #11DD41
 
-A [#red]--> XSync : try to lock
+A [#red]--> XSync : try to lock by **userId**
 activate A #DD3311
-note left: wait for the \n\
+note left: wait for \n\
 release of \nthe mutex
 
 'A -> A : waiting
 
-XSync -> B : released mutex
+XSync -> B : release mutex
 deactivate XSync
 
-A -> XSync :\tlocked mutex
+A -> XSync :\tlock mutex by **userId**
 deactivate A
 activate XSync #11DD41
 
-XSync -> A : released mutex
+XSync -> A : release mutex
 deactivate XSync
 ....
+
+At the first we need to make a synchronization primitive - the custom mutex.
+Which will work by the value of the variable, and not by the reference to the object.
+
+Something like this:
+
+[source, java]
+----
+public void withdrawMoney(UUID userId, int amountOfMoney) {
+  synchronized (XMutex.of(userId)) {
+      ..
+  }
+}
+----
+
+In order to ensure that the same mutexes are obtained
+for equal values of variables, we will make the mutex factory.
+
+[source, java]
+----
+public void withdrawMoney(UUID userId, int amountOfMoney) {
+  synchronized (XMutexFactory.get(userId)) {
+      ..
+  }
+}
+
+public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
+  synchronized (XMutexFactory.get(userId)) {
+      ..
+  }
+}
+----
+
+In order to implementation this behavior we used WeakReference and WeakHashMap.
+I wrote an article about this type of references a month ago, you can consider this in more details here: http...
+
+
+
 
 ### WeakReference map + concurrency
 
