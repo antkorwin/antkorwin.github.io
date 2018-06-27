@@ -505,6 +505,18 @@ add the next repository &amp; dependency:</p>
 &lt;/repositories&gt;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>You need to add a one annotation(<code>@EnableStateMachineResolver</code>) in the configuration files:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Configuration
+@EnableStateMachineResolver
+public class StateMachineConfig {
+  ...
+}</code></pre>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -602,7 +614,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-26 23:40:27 +10
+Last updated 2018-06-28 07:22:23 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

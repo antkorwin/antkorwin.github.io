@@ -58,6 +58,16 @@ Also, you need to declare jitpack repository:
 </repositories>
 ----
 
+You need to add a one annotation(`@EnableStateMachineResolver`) in the configuration files:
+
+[source, java]
+----
+@Configuration
+@EnableStateMachineResolver
+public class StateMachineConfig {
+  ...
+}
+----
 
 ## Example of usage
 

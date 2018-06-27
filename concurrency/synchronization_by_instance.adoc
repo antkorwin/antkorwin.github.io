@@ -10,9 +10,7 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Intro
 
-Sometimes we need to synchronization some blocks of code by the value of variable, for example Id of the entity.
-
-Let's look at the next example:
+Sometimes we need to synchronization some blocks of code by the value of variable, for example Id of the entity:
 
 [source, java]
 ----
@@ -137,14 +135,77 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 ----
 
 In order to implementation this behavior we used WeakReference and WeakHashMap.
-I wrote an article about this type of references a month ago, you can consider this in more details here: http...
+I wrote an article about this type of references a week ago, you can consider this in more details here:
+link:./weakreference.html[Soft, Weak, Phantom references in Java]
+
+Our mutex factory will be based on the WeakHashMap.
+We need to use a synchronized version of WeakHashMap,
+let's see what's described in the documentation about it:
+
+"This class is not synchronized. A synchronized WeakHashMap may be constructed using the Collections.synchronizedMap method"
 
 
+The mutex factory creates a new mutex only
+if the mutex for this value(key) is not found in the HashMap.
+Then created mutex is added to the HashMap.
+Using of the WeakHashMap allows us to store a mutex in the HashMap while exist any references to it
+And the mutex will be removed from HashMap automatically when all references to it are released.
+
+[source, java]
+----
+public XMutex<KeyT> getMutex(KeyT key) {
+    synchronized (weakHashMap) {
+        validateKey(key);
+        return getExist(key)
+                .orElseGet(() -> saveNewReference(key));
+    }
+}
+
+private Optional<XMutex<KeyT>> getExist(KeyT key) {
+    return Optional.ofNullable(weakHashMap.get(XMutex.of(key)))
+                   .map(WeakReference::get);
+}
+
+private XMutex<KeyT> saveNewReference(KeyT key) {
+
+    XMutex<KeyT> mutex = XMutex.of(key);
+
+    WeakReference<XMutex<KeyT>> res = weakHashMap.put(mutex, new WeakReference<>(mutex));
+    if (res != null && res.get() != null) {
+        return res.get();
+    }
+    return mutex;
+}
+----
+
+## XSync library
+
+I wrapped this code into the XSync library,
+and you can use it as ready solution for the synchronization on value of variable.
+
+In order to do it, you need to add dependencies:
+
+[source , xml]
+----
+<repositories>
+	<repository>
+		<id>jitpack.io</id>
+		<url>https://jitpack.io</url>
+	</repository>
+</repositories>
+
+<dependency>
+	<groupId>com.github.antkorwin</groupId>
+	<artifactId>xsync</artifactId>
+	<version>0.4</version>
+</dependency>
+----
 
 
-### WeakReference map + concurrency
 
 ## Concurrency tests
+
+
 
 ## XSync library on github, issue requests are welcome
 

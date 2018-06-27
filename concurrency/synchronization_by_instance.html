@@ -451,13 +451,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_string_intern">2.2. String.intern</a></li>
 </ul>
 </li>
-<li><a href="#_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</a>
-<ul class="sectlevel2">
-<li><a href="#_weakreference_map_concurrency">3.1. WeakReference map + concurrency</a></li>
-</ul>
-</li>
-<li><a href="#_concurrency_tests">4. Concurrency tests</a></li>
-<li><a href="#_xsync_library_on_github_issue_requests_are_welcome">5. XSync library on github, issue requests are welcome</a></li>
+<li><a href="#_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</a></li>
+<li><a href="#_xsync_library">4. XSync library</a></li>
+<li><a href="#_concurrency_tests">5. Concurrency tests</a></li>
+<li><a href="#_xsync_library_on_github_issue_requests_are_welcome">6. XSync library on github, issue requests are welcome</a></li>
 </ul>
 </div>
 </div>
@@ -466,10 +463,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_intro">1. Intro</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Sometimes we need to synchronization some blocks of code by the value of variable, for example Id of the entity.</p>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s look at the next example:</p>
+<p>Sometimes we need to synchronization some blocks of code by the value of variable, for example Id of the entity:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -586,22 +580,89 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 </div>
 <div class="paragraph">
 <p>In order to implementation this behavior we used WeakReference and WeakHashMap.
-I wrote an article about this type of references a month ago, you can consider this in more details here: http&#8230;&#8203;</p>
+I wrote an article about this type of references a week ago, you can consider this in more details here:
+<a href="./weakreference.html">Soft, Weak, Phantom references in Java</a></p>
 </div>
-<div class="sect2">
-<h3 id="_weakreference_map_concurrency">3.1. WeakReference map + concurrency</h3>
+<div class="paragraph">
+<p>Our mutex factory will be based on the WeakHashMap.
+We need to use a synchronized version of WeakHashMap,
+let&#8217;s see what&#8217;s described in the documentation about it:</p>
+</div>
+<div class="paragraph">
+<p>"This class is not synchronized. A synchronized WeakHashMap may be constructed using the Collections.synchronizedMap method"</p>
+</div>
+<div class="paragraph">
+<p>The mutex factory creates a new mutex only
+if the mutex for this value(key) is not found in the HashMap.
+Then created mutex is added to the HashMap.
+Using of the WeakHashMap allows us to store a mutex in the HashMap while exist any references to it
+And the mutex will be removed from HashMap automatically when all references to it are released.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public XMutex&lt;KeyT&gt; getMutex(KeyT key) {
+    synchronized (weakHashMap) {
+        validateKey(key);
+        return getExist(key)
+                .orElseGet(() -&gt; saveNewReference(key));
+    }
+}
 
+private Optional&lt;XMutex&lt;KeyT&gt;&gt; getExist(KeyT key) {
+    return Optional.ofNullable(weakHashMap.get(XMutex.of(key)))
+                   .map(WeakReference::get);
+}
+
+private XMutex&lt;KeyT&gt; saveNewReference(KeyT key) {
+
+    XMutex&lt;KeyT&gt; mutex = XMutex.of(key);
+
+    WeakReference&lt;XMutex&lt;KeyT&gt;&gt; res = weakHashMap.put(mutex, new WeakReference&lt;&gt;(mutex));
+    if (res != null &amp;&amp; res.get() != null) {
+        return res.get();
+    }
+    return mutex;
+}</code></pre>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_concurrency_tests">4. Concurrency tests</h2>
+<h2 id="_xsync_library">4. XSync library</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>I wrapped this code into the XSync library,
+and you can use it as ready solution for the synchronization on value of variable.</p>
+</div>
+<div class="paragraph">
+<p>In order to do it, you need to add dependencies:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;repositories&gt;
+	&lt;repository&gt;
+		&lt;id&gt;jitpack.io&lt;/id&gt;
+		&lt;url&gt;https://jitpack.io&lt;/url&gt;
+	&lt;/repository&gt;
+&lt;/repositories&gt;
+
+&lt;dependency&gt;
+	&lt;groupId&gt;com.github.antkorwin&lt;/groupId&gt;
+	&lt;artifactId&gt;xsync&lt;/artifactId&gt;
+	&lt;version&gt;0.4&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_concurrency_tests">5. Concurrency tests</h2>
 <div class="sectionbody">
 
 </div>
 </div>
 <div class="sect1">
-<h2 id="_xsync_library_on_github_issue_requests_are_welcome">5. XSync library on github, issue requests are welcome</h2>
+<h2 id="_xsync_library_on_github_issue_requests_are_welcome">6. XSync library on github, issue requests are welcome</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/xsync">github.com/antkorwin/xsync</a></p>
@@ -658,7 +719,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-27 09:50:15 +10
+Last updated 2018-06-28 09:21:28 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
