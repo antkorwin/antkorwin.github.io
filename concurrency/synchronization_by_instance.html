@@ -536,7 +536,7 @@ there are good articles by Aleksey Shipilev about this point.</p>
 <h2 id="_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We need to implementation of the next diagram:</p>
+<p>we need to implementation a behavior that describes on the next diagram:</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -544,7 +544,7 @@ there are good articles by Aleksey Shipilev about this point.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>At the first we need to make a synchronization primitive - the custom mutex.
+<p>At the first we need to make a new synchronization primitive - the custom mutex.
 Which will work by the value of the variable, and not by the reference to the object.</p>
 </div>
 <div class="paragraph">
@@ -586,16 +586,19 @@ I wrote an article about this type of references a week ago, you can consider th
 <div class="paragraph">
 <p>Our mutex factory will be based on the WeakHashMap.
 We need to use a synchronized version of WeakHashMap,
-let&#8217;s see what&#8217;s described in the documentation about it:</p>
+let&#8217;s see what&#8217;s described in the <a href="https://docs.oracle.com/javase/7/docs/api/java/util/WeakHashMap.html">documentation</a> about it:</p>
 </div>
-<div class="paragraph">
-<p>"This class is not synchronized. A synchronized WeakHashMap may be constructed using the Collections.synchronizedMap method"</p>
+<div class="listingblock">
+<div class="content">
+<pre>This class is not synchronized. A synchronized WeakHashMap may be constructed
+using the Collections.synchronizedMap method.</pre>
+</div>
 </div>
 <div class="paragraph">
 <p>The mutex factory creates a new mutex only
 if the mutex for this value(key) is not found in the HashMap.
 Then created mutex is added to the HashMap.
-Using of the WeakHashMap allows us to store a mutex in the HashMap while exist any references to it
+Using of the WeakHashMap allows us to store a mutex in the HashMap while exist any references to it.
 And the mutex will be removed from HashMap automatically when all references to it are released.</p>
 </div>
 <div class="listingblock">
@@ -631,8 +634,8 @@ private XMutex&lt;KeyT&gt; saveNewReference(KeyT key) {
 <h2 id="_xsync_library">4. XSync library</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>I wrapped this code into the XSync library,
-and you can use it as ready solution for the synchronization on value of variable.</p>
+<p>I packed this code into the XSync library,
+and you can use it as a ready solution for the synchronization on value of variable.</p>
 </div>
 <div class="paragraph">
 <p>In order to do it, you need to add dependencies:</p>
@@ -651,6 +654,71 @@ and you can use it as ready solution for the synchronization on value of variabl
 	&lt;artifactId&gt;xsync&lt;/artifactId&gt;
 	&lt;version&gt;0.4&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then you be able to make instances of the XSync for synchronization on types that you need.
+For the Spring Framework you can make them as beans:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Bean
+public XSync&lt;UUID&gt; idXSync(){
+    return new XSync&lt;&gt;();
+}
+
+@Bean
+public XSync&lt;Integer&gt; intXSync(){
+    return new XSync&lt;&gt;();
+}
+
+@Bean
+public XSync&lt;String&gt; xSync(){
+    return new XSync&lt;&gt;();
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And now, you can use it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
+private XSync&lt;String&gt; xSync;
+
+@Test
+public void testLock() throws InterruptedException {
+
+    ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+    executorService.submit(()-&gt;{
+        System.out.println("firstThread started.");
+        xSync.execute(new String("key"), () -&gt; {
+            try {
+                System.out.println("firstThread took a lock");
+                Thread.sleep(1000);
+                System.out.println("firstThread released a look");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+    });
+
+    executorService.submit(()-&gt;{
+        System.out.println("secondThread started.");
+        xSync.execute(new String("key"), () -&gt; {
+            try {
+                System.out.println("secondThread took a lock");
+                Thread.sleep(1000);
+                System.out.println("secondThread released a look");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+    });
+
+    executorService.awaitTermination(3, TimeUnit.SECONDS);
+}</code></pre>
 </div>
 </div>
 </div>
@@ -719,7 +787,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-28 09:21:28 +10
+Last updated 2018-06-29 00:42:06 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

@@ -71,7 +71,7 @@ there are good articles by Aleksey Shipilev about this point.
 
 ## Create your own synchronization primitive
 
-We need to implementation of the next diagram:
+we need to implementation a behavior that describes on the next diagram:
 
 [plantuml]
 ....
@@ -102,7 +102,7 @@ XSync -> A : release mutex
 deactivate XSync
 ....
 
-At the first we need to make a synchronization primitive - the custom mutex.
+At the first we need to make a new synchronization primitive - the custom mutex.
 Which will work by the value of the variable, and not by the reference to the object.
 
 Something like this:
@@ -140,15 +140,18 @@ link:./weakreference.html[Soft, Weak, Phantom references in Java]
 
 Our mutex factory will be based on the WeakHashMap.
 We need to use a synchronized version of WeakHashMap,
-let's see what's described in the documentation about it:
+let's see what's described in the link:https://docs.oracle.com/javase/7/docs/api/java/util/WeakHashMap.html[documentation] about it:
 
-"This class is not synchronized. A synchronized WeakHashMap may be constructed using the Collections.synchronizedMap method"
+----
+This class is not synchronized. A synchronized WeakHashMap may be constructed
+using the Collections.synchronizedMap method.
+----
 
 
 The mutex factory creates a new mutex only
 if the mutex for this value(key) is not found in the HashMap.
 Then created mutex is added to the HashMap.
-Using of the WeakHashMap allows us to store a mutex in the HashMap while exist any references to it
+Using of the WeakHashMap allows us to store a mutex in the HashMap while exist any references to it.
 And the mutex will be removed from HashMap automatically when all references to it are released.
 
 [source, java]
@@ -180,8 +183,8 @@ private XMutex<KeyT> saveNewReference(KeyT key) {
 
 ## XSync library
 
-I wrapped this code into the XSync library,
-and you can use it as ready solution for the synchronization on value of variable.
+I packed this code into the XSync library,
+and you can use it as a ready solution for the synchronization on value of variable.
 
 In order to do it, you need to add dependencies:
 
@@ -201,9 +204,71 @@ In order to do it, you need to add dependencies:
 </dependency>
 ----
 
+Then you be able to make instances of the XSync for synchronization on types that you need.
+For the Spring Framework you can make them as beans:
 
+[source, java]
+----
+@Bean
+public XSync<UUID> idXSync(){
+    return new XSync<>();
+}
+
+@Bean
+public XSync<Integer> intXSync(){
+    return new XSync<>();
+}
+
+@Bean
+public XSync<String> xSync(){
+    return new XSync<>();
+}
+----
+
+And now, you can use it:
+
+[source, java]
+----
+@Autowired
+private XSync<String> xSync;
+
+@Test
+public void testLock() throws InterruptedException {
+
+    ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+    executorService.submit(()->{
+        System.out.println("firstThread started.");
+        xSync.execute(new String("key"), () -> {
+            try {
+                System.out.println("firstThread took a lock");
+                Thread.sleep(1000);
+                System.out.println("firstThread released a look");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+    });
+
+    executorService.submit(()->{
+        System.out.println("secondThread started.");
+        xSync.execute(new String("key"), () -> {
+            try {
+                System.out.println("secondThread took a lock");
+                Thread.sleep(1000);
+                System.out.println("secondThread released a look");
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+    });
+
+    executorService.awaitTermination(3, TimeUnit.SECONDS);
+}
+----
 
 ## Concurrency tests
+
 
 
 
