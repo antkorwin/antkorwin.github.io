@@ -536,7 +536,7 @@ there are good articles by <a href="https://shipilev.net">Aleksey Shipilev</a> a
 <h2 id="_a_right_way_create_your_own_synchronization_primitive">3. A right way: Create your own synchronization primitive</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We need to implementation a behavior that describes on the next diagram:</p>
+<p>We need to implement a behavior that describes on the next diagram:</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -663,17 +663,7 @@ For the Spring Framework you can make them as beans:</p>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Bean
-public XSync&lt;UUID&gt; idXSync(){
-    return new XSync&lt;&gt;();
-}
-
-@Bean
-public XSync&lt;Integer&gt; intXSync(){
-    return new XSync&lt;&gt;();
-}
-
-@Bean
-public XSync&lt;String&gt; xSync(){
+public XSync&lt;UUID&gt; xSync(){
     return new XSync&lt;&gt;();
 }</code></pre>
 </div>
@@ -684,53 +674,21 @@ public XSync&lt;String&gt; xSync(){
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Autowired
-private XSync&lt;String&gt; xSync;
+private XSync&lt;UUID&gt; xSync;
 
-@Test
-public void testLock() throws InterruptedException {
-    // Arrange
-    NonAtomicInt variable = new NonAtomicInt(0);
-    XSync&lt;String&gt; xSync = new XSync&lt;&gt;();
+public void withdrawMoney(UUID userId, int amountOfMoney) {
+  xSync.execute(userId, () -&gt; {
+      Result result = externalPolicySystem.validateTransfer(userId, amountOfMoney, WITHDRAW);
+      accountService.transfer(userId, amountOfMoney, WITHDRAW);
+  });
+}
 
-    ExecutorService executorService = Executors.newFixedThreadPool(10);
-
-    // Act
-    executorService.submit(() -&gt; {
-        System.out.println("firstThread started.");
-        xSync.execute(new String("key"), () -&gt; {
-            System.out.println("firstThread took a lock");
-            sleep(2);
-            variable.increment();
-            System.out.println("firstThread released a look");
-        });
-    });
-
-    executorService.submit(() -&gt; {
-        sleep(1);
-        System.out.println("secondThread started.");
-        xSync.execute(new String("key"), () -&gt; {
-            System.out.println("secondThread took a lock");
-
-            // Assert
-            Assertions.assertThat(variable.getValue()).isEqualTo(1);
-            sleep(1);
-            variable.increment();
-            System.out.println("secondThread released a look");
-        });
-    });
-
-    executorService.awaitTermination(5, TimeUnit.SECONDS);
-
-    // Assert
-    Assertions.assertThat(variable.getValue()).isEqualTo(2);
+public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
+  xSync.execute(userId, () -&gt; {
+      ..
+  });
 }</code></pre>
 </div>
-</div>
-<div class="paragraph">
-<p>Test result:</p>
-</div>
-<div class="paragraph">
-<p><span class="image"><img src="./lock_test.png" alt="xsync test result"></span></p>
 </div>
 </div>
 </div>
@@ -861,7 +819,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-30 11:46:51 +10
+Last updated 2018-07-01 00:33:15 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

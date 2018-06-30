@@ -71,7 +71,7 @@ there are good articles by link:https://shipilev.net[Aleksey Shipilev] about thi
 
 ## A right way: Create your own synchronization primitive
 
-We need to implementation a behavior that describes on the next diagram:
+We need to implement a behavior that describes on the next diagram:
 
 [plantuml]
 ....
@@ -210,17 +210,7 @@ For the Spring Framework you can make them as beans:
 [source, java]
 ----
 @Bean
-public XSync<UUID> idXSync(){
-    return new XSync<>();
-}
-
-@Bean
-public XSync<Integer> intXSync(){
-    return new XSync<>();
-}
-
-@Bean
-public XSync<String> xSync(){
+public XSync<UUID> xSync(){
     return new XSync<>();
 }
 ----
@@ -230,51 +220,21 @@ And now, you can use it:
 [source, java]
 ----
 @Autowired
-private XSync<String> xSync;
+private XSync<UUID> xSync;
 
-@Test
-public void testLock() throws InterruptedException {
-    // Arrange
-    NonAtomicInt variable = new NonAtomicInt(0);
-    XSync<String> xSync = new XSync<>();
+public void withdrawMoney(UUID userId, int amountOfMoney) {
+  xSync.execute(userId, () -> {
+      Result result = externalPolicySystem.validateTransfer(userId, amountOfMoney, WITHDRAW);
+      accountService.transfer(userId, amountOfMoney, WITHDRAW);
+  });
+}
 
-    ExecutorService executorService = Executors.newFixedThreadPool(10);
-
-    // Act
-    executorService.submit(() -> {
-        System.out.println("firstThread started.");
-        xSync.execute(new String("key"), () -> {
-            System.out.println("firstThread took a lock");
-            sleep(2);
-            variable.increment();
-            System.out.println("firstThread released a look");
-        });
-    });
-
-    executorService.submit(() -> {
-        sleep(1);
-        System.out.println("secondThread started.");
-        xSync.execute(new String("key"), () -> {
-            System.out.println("secondThread took a lock");
-
-            // Assert
-            Assertions.assertThat(variable.getValue()).isEqualTo(1);
-            sleep(1);
-            variable.increment();
-            System.out.println("secondThread released a look");
-        });
-    });
-
-    executorService.awaitTermination(5, TimeUnit.SECONDS);
-
-    // Assert
-    Assertions.assertThat(variable.getValue()).isEqualTo(2);
+public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
+  xSync.execute(userId, () -> {
+      ..
+  });
 }
 ----
-
-Test result:
-
-image:./lock_test.png[xsync test result]
 
 
 ## Concurrent tests
