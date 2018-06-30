@@ -64,7 +64,7 @@ Also, there is a chance that foreign code blocks is synchronized on
 the same instance of the string as your application.
 This can lead to deadlocks.
 
-In general, the use of intern is better left to the libraries of the JDK,
+In general, the use of intern is better left to the internal libraries of the JDK,
 there are good articles by link:https://shipilev.net[Aleksey Shipilev] about this point.
 
 
