@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>Synchronization by instance of the class</title>
+<title>Synchronization by the instance of the class</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,7 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Synchronization by instance of the class</h1>
+<h1>Synchronization by the instance of the class</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
@@ -447,14 +447,14 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_intro">1. Intro</a></li>
 <li><a href="#_wrong_ways_to_solve_this_issue">2. Wrong ways to solve this issue</a>
 <ul class="sectlevel2">
-<li><a href="#_synchronization_on_methods">2.1. synchronization on methods</a></li>
-<li><a href="#_string_intern">2.2. String.intern</a></li>
+<li><a href="#_synchronization_on_methods">2.1. Synchronization on methods</a></li>
+<li><a href="#_string_intern">2.2. String intern</a></li>
 </ul>
 </li>
-<li><a href="#_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</a></li>
-<li><a href="#_xsync_library">4. XSync library</a></li>
-<li><a href="#_concurrency_tests">5. Concurrency tests</a></li>
-<li><a href="#_xsync_library_on_github_issue_requests_are_welcome">6. XSync library on github, issue requests are welcome</a></li>
+<li><a href="#_a_right_way_create_your_own_synchronization_primitive">3. A right way: Create your own synchronization primitive</a></li>
+<li><a href="#_getting_started_with_xsync_library">4. Getting started with XSync library</a></li>
+<li><a href="#_concurrent_tests">5. Concurrent tests</a></li>
+<li><a href="#_xsync_library_on_github">6. XSync library on github</a></li>
 </ul>
 </div>
 </div>
@@ -463,7 +463,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_intro">1. Intro</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Sometimes we need to synchronization some blocks of code by the value of variable, for example Id of the entity:</p>
+<p>Sometimes we need to synchronization some blocks of code by the value of variable, for example on Id of the entity:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -484,9 +484,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_wrong_ways_to_solve_this_issue">2. Wrong ways to solve this issue</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_synchronization_on_methods">2.1. synchronization on methods</h3>
+<h3 id="_synchronization_on_methods">2.1. Synchronization on methods</h3>
 <div class="paragraph">
-<p>you can move synchronized on method:</p>
+<p>You can move synchronized on method:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -497,15 +497,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="paragraph">
 <p>This solution has bad performance.
-You will block the money transfer for absolutely all users.</p>
+You will block transfers of money for absolutely all users.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_string_intern">2.2. String.intern</h3>
+<h3 id="_string_intern">2.2. String intern</h3>
 <div class="paragraph">
-<p>In order to ensure that the instance of the class with the user ID
-is the same in all synchronized blocks,
-we can serialize it into a String and use the String.intern().</p>
+<p>In order to ensure that the instance of the class (which contain a user ID)
+will be the same in all synchronized blocks,
+we can serialize it into a String and use the String.intern() for obtain a same link for equals strings.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -527,16 +527,16 @@ This can lead to deadlocks.</p>
 </div>
 <div class="paragraph">
 <p>In general, the use of intern is better left to the libraries of the JDK,
-there are good articles by Aleksey Shipilev about this point.</p>
+there are good articles by <a href="https://shipilev.net">Aleksey Shipilev</a> about this point.</p>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</h2>
+<h2 id="_a_right_way_create_your_own_synchronization_primitive">3. A right way: Create your own synchronization primitive</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>we need to implementation a behavior that describes on the next diagram:</p>
+<p>We need to implementation a behavior that describes on the next diagram:</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -579,7 +579,7 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 </div>
 </div>
 <div class="paragraph">
-<p>In order to implementation this behavior we used WeakReference and WeakHashMap.
+<p>In order to implement this behavior, we used WeakReference and WeakHashMap.
 I wrote an article about this type of references a week ago, you can consider this in more details here:
 <a href="./weakreference.html">Soft, Weak, Phantom references in Java</a></p>
 </div>
@@ -631,14 +631,14 @@ private XMutex&lt;KeyT&gt; saveNewReference(KeyT key) {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_xsync_library">4. XSync library</h2>
+<h2 id="_getting_started_with_xsync_library">4. Getting started with XSync library</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>I packed this code into the XSync library,
+<p>I packed this code into the <a href="https://github.com/antkorwin/xsync">XSync</a> library,
 and you can use it as a ready solution for the synchronization on value of variable.</p>
 </div>
 <div class="paragraph">
-<p>In order to do it, you need to add dependencies:</p>
+<p>In order to do it, you need to add next dependencies:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -657,7 +657,7 @@ and you can use it as a ready solution for the synchronization on value of varia
 </div>
 </div>
 <div class="paragraph">
-<p>Then you be able to make instances of the XSync for synchronization on types that you need.
+<p>Then you be able to create instances of the XSync class for a synchronization on types that you need.
 For the Spring Framework you can make them as beans:</p>
 </div>
 <div class="listingblock">
@@ -688,52 +688,126 @@ private XSync&lt;String&gt; xSync;
 
 @Test
 public void testLock() throws InterruptedException {
+    // Arrange
+    NonAtomicInt variable = new NonAtomicInt(0);
+    XSync&lt;String&gt; xSync = new XSync&lt;&gt;();
 
     ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    executorService.submit(()-&gt;{
+    // Act
+    executorService.submit(() -&gt; {
         System.out.println("firstThread started.");
         xSync.execute(new String("key"), () -&gt; {
-            try {
-                System.out.println("firstThread took a lock");
-                Thread.sleep(1000);
-                System.out.println("firstThread released a look");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            System.out.println("firstThread took a lock");
+            sleep(2);
+            variable.increment();
+            System.out.println("firstThread released a look");
         });
     });
 
-    executorService.submit(()-&gt;{
+    executorService.submit(() -&gt; {
+        sleep(1);
         System.out.println("secondThread started.");
         xSync.execute(new String("key"), () -&gt; {
-            try {
-                System.out.println("secondThread took a lock");
-                Thread.sleep(1000);
-                System.out.println("secondThread released a look");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            System.out.println("secondThread took a lock");
+
+            // Assert
+            Assertions.assertThat(variable.getValue()).isEqualTo(1);
+            sleep(1);
+            variable.increment();
+            System.out.println("secondThread released a look");
         });
     });
 
-    executorService.awaitTermination(3, TimeUnit.SECONDS);
+    executorService.awaitTermination(5, TimeUnit.SECONDS);
+
+    // Assert
+    Assertions.assertThat(variable.getValue()).isEqualTo(2);
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>Test result:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./lock_test.png" alt="xsync test result"></span></p>
+</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_concurrency_tests">5. Concurrency tests</h2>
+<h2 id="_concurrent_tests">5. Concurrent tests</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>In order to be sure that this code works well, I wrote several concurrent tests.</p>
+</div>
+<div class="paragraph">
+<p>There is an example of one of these tests:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public void testSyncBySingleKeyInConcurrency() {
+   // Arrange
+   XSync&lt;UUID&gt; xsync = new XSync&lt;&gt;(); <i class="conum" data-value="1"></i><b>(1)</b>
+   String id = UUID.randomUUID().toString();
+   NonAtomicInt var = new NonAtomicInt(0);
 
+   // Act
+   IntStream.range(0, THREAD_CNT)
+            .boxed()
+            .parallel()
+            .forEach(j -&gt; xsync.execute(UUID.fromString(id), var::increment));  <i class="conum" data-value="2"></i><b>(2)</b>
+
+   // Asserts
+   await().atMost(5, TimeUnit.SECONDS)
+          .until(var::getValue, equalTo(THREAD_CNT));
+
+   Assertions.assertThat(var.getValue()).isEqualTo(THREAD_CNT);
+}
+
+@Getter
+@AllArgsConstructor
+private class NonAtomicInt {  <i class="conum" data-value="3"></i><b>(3)</b>
+    private int value;
+
+    public int increment() {
+        return value++;
+    }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Create a XSync instance for a synchronization by UUID value.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>There is a magic here, we created a parallel stream
+and try to increment the same nonatomic integer variable in the each stream.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>Implementation of the not thread safe integer variable.</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s see at the result of the test:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./concurrent_test.png" alt="concurrent test result"></span></p>
+</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_xsync_library_on_github_issue_requests_are_welcome">6. XSync library on github, issue requests are welcome</h2>
+<h2 id="_xsync_library_on_github">6. XSync library on github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/xsync">github.com/antkorwin/xsync</a></p>
+</div>
+<div class="paragraph">
+<p>issue requests and pull-requests are welcome.</p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -787,7 +861,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-29 00:42:06 +10
+Last updated 2018-06-30 11:46:51 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

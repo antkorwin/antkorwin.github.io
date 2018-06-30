@@ -1,4 +1,4 @@
-= Synchronization by instance of the class
+= Synchronization by the instance of the class
 :source-highlighter: prettify
 :icons: font
 :toc:
@@ -10,7 +10,7 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Intro
 
-Sometimes we need to synchronization some blocks of code by the value of variable, for example Id of the entity:
+Sometimes we need to synchronization some blocks of code by the value of variable, for example on Id of the entity:
 
 [source, java]
 ----
@@ -27,9 +27,9 @@ public void withdrawMoney(UUID userId, int amountOfMoney) {
 
 ## Wrong ways to solve this issue
 
-### synchronization on methods
+### Synchronization on methods
 
-you can move synchronized on method:
+You can move synchronized on method:
 
 [source, java]
 ----
@@ -39,14 +39,14 @@ public synchronized void withdrawMoney(UUID userId, int amountOfMoney) {
 ----
 
 This solution has bad performance.
-You will block the money transfer for absolutely all users.
+You will block transfers of money for absolutely all users.
 
 
-### String.intern
+### String intern
 
-In order to ensure that the instance of the class with the user ID
-is the same in all synchronized blocks,
-we can serialize it into a String and use the String.intern().
+In order to ensure that the instance of the class (which contain a user ID)
+will be the same in all synchronized blocks,
+we can serialize it into a String and use the String.intern() for obtain a same link for equals strings.
 
 [source, java]
 ----
@@ -65,13 +65,13 @@ the same instance of the string as your application.
 This can lead to deadlocks.
 
 In general, the use of intern is better left to the libraries of the JDK,
-there are good articles by Aleksey Shipilev about this point.
+there are good articles by link:https://shipilev.net[Aleksey Shipilev] about this point.
 
 
 
-## Create your own synchronization primitive
+## A right way: Create your own synchronization primitive
 
-we need to implementation a behavior that describes on the next diagram:
+We need to implementation a behavior that describes on the next diagram:
 
 [plantuml]
 ....
@@ -134,7 +134,7 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 }
 ----
 
-In order to implementation this behavior we used WeakReference and WeakHashMap.
+In order to implement this behavior, we used WeakReference and WeakHashMap.
 I wrote an article about this type of references a week ago, you can consider this in more details here:
 link:./weakreference.html[Soft, Weak, Phantom references in Java]
 
@@ -181,12 +181,12 @@ private XMutex<KeyT> saveNewReference(KeyT key) {
 }
 ----
 
-## XSync library
+## Getting started with XSync library
 
-I packed this code into the XSync library,
+I packed this code into the https://github.com/antkorwin/xsync[XSync] library,
 and you can use it as a ready solution for the synchronization on value of variable.
 
-In order to do it, you need to add dependencies:
+In order to do it, you need to add next dependencies:
 
 [source , xml]
 ----
@@ -204,7 +204,7 @@ In order to do it, you need to add dependencies:
 </dependency>
 ----
 
-Then you be able to make instances of the XSync for synchronization on types that you need.
+Then you be able to create instances of the XSync class for a synchronization on types that you need.
 For the Spring Framework you can make them as beans:
 
 [source, java]
@@ -234,47 +234,101 @@ private XSync<String> xSync;
 
 @Test
 public void testLock() throws InterruptedException {
+    // Arrange
+    NonAtomicInt variable = new NonAtomicInt(0);
+    XSync<String> xSync = new XSync<>();
 
     ExecutorService executorService = Executors.newFixedThreadPool(10);
 
-    executorService.submit(()->{
+    // Act
+    executorService.submit(() -> {
         System.out.println("firstThread started.");
         xSync.execute(new String("key"), () -> {
-            try {
-                System.out.println("firstThread took a lock");
-                Thread.sleep(1000);
-                System.out.println("firstThread released a look");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            System.out.println("firstThread took a lock");
+            sleep(2);
+            variable.increment();
+            System.out.println("firstThread released a look");
         });
     });
 
-    executorService.submit(()->{
+    executorService.submit(() -> {
+        sleep(1);
         System.out.println("secondThread started.");
         xSync.execute(new String("key"), () -> {
-            try {
-                System.out.println("secondThread took a lock");
-                Thread.sleep(1000);
-                System.out.println("secondThread released a look");
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            System.out.println("secondThread took a lock");
+
+            // Assert
+            Assertions.assertThat(variable.getValue()).isEqualTo(1);
+            sleep(1);
+            variable.increment();
+            System.out.println("secondThread released a look");
         });
     });
 
-    executorService.awaitTermination(3, TimeUnit.SECONDS);
+    executorService.awaitTermination(5, TimeUnit.SECONDS);
+
+    // Assert
+    Assertions.assertThat(variable.getValue()).isEqualTo(2);
 }
 ----
 
-## Concurrency tests
+Test result:
+
+image:./lock_test.png[xsync test result]
 
 
+## Concurrent tests
+
+In order to be sure that this code works well, I wrote several concurrent tests.
+
+There is an example of one of these tests:
+
+[source, java]
+----
+public void testSyncBySingleKeyInConcurrency() {
+   // Arrange
+   XSync<UUID> xsync = new XSync<>(); <1>
+   String id = UUID.randomUUID().toString();
+   NonAtomicInt var = new NonAtomicInt(0);
+
+   // Act
+   IntStream.range(0, THREAD_CNT)
+            .boxed()
+            .parallel()
+            .forEach(j -> xsync.execute(UUID.fromString(id), var::increment));  <2>
+
+   // Asserts
+   await().atMost(5, TimeUnit.SECONDS)
+          .until(var::getValue, equalTo(THREAD_CNT));
+
+   Assertions.assertThat(var.getValue()).isEqualTo(THREAD_CNT);
+}
+
+@Getter
+@AllArgsConstructor
+private class NonAtomicInt {  <3>
+    private int value;
+
+    public int increment() {
+        return value++;
+    }
+}
+----
+<1> Create a XSync instance for a synchronization by UUID value.
+<2> There is a magic here, we created a parallel stream
+and try to increment the same nonatomic integer variable in the each stream.
+<3> Implementation of the not thread safe integer variable.
+
+Let's see at the result of the test:
+
+image:./concurrent_test.png[concurrent test result]
 
 
-## XSync library on github, issue requests are welcome
+## XSync library on github
 
 image:../icons/git.png[github,64,64] https://github.com/antkorwin/xsync[github.com/antkorwin/xsync]
+
+issue requests and pull-requests are welcome.
 
 
 
