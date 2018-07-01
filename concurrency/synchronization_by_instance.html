@@ -451,10 +451,11 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_string_intern">2.2. String intern</a></li>
 </ul>
 </li>
-<li><a href="#_a_right_way_create_your_own_synchronization_primitive">3. A right way: Create your own synchronization primitive</a></li>
-<li><a href="#_getting_started_with_xsync_library">4. Getting started with XSync library</a></li>
-<li><a href="#_concurrent_tests">5. Concurrent tests</a></li>
-<li><a href="#_xsync_library_on_github">6. XSync library on github</a></li>
+<li><a href="#_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</a></li>
+<li><a href="#_concurrenthashmap_with_a_weakreference_as_a_key">4. ConcurrentHashMap with a WeakReference as a key</a></li>
+<li><a href="#_getting_started_with_xsync_library">5. Getting started with XSync library</a></li>
+<li><a href="#_concurrent_tests">6. Concurrent tests</a></li>
+<li><a href="#_xsync_library_on_github">7. XSync library on github</a></li>
 </ul>
 </div>
 </div>
@@ -533,7 +534,7 @@ there are good articles by <a href="https://shipilev.net">Aleksey Shipilev</a> a
 </div>
 </div>
 <div class="sect1">
-<h2 id="_a_right_way_create_your_own_synchronization_primitive">3. A right way: Create your own synchronization primitive</h2>
+<h2 id="_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>We need to implement a behavior that describes on the next diagram:</p>
@@ -584,8 +585,15 @@ I wrote an article about this type of references a week ago, you can consider th
 <a href="./weakreference.html">Soft, Weak, Phantom references in Java</a></p>
 </div>
 <div class="paragraph">
-<p>Our mutex factory will be based on the WeakHashMap.
-We need to use a synchronized version of WeakHashMap,
+<p>Our mutex factory will be based on the <code>WeakHashMap</code>.
+The mutex factory creates a new mutex only
+if the mutex for this value(key) is not found in the HashMap.
+Then created mutex is added to the HashMap.
+Using of the <code>WeakHashMap</code> allows us to store a mutex in the HashMap while exist any references to it.
+And the mutex will be removed from HashMap automatically when all references to it are released.</p>
+</div>
+<div class="paragraph">
+<p>We need to use a synchronized version of <code>WeakHashMap</code>,
 let&#8217;s see what&#8217;s described in the <a href="https://docs.oracle.com/javase/7/docs/api/java/util/WeakHashMap.html">documentation</a> about it:</p>
 </div>
 <div class="listingblock">
@@ -595,20 +603,18 @@ using the Collections.synchronizedMap method.</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>The mutex factory creates a new mutex only
-if the mutex for this value(key) is not found in the HashMap.
-Then created mutex is added to the HashMap.
-Using of the WeakHashMap allows us to store a mutex in the HashMap while exist any references to it.
-And the mutex will be removed from HashMap automatically when all references to it are released.</p>
+<p>It&#8217;s very sad and a little later we&#8217;ll take a closer look at reason.
+but for now, let&#8217;s consider an example of implementation, which is proposed by the documentation.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public XMutex&lt;KeyT&gt; getMutex(KeyT key) {
-    synchronized (weakHashMap) {
-        validateKey(key);
-        return getExist(key)
-                .orElseGet(() -&gt; saveNewReference(key));
-    }
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public final Map&lt;XMutex&lt;KeyT&gt;, WeakReference&lt;XMutex&lt;KeyT&gt;&gt;&gt; weakHashMap =
+            Collections.synchronizedMap(new WeakHashMap&lt;XMutex&lt;KeyT&gt;, WeakReference&lt;XMutex&lt;KeyT&gt;&gt;&gt;());
+
+public XMutex&lt;KeyT&gt; getMutex(KeyT key) {
+    validateKey(key);
+    return getExist(key)
+            .orElseGet(() -&gt; saveNewReference(key));
 }
 
 private Optional&lt;XMutex&lt;KeyT&gt;&gt; getExist(KeyT key) {
@@ -628,10 +634,124 @@ private XMutex&lt;KeyT&gt; saveNewReference(KeyT key) {
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>If we look at the code of the <code>Collections.synchronizedMap</code>
+then we find a lot of synchronizations on the global mutex which
+creates with a SynchronizedMap instance.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">SynchronizedMap(Map&lt;K,V&gt; m) {
+    this.m = Objects.requireNonNull(m);
+    mutex = this;   <i class="conum" data-value="1"></i><b>(1)</b>
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>create a mutex while creating a SynchronizedMap instance</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>And all other methods are synchronized to it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public int size() {
+    synchronized (mutex) {return m.size();}
+}
+public boolean containsKey(Object key) {
+    synchronized (mutex) {return m.containsKey(key);}
+}
+public V get(Object key) {
+    synchronized (mutex) {return m.get(key);}
+}
+public V put(K key, V value) {
+    synchronized (mutex) {return m.put(key, value);}
+}
+public V remove(Object key) {
+    synchronized (mutex) {return m.remove(key);}
+}
+
+...</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+This solution does not have the best performance.
+All of these synchronizations are lead us to permanent locks on each operations with a factory of mutexes.
+</td>
+</tr>
+</table>
+</div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_getting_started_with_xsync_library">4. Getting started with XSync library</h2>
+<h2 id="_concurrenthashmap_with_a_weakreference_as_a_key">4. ConcurrentHashMap with a WeakReference as a key</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We need to look at the using of the <code>ConcurrentHashMap</code>.
+It has a better performance than Collections.synchronizedMap.</p>
+</div>
+<div class="paragraph">
+<p>But we have a one problem - the ConcurrentHashMap doesn&#8217;t allow a using of weak-references.</p>
+</div>
+<div class="paragraph">
+<p>This means that the collector can not delete unused mutexes.
+I found two ways to solve this problem:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The first is to create my own <code>ConcurrentMap</code> implementation.
+This is the right decision, but it will take a very long time.</p>
+</li>
+<li>
+<p>The second one is the use of the <code>ConcurrentReferenceHashMap</code> implementation from the Spring Framework.
+This is a good implementation, but it has a couple of nuances. We will consider them below.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s look at the implementation of the XMutexFactory based on the ConcurrentReferenceHashMap:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">/**
+ * Create mutex factory with default settings
+ */
+public XMutexFactory() {
+    this.map = new ConcurrentReferenceHashMap&lt;&gt;(DEFAULT_INITIAL_CAPACITY,
+                                                DEFAULT_LOAD_FACTOR,
+                                                DEFAULT_CONCURRENCY_LEVEL,
+                                                DEFAULT_REFERENCE_TYPE);
+}
+
+/**
+ * Creates and returns a mutex by the key.
+ * If the mutex for this key already exists in the weak-map,
+ * then returns the same reference of the mutex.
+ */
+public XMutex&lt;KeyT&gt; getMutex(KeyT key) {
+    return this.map.compute(key, (k, v) -&gt; (v == null) ? new XMutex&lt;&gt;(k) : v);
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>to be continued&#8230;&#8203;</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_getting_started_with_xsync_library">5. Getting started with XSync library</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>I packed this code into the <a href="https://github.com/antkorwin/xsync">XSync</a> library,
@@ -693,7 +813,7 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_concurrent_tests">5. Concurrent tests</h2>
+<h2 id="_concurrent_tests">6. Concurrent tests</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>In order to be sure that this code works well, I wrote several concurrent tests.</p>
@@ -759,7 +879,7 @@ and try to increment the same nonatomic integer variable in the each stream.</td
 </div>
 </div>
 <div class="sect1">
-<h2 id="_xsync_library_on_github">6. XSync library on github</h2>
+<h2 id="_xsync_library_on_github">7. XSync library on github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/xsync">github.com/antkorwin/xsync</a></p>
@@ -819,7 +939,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-07-01 00:57:54 +10
+Last updated 2018-07-02 09:00:58 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

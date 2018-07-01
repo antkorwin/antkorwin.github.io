@@ -69,7 +69,7 @@ there are good articles by link:https://shipilev.net[Aleksey Shipilev] about thi
 
 
 
-## A right way: Create your own synchronization primitive
+## Create your own synchronization primitive
 
 We need to implement a behavior that describes on the next diagram:
 
@@ -138,8 +138,14 @@ In order to implement this behavior, we used WeakReference and WeakHashMap.
 I wrote an article about this type of references a week ago, you can consider this in more details here:
 link:./weakreference.html[Soft, Weak, Phantom references in Java]
 
-Our mutex factory will be based on the WeakHashMap.
-We need to use a synchronized version of WeakHashMap,
+Our mutex factory will be based on the `WeakHashMap`.
+The mutex factory creates a new mutex only
+if the mutex for this value(key) is not found in the HashMap.
+Then created mutex is added to the HashMap.
+Using of the `WeakHashMap` allows us to store a mutex in the HashMap while exist any references to it.
+And the mutex will be removed from HashMap automatically when all references to it are released.
+
+We need to use a synchronized version of `WeakHashMap`,
 let's see what's described in the link:https://docs.oracle.com/javase/7/docs/api/java/util/WeakHashMap.html[documentation] about it:
 
 ----
@@ -147,21 +153,19 @@ This class is not synchronized. A synchronized WeakHashMap may be constructed
 using the Collections.synchronizedMap method.
 ----
 
+It's very sad and a little later we'll take a closer look at reason.
+but for now, let's consider an example of implementation, which is proposed by the documentation.
 
-The mutex factory creates a new mutex only
-if the mutex for this value(key) is not found in the HashMap.
-Then created mutex is added to the HashMap.
-Using of the WeakHashMap allows us to store a mutex in the HashMap while exist any references to it.
-And the mutex will be removed from HashMap automatically when all references to it are released.
 
 [source, java]
 ----
+public final Map<XMutex<KeyT>, WeakReference<XMutex<KeyT>>> weakHashMap =
+            Collections.synchronizedMap(new WeakHashMap<XMutex<KeyT>, WeakReference<XMutex<KeyT>>>());
+
 public XMutex<KeyT> getMutex(KeyT key) {
-    synchronized (weakHashMap) {
-        validateKey(key);
-        return getExist(key)
-                .orElseGet(() -> saveNewReference(key));
-    }
+    validateKey(key);
+    return getExist(key)
+            .orElseGet(() -> saveNewReference(key));
 }
 
 private Optional<XMutex<KeyT>> getExist(KeyT key) {
@@ -180,6 +184,91 @@ private XMutex<KeyT> saveNewReference(KeyT key) {
     return mutex;
 }
 ----
+
+If we look at the code of the `Collections.synchronizedMap`
+then we find a lot of synchronizations on the global mutex which
+creates with a SynchronizedMap instance.
+
+[source, java]
+----
+SynchronizedMap(Map<K,V> m) {
+    this.m = Objects.requireNonNull(m);
+    mutex = this;   <1>
+}
+----
+<1> create a mutex while creating a SynchronizedMap instance
+
+
+And all other methods are synchronized to it:
+
+[source, java]
+----
+public int size() {
+    synchronized (mutex) {return m.size();}
+}
+public boolean containsKey(Object key) {
+    synchronized (mutex) {return m.containsKey(key);}
+}
+public V get(Object key) {
+    synchronized (mutex) {return m.get(key);}
+}
+public V put(K key, V value) {
+    synchronized (mutex) {return m.put(key, value);}
+}
+public V remove(Object key) {
+    synchronized (mutex) {return m.remove(key);}
+}
+
+...
+
+----
+
+NOTE: This solution does not have the best performance.
+All of these synchronizations are lead us to permanent locks on each operations with a factory of mutexes.
+
+
+## ConcurrentHashMap with a WeakReference as a key
+
+We need to look at the using of the `ConcurrentHashMap`.
+It has a better performance than Collections.synchronizedMap.
+
+But we have a one problem - the ConcurrentHashMap doesn't allow a using of weak-references.
+
+This means that the collector can not delete unused mutexes.
+I found two ways to solve this problem:
+
+* The first is to create my own `ConcurrentMap` implementation.
+This is the right decision, but it will take a very long time.
+* The second one is the use of the `ConcurrentReferenceHashMap` implementation from the Spring Framework.
+This is a good implementation, but it has a couple of nuances. We will consider them below.
+
+
+Let's look at the implementation of the XMutexFactory based on the ConcurrentReferenceHashMap:
+
+[source, java]
+----
+/**
+ * Create mutex factory with default settings
+ */
+public XMutexFactory() {
+    this.map = new ConcurrentReferenceHashMap<>(DEFAULT_INITIAL_CAPACITY,
+                                                DEFAULT_LOAD_FACTOR,
+                                                DEFAULT_CONCURRENCY_LEVEL,
+                                                DEFAULT_REFERENCE_TYPE);
+}
+
+/**
+ * Creates and returns a mutex by the key.
+ * If the mutex for this key already exists in the weak-map,
+ * then returns the same reference of the mutex.
+ */
+public XMutex<KeyT> getMutex(KeyT key) {
+    return this.map.compute(key, (k, v) -> (v == null) ? new XMutex<>(k) : v);
+}
+----
+
+to be continued...
+
 
 ## Getting started with XSync library
 
