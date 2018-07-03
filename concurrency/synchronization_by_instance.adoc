@@ -267,7 +267,31 @@ public XMutex<KeyT> getMutex(KeyT key) {
 }
 ----
 
-to be continued...
+## A simple benchmark
+
+I made a small benchmark in order to select an implementation.
+
+There are three implementation of the Map involved in test:
+
+* Collections.synchronizedMap based on the WeakHashMap
+* ConcurrentHashMap
+* ConcurrentReferenceHashMap
+
+
+I use the ConcurrentHashMap in benchmark just for interest in measurements,
+this implementation is not suitable for use in the factory of mutexes,
+because it not support a using of weak or soft references
+
+Tests result:
+
+image:./sync_map_bench.png[result of benchmarks]
+
+So, the implementation of ConcurrentHashMap justifies its use in the library.
+
+In the benchmark, I create a situation when the factory will read and write mutexes in several threads.
+I must say that the benchmark is quite synthetic and for more comprehensive testing
+ of the performance you need to approach to this task a more seriously.
+
 
 
 ## Getting started with XSync library

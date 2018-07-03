@@ -453,9 +453,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </li>
 <li><a href="#_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</a></li>
 <li><a href="#_concurrenthashmap_with_a_weakreference_as_a_key">4. ConcurrentHashMap with a WeakReference as a key</a></li>
-<li><a href="#_getting_started_with_xsync_library">5. Getting started with XSync library</a></li>
-<li><a href="#_concurrent_tests">6. Concurrent tests</a></li>
-<li><a href="#_xsync_library_on_github">7. XSync library on github</a></li>
+<li><a href="#_a_simple_benchmark">5. A simple benchmark</a></li>
+<li><a href="#_getting_started_with_xsync_library">6. Getting started with XSync library</a></li>
+<li><a href="#_concurrent_tests">7. Concurrent tests</a></li>
+<li><a href="#_xsync_library_on_github">8. XSync library on github</a></li>
 </ul>
 </div>
 </div>
@@ -745,13 +746,53 @@ public XMutex&lt;KeyT&gt; getMutex(KeyT key) {
 }</code></pre>
 </div>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_a_simple_benchmark">5. A simple benchmark</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<p>to be continued&#8230;&#8203;</p>
+<p>I made a small benchmark in order to select an implementation.</p>
+</div>
+<div class="paragraph">
+<p>There are three implementation of the Map involved in test:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Collections.synchronizedMap based on the WeakHashMap</p>
+</li>
+<li>
+<p>ConcurrentHashMap</p>
+</li>
+<li>
+<p>ConcurrentReferenceHashMap</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>I use the ConcurrentHashMap in benchmark just for interest in measurements,
+this implementation is not suitable for use in the factory of mutexes,
+because it not support a using of weak or soft references</p>
+</div>
+<div class="paragraph">
+<p>Tests result:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./sync_map_bench.png" alt="result of benchmarks"></span></p>
+</div>
+<div class="paragraph">
+<p>So, the implementation of ConcurrentHashMap justifies its use in the library.</p>
+</div>
+<div class="paragraph">
+<p>In the benchmark, I create a situation when the factory will read and write mutexes in several threads.
+I must say that the benchmark is quite synthetic and for more comprehensive testing
+ of the performance you need to approach to this task a more seriously.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_getting_started_with_xsync_library">5. Getting started with XSync library</h2>
+<h2 id="_getting_started_with_xsync_library">6. Getting started with XSync library</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>I packed this code into the <a href="https://github.com/antkorwin/xsync">XSync</a> library,
@@ -813,7 +854,7 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_concurrent_tests">6. Concurrent tests</h2>
+<h2 id="_concurrent_tests">7. Concurrent tests</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>In order to be sure that this code works well, I wrote several concurrent tests.</p>
@@ -879,7 +920,7 @@ and try to increment the same nonatomic integer variable in the each stream.</td
 </div>
 </div>
 <div class="sect1">
-<h2 id="_xsync_library_on_github">7. XSync library on github</h2>
+<h2 id="_xsync_library_on_github">8. XSync library on github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/xsync">github.com/antkorwin/xsync</a></p>
@@ -939,7 +980,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-07-02 09:00:58 +10
+Last updated 2018-07-04 09:58:15 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
