@@ -38,7 +38,7 @@ You can get an object value from the `WeakReference`
 until the GC decides to collect the object.
 As soon as the GC decides to do it (not after the GC finalize the object and clear an allocated memory),
 you will get the NULL from the `WeakReference`.
-This happens when the GC is only marking the object for a further processing.
+This happens when the GC is just marking the object for a further processing.
 It is important to understand, that all finalization actions are executed only after this.
 When we look at the `PhantomReference`, we'll return to this point.
 
