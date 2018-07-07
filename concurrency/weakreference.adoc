@@ -61,6 +61,8 @@ public void testWeakAfterGC() {
 }
 ----
 
+This test was successful.
+
 Java provides us the `WeakHashMap` data structure.
 It's a something like a `HashMap`,
 which uses the `WeakReference` as a key of the Map.
@@ -79,16 +81,18 @@ public void testWeakMap() throws InterruptedException {
 
     // Act
     instance = null;
-    System.gc();
+    GcUtils.fullFinalization();
 
     // Asserts
-    Thread.sleep(1000);
-
     Assertions.assertThat(map).isEmpty();
 }
 ----
 
-You might think that this is a good solution for creating a cache,
+Results of weak tests:
+
+image:./weak_test_result.png[result of weak tests]
+
+NOTE: You might think that the `WeakHashMap` is a good solution for creating a cache,
 but you should understand what kind of behavior you need.
 Because if we are talking about a cache that removes data from a storage
 only when we reached a memory limit, then you should looking at the using of `SoftReferences`.
@@ -105,32 +109,27 @@ Let's try to test it:
 [source, java]
 ----
 @Test
-public void name() {
+public void softTest() {
     // Arrange
-    String instance = new String("1234567");
+    String instance = new String("123323");
     SoftReference<String> softReference = new SoftReference<>(instance);
     instance = null;
     Assertions.assertThat(softReference).isNotNull();
     Assertions.assertThat(softReference.get()).isNotNull();
 
     // Act
-    allocateAllMemory();
+    GcUtils.tryToAllocateAllAvailableMemory(); <1>
 
     // Asserts
     Assertions.assertThat(softReference.get()).isNull();
 }
-
-private void allocateAllMemory() {
-    try {
-        Object[] ignored = new Object[(int) Runtime.getRuntime().maxMemory()];
-    } catch (OutOfMemoryError e) {
-        log.error("exception: ", e);
-    }
-}
 ----
+<1> at this line we try to get all available memory until is the `OutOfMemoryError` thrown.
+I used `GcUtils`, this describes below.
 
 The GC collects our `SoftReference` before we get the `OutOfMemoryError`.
-This behavior is a good reason to use SoftReferences as a cache for a
+
+This behavior is a good reason to use `SoftReferences` as a cache for a
 data that is difficult to build in memory.
 
 For example, a reading video or graphics data from a slow file storage.
@@ -151,7 +150,7 @@ specially to prevent you from being able to resurrect an almost removed object.
 
 The `PhantomReference` provides you an ability to determine exactly when an object was removed from memory.
 In order for implementation this we need to work with a `ReferenceQueue`.
-When the referent object of a `PhantomReference` removes from a memory
+When the referent object of a `PhantomReference`, removes from a memory
 then the GC enqueues the phantomReference in the referenceQueue
 and we can poll this reference from this queue.
 
@@ -184,14 +183,16 @@ private class Foo {
 }
 ----
 
-NOTE: I use my utility class (`GcUtils`), to test the behavior of phantom references.
+NOTE: I used my utility class (link:https://github.com/antkorwin/common-utils/blob/master/src/main/java/com/antkorwin/commonutils/gc/GcUtils.java[GcUtils.java]), to test the behavior of phantom references.
 This tools are ensure that the GC accurately performs a full cycle of cleaning and finalization.
-You can find source code of this utility on my github: link:https://github.com/antkorwin/strong-soft-weak/blob/master/src/main/java/com/antkorwin/strongsoftweak/GcUtils.java[GcUtils.java]
+You can find source code of this utility on my github: link:https://github.com/antkorwin/common-utils[github.com/antkorwin/common-utils]
 
 For example, if you need to allocate memory for processing of a large video file,
-only after finished processing of a previous file and released allocated memory,
-then using a `PhantomReference` is the right decision. Because you can request new memory
-after the GC are really release a previous used part and this reduces a chance to get an `OutOfMemoryError`.
+only after finish processing of a previous file and release memory
+(that was allocated in the previous step) then using a `PhantomReference` is a right decision.
+Because you can request a new part of memory exactly after the GC is release a previous used part.
+So, this reduces a chance to get the `OutOfMemoryError` when you already released a part of memory
+but the GC has not collected it yet.
 
 Finalization may does not happened in a timely fashion,
 it is difficult to predict the number of garbage collection cycles
@@ -199,7 +200,7 @@ while the object was waiting for finalization.
 It can lead to serious delay in actually cleaning up garbage objects,
 and become the reason of you can get an `OutOfMemoryErrors` even when most of the heap is garbage.
 
-We can write own utility to checking for memory leaks, using phantom references:
+I wrote a simple utility to checking a code on memory leaks, which is using phantom references:
 
 Example of using this tool:
 
@@ -215,7 +216,7 @@ public void testWithoutLeaks() {
     foo = null;
 
     // Asserts
-    leakDetector.assertLeaksExist();
+    leakDetector.assertMemoryLeaksNotExist();
 }
 
 @Test
@@ -229,7 +230,7 @@ public void testWithLeak() {
     foo = null;
 
     // Asserts
-    leakDetector.assertLeaksExist();
+    leakDetector.assertMemoryLeaksExist();
 }
 ----
 
@@ -251,15 +252,29 @@ public class LeakDetector extends PhantomReference<Object> {
     }
 
     /**
-     * You must run this method after delete all references on the checkable object(resource)
      * If exists memory leaks then throws a fail.
+     *
+     * WARN: Run this method after delete all references on the checkable object(resource)
      */
-    public void assertLeaksExist() {
+    public void assertMemoryLeaksNotExist() {
         GcUtils.fullFinalization();
 
         Assertions.assertThat(isEnqueued())
                   .as("Object: " + description + " was leaked")
                   .isTrue();
+    }
+
+    /**
+     * If not exists memory leaks then throws a fail.
+     *
+     * WARN: Run this method after delete all references on the checkable object(resource)
+     */
+    public void assertMemoryLeaksExist() {
+        GcUtils.fullFinalization();
+
+        Assertions.assertThat(isEnqueued())
+                  .as("Object: " + description + " already collected by the GC")
+                  .isFalse();
     }
 }
 ----

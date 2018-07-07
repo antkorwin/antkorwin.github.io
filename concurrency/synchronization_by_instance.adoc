@@ -286,7 +286,7 @@ Tests result:
 
 image:./sync_map_bench.png[result of benchmarks]
 
-So, the implementation of ConcurrentHashMap justifies its use in the library.
+So, the implementation of ConcurrentHashMap justifies its use in this case.
 
 In the benchmark, I create a situation when the factory will read and write mutexes in several threads.
 I must say that the benchmark is quite synthetic and for more comprehensive testing

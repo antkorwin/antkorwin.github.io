@@ -517,6 +517,9 @@ public void testWeakAfterGC() {
 </div>
 </div>
 <div class="paragraph">
+<p>This test was successful.</p>
+</div>
+<div class="paragraph">
 <p>Java provides us the <code>WeakHashMap</code> data structure.
 It&#8217;s a something like a <code>HashMap</code>,
 which uses the <code>WeakReference</code> as a key of the Map.
@@ -536,20 +539,33 @@ public void testWeakMap() throws InterruptedException {
 
     // Act
     instance = null;
-    System.gc();
+    GcUtils.fullFinalization();
 
     // Asserts
-    Thread.sleep(1000);
-
     Assertions.assertThat(map).isEmpty();
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>You might think that this is a good solution for creating a cache,
+<p>Results of weak tests:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./weak_test_result.png" alt="result of weak tests"></span></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+You might think that the <code>WeakHashMap</code> is a good solution for creating a cache,
 but you should understand what kind of behavior you need.
 Because if we are talking about a cache that removes data from a storage
-only when we reached a memory limit, then you should looking at the using of <code>SoftReferences</code>.</p>
+only when we reached a memory limit, then you should looking at the using of <code>SoftReferences</code>.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -567,33 +583,36 @@ our application does not have enough of memory.</p>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
-public void name() {
+public void softTest() {
     // Arrange
-    String instance = new String("1234567");
+    String instance = new String("123323");
     SoftReference&lt;String&gt; softReference = new SoftReference&lt;&gt;(instance);
     instance = null;
     Assertions.assertThat(softReference).isNotNull();
     Assertions.assertThat(softReference.get()).isNotNull();
 
     // Act
-    allocateAllMemory();
+    GcUtils.tryToAllocateAllAvailableMemory(); <i class="conum" data-value="1"></i><b>(1)</b>
 
     // Asserts
     Assertions.assertThat(softReference.get()).isNull();
-}
-
-private void allocateAllMemory() {
-    try {
-        Object[] ignored = new Object[(int) Runtime.getRuntime().maxMemory()];
-    } catch (OutOfMemoryError e) {
-        log.error("exception: ", e);
-    }
 }</code></pre>
 </div>
 </div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>at this line we try to get all available memory until is the <code>OutOfMemoryError</code> thrown.
+I used <code>GcUtils</code>, this describes below.</td>
+</tr>
+</table>
+</div>
 <div class="paragraph">
-<p>The GC collects our <code>SoftReference</code> before we get the <code>OutOfMemoryError</code>.
-This behavior is a good reason to use SoftReferences as a cache for a
+<p>The GC collects our <code>SoftReference</code> before we get the <code>OutOfMemoryError</code>.</p>
+</div>
+<div class="paragraph">
+<p>This behavior is a good reason to use <code>SoftReferences</code> as a cache for a
 data that is difficult to build in memory.</p>
 </div>
 <div class="paragraph">
@@ -621,7 +640,7 @@ specially to prevent you from being able to resurrect an almost removed object.<
 <div class="paragraph">
 <p>The <code>PhantomReference</code> provides you an ability to determine exactly when an object was removed from memory.
 In order for implementation this we need to work with a <code>ReferenceQueue</code>.
-When the referent object of a <code>PhantomReference</code> removes from a memory
+When the referent object of a <code>PhantomReference</code>, removes from a memory
 then the GC enqueues the phantomReference in the referenceQueue
 and we can poll this reference from this queue.</p>
 </div>
@@ -662,18 +681,20 @@ private class Foo {
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-I use my utility class (<code>GcUtils</code>), to test the behavior of phantom references.
+I used my utility class (<a href="https://github.com/antkorwin/common-utils/blob/master/src/main/java/com/antkorwin/commonutils/gc/GcUtils.java">GcUtils.java</a>), to test the behavior of phantom references.
 This tools are ensure that the GC accurately performs a full cycle of cleaning and finalization.
-You can find source code of this utility on my github: <a href="https://github.com/antkorwin/strong-soft-weak/blob/master/src/main/java/com/antkorwin/strongsoftweak/GcUtils.java">GcUtils.java</a>
+You can find source code of this utility on my github: <a href="https://github.com/antkorwin/common-utils">github.com/antkorwin/common-utils</a>
 </td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
 <p>For example, if you need to allocate memory for processing of a large video file,
-only after finished processing of a previous file and released allocated memory,
-then using a <code>PhantomReference</code> is the right decision. Because you can request new memory
-after the GC are really release a previous used part and this reduces a chance to get an <code>OutOfMemoryError</code>.</p>
+only after finish processing of a previous file and release memory
+(that was allocated in the previous step) then using a <code>PhantomReference</code> is a right decision.
+Because you can request a new part of memory exactly after the GC is release a previous used part.
+So, this reduces a chance to get the <code>OutOfMemoryError</code> when you already released a part of memory
+but the GC has not collected it yet.</p>
 </div>
 <div class="paragraph">
 <p>Finalization may does not happened in a timely fashion,
@@ -683,7 +704,7 @@ It can lead to serious delay in actually cleaning up garbage objects,
 and become the reason of you can get an <code>OutOfMemoryErrors</code> even when most of the heap is garbage.</p>
 </div>
 <div class="paragraph">
-<p>We can write own utility to checking for memory leaks, using phantom references:</p>
+<p>I wrote a simple utility to checking a code on memory leaks, which is using phantom references:</p>
 </div>
 <div class="paragraph">
 <p>Example of using this tool:</p>
@@ -700,7 +721,7 @@ public void testWithoutLeaks() {
     foo = null;
 
     // Asserts
-    leakDetector.assertLeaksExist();
+    leakDetector.assertMemoryLeaksNotExist();
 }
 
 @Test
@@ -714,7 +735,7 @@ public void testWithLeak() {
     foo = null;
 
     // Asserts
-    leakDetector.assertLeaksExist();
+    leakDetector.assertMemoryLeaksExist();
 }</code></pre>
 </div>
 </div>
@@ -737,15 +758,29 @@ public void testWithLeak() {
     }
 
     /**
-     * You must run this method after delete all references on the checkable object(resource)
      * If exists memory leaks then throws a fail.
+     *
+     * WARN: Run this method after delete all references on the checkable object(resource)
      */
-    public void assertLeaksExist() {
+    public void assertMemoryLeaksNotExist() {
         GcUtils.fullFinalization();
 
         Assertions.assertThat(isEnqueued())
                   .as("Object: " + description + " was leaked")
                   .isTrue();
+    }
+
+    /**
+     * If not exists memory leaks then throws a fail.
+     *
+     * WARN: Run this method after delete all references on the checkable object(resource)
+     */
+    public void assertMemoryLeaksExist() {
+        GcUtils.fullFinalization();
+
+        Assertions.assertThat(isEnqueued())
+                  .as("Object: " + description + " already collected by the GC")
+                  .isFalse();
     }
 }</code></pre>
 </div>
@@ -810,7 +845,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-06-24 15:25:11 +10
+Last updated 2018-07-07 23:35:21 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
