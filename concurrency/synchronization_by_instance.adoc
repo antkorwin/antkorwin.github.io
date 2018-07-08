@@ -10,7 +10,7 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Intro
 
-Sometimes we need to synchronization some blocks of code by the value of variable, for example on Id of the entity:
+Sometimes we need to synchronize some blocks of a code by the value of variable, for example on Id of the entity:
 
 [source, java]
 ----
@@ -24,6 +24,12 @@ public void withdrawMoney(UUID userId, int amountOfMoney) {
   }
 }
 ----
+
+However, you can have several objects with the same value (userId - in the example),
+but the synchronization works on the instance of the object and not on its value.
+
+In this case you need to obtain a same reference for equals objects to synchronize on it.
+
 
 ## Wrong ways to solve this issue
 
@@ -40,6 +46,7 @@ public synchronized void withdrawMoney(UUID userId, int amountOfMoney) {
 
 This solution has bad performance.
 You will block transfers of money for absolutely all users.
+And if you need to synchronize a different operations in the different classes this solution not helps you at all.
 
 
 ### String intern
@@ -58,18 +65,19 @@ public void withdrawMoney(UUID userId, int amountOfMoney) {
 ----
 
 Using intern is not good practice, because the pool of Strings is difficult to clean with the GC.
-And with the active use of such synchronizations, your application can consume too many resources.
+And your application can consume too many resources while active use of the `String.intern`.
 
 Also, there is a chance that foreign code blocks is synchronized on
 the same instance of the string as your application.
 This can lead to deadlocks.
 
-In general, the use of intern is better left to the internal libraries of the JDK,
+WARNING: In general, the use of intern is better left to the internal libraries of the JDK,
 there are good articles by link:https://shipilev.net[Aleksey Shipilev] about this point.
 
 
+## How can we solve this problem correctly?
 
-## Create your own synchronization primitive
+### Create your own synchronization primitive
 
 We need to implement a behavior that describes on the next diagram:
 
@@ -117,7 +125,7 @@ public void withdrawMoney(UUID userId, int amountOfMoney) {
 ----
 
 In order to ensure that the same mutexes are obtained
-for equal values of variables, we will make the mutex factory.
+for equals values of variables, we will make the mutex factory.
 
 [source, java]
 ----
@@ -134,16 +142,16 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 }
 ----
 
-In order to implement this behavior, we used WeakReference and WeakHashMap.
+In order to implement this behavior, we used the WeakReference and the WeakHashMap structure.
 I wrote an article about this type of references a week ago, you can consider this in more details here:
 link:./weakreference.html[Soft, Weak, Phantom references in Java]
 
 Our mutex factory will be based on the `WeakHashMap`.
-The mutex factory creates a new mutex only
+The mutex factory creates a new mutex just
 if the mutex for this value(key) is not found in the HashMap.
 Then created mutex is added to the HashMap.
 Using of the `WeakHashMap` allows us to store a mutex in the HashMap while exist any references to it.
-And the mutex will be removed from HashMap automatically when all references to it are released.
+And the mutex will be removed from a HashMap automatically when all references to it are released.
 
 We need to use a synchronized version of `WeakHashMap`,
 let's see what's described in the link:https://docs.oracle.com/javase/7/docs/api/java/util/WeakHashMap.html[documentation] about it:
@@ -153,8 +161,8 @@ This class is not synchronized. A synchronized WeakHashMap may be constructed
 using the Collections.synchronizedMap method.
 ----
 
-It's very sad and a little later we'll take a closer look at reason.
-but for now, let's consider an example of implementation, which is proposed by the documentation.
+It's very sad and a little later we'll take a closer look at the reason.
+But for now, let's consider an example of implementation, which is proposed by the official documentation.
 
 
 [source, java]
@@ -185,9 +193,11 @@ private XMutex<KeyT> saveNewReference(KeyT key) {
 }
 ----
 
+### What about performance?
+
 If we look at the code of the `Collections.synchronizedMap`
-then we find a lot of synchronizations on the global mutex which
-creates with a SynchronizedMap instance.
+then we find a lot of synchronizations on the global mutex which is
+created in pair with a SynchronizedMap instance.
 
 [source, java]
 ----
@@ -199,7 +209,7 @@ SynchronizedMap(Map<K,V> m) {
 <1> create a mutex while creating a SynchronizedMap instance
 
 
-And all other methods are synchronized to it:
+And all other methods of the SynchronizedMap are synchronized on this mutex:
 
 [source, java]
 ----
@@ -227,47 +237,55 @@ NOTE: This solution does not have the best performance.
 All of these synchronizations are lead us to permanent locks on each operations with a factory of mutexes.
 
 
-## ConcurrentHashMap with a WeakReference as a key
+### ConcurrentHashMap with a WeakReference as a key
 
 We need to look at the using of the `ConcurrentHashMap`.
 It has a better performance than Collections.synchronizedMap.
 
-But we have a one problem - the ConcurrentHashMap doesn't allow a using of weak-references.
+But we have a one problem - the `ConcurrentHashMap` doesn't allow a using of weak-references.
 
-This means that the collector can not delete unused mutexes.
+This means that the garbage collector can not delete unused mutexes.
 I found two ways to solve this problem:
 
-* The first is to create my own `ConcurrentMap` implementation.
+* The first is to create my own `ConcurrentMap` implementation. +
 This is the right decision, but it will take a very long time.
-* The second one is the use of the `ConcurrentReferenceHashMap` implementation from the Spring Framework.
-This is a good implementation, but it has a couple of nuances. We will consider them below.
+* The second one is the use of the `ConcurrentReferenceHashMap` implementation from the Spring Framework. +
+This is a good implementation, but it has a couple of nuances.
+We will consider them below.
 
-
-Let's look at the implementation of the XMutexFactory based on the ConcurrentReferenceHashMap:
+Let's change the XMutexFactory implementation to use a `ConcurrentReferenceHashMap`:
 
 [source, java]
 ----
-/**
- * Create mutex factory with default settings
- */
-public XMutexFactory() {
-    this.map = new ConcurrentReferenceHashMap<>(DEFAULT_INITIAL_CAPACITY,
-                                                DEFAULT_LOAD_FACTOR,
-                                                DEFAULT_CONCURRENCY_LEVEL,
-                                                DEFAULT_REFERENCE_TYPE);
-}
+public class XMutexFactory<KeyT> {
 
-/**
- * Creates and returns a mutex by the key.
- * If the mutex for this key already exists in the weak-map,
- * then returns the same reference of the mutex.
- */
-public XMutex<KeyT> getMutex(KeyT key) {
-    return this.map.compute(key, (k, v) -> (v == null) ? new XMutex<>(k) : v);
+  /**
+   * Create mutex factory with default settings
+   */
+  public XMutexFactory() {
+      this.map = new ConcurrentReferenceHashMap<>(DEFAULT_INITIAL_CAPACITY,
+                                                  DEFAULT_LOAD_FACTOR,
+                                                  DEFAULT_CONCURRENCY_LEVEL,
+                                                  DEFAULT_REFERENCE_TYPE);
+  }
+
+  /**
+   * Creates and returns a mutex by the key.
+   * If the mutex for this key already exists in the weak-map,
+   * then returns the same reference of the mutex.
+   */
+  public XMutex<KeyT> getMutex(KeyT key) {
+      return this.map.compute(key, (k, v) -> (v == null) ? new XMutex<>(k) : v);
+  }
+
 }
 ----
 
-## A simple benchmark
+That's cool! +
+Less code, but more performance.
+
+
+### Create a simple benchmark
 
 I made a small benchmark in order to select an implementation.
 
@@ -284,14 +302,12 @@ because it not support a using of weak or soft references
 
 Tests result:
 
-image:./sync_map_bench.png[result of benchmarks]
+image:./concurrent_map_test_result.PNG[result of benchmarks]
 
-So, the implementation of ConcurrentHashMap justifies its use in this case.
+So, the ConcurrentReferenceHashMap justifies its use in this case.
 
-In the benchmark, I create a situation when the factory will read and write mutexes in several threads.
-I must say that the benchmark is quite synthetic and for more comprehensive testing
- of the performance you need to approach to this task a more seriously.
-
+In this benchmark, I create a situation when several threads computes key-values in the map.
+You can consider this benchmark in more details here http://github.com/antkorwin[Concurrent map benchmark]
 
 
 ## Getting started with XSync library

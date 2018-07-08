@@ -451,12 +451,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_string_intern">2.2. String intern</a></li>
 </ul>
 </li>
-<li><a href="#_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</a></li>
-<li><a href="#_concurrenthashmap_with_a_weakreference_as_a_key">4. ConcurrentHashMap with a WeakReference as a key</a></li>
-<li><a href="#_a_simple_benchmark">5. A simple benchmark</a></li>
-<li><a href="#_getting_started_with_xsync_library">6. Getting started with XSync library</a></li>
-<li><a href="#_concurrent_tests">7. Concurrent tests</a></li>
-<li><a href="#_xsync_library_on_github">8. XSync library on github</a></li>
+<li><a href="#_how_can_we_solve_this_problem_correctly">3. How can we solve this problem correctly?</a>
+<ul class="sectlevel2">
+<li><a href="#_create_your_own_synchronization_primitive">3.1. Create your own synchronization primitive</a></li>
+<li><a href="#_what_about_performance">3.2. What about performance?</a></li>
+<li><a href="#_concurrenthashmap_with_a_weakreference_as_a_key">3.3. ConcurrentHashMap with a WeakReference as a key</a></li>
+<li><a href="#_create_a_simple_benchmark">3.4. Create a simple benchmark</a></li>
+</ul>
+</li>
+<li><a href="#_getting_started_with_xsync_library">4. Getting started with XSync library</a></li>
+<li><a href="#_concurrent_tests">5. Concurrent tests</a></li>
+<li><a href="#_xsync_library_on_github">6. XSync library on github</a></li>
 </ul>
 </div>
 </div>
@@ -465,7 +470,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_intro">1. Intro</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Sometimes we need to synchronization some blocks of code by the value of variable, for example on Id of the entity:</p>
+<p>Sometimes we need to synchronize some blocks of a code by the value of variable, for example on Id of the entity:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -479,6 +484,13 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
   }
 }</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>However, you can have several objects with the same value (userId - in the example),
+but the synchronization works on the instance of the object and not on its value.</p>
+</div>
+<div class="paragraph">
+<p>In this case you need to obtain a same reference for equals objects to synchronize on it.</p>
 </div>
 </div>
 </div>
@@ -499,7 +511,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="paragraph">
 <p>This solution has bad performance.
-You will block transfers of money for absolutely all users.</p>
+You will block transfers of money for absolutely all users.
+And if you need to synchronize a different operations in the different classes this solution not helps you at all.</p>
 </div>
 </div>
 <div class="sect2">
@@ -520,23 +533,34 @@ we can serialize it into a String and use the String.intern() for obtain a same 
 </div>
 <div class="paragraph">
 <p>Using intern is not good practice, because the pool of Strings is difficult to clean with the GC.
-And with the active use of such synchronizations, your application can consume too many resources.</p>
+And your application can consume too many resources while active use of the <code>String.intern</code>.</p>
 </div>
 <div class="paragraph">
 <p>Also, there is a chance that foreign code blocks is synchronized on
 the same instance of the string as your application.
 This can lead to deadlocks.</p>
 </div>
-<div class="paragraph">
-<p>In general, the use of intern is better left to the internal libraries of the JDK,
-there are good articles by <a href="https://shipilev.net">Aleksey Shipilev</a> about this point.</p>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+In general, the use of intern is better left to the internal libraries of the JDK,
+there are good articles by <a href="https://shipilev.net">Aleksey Shipilev</a> about this point.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_create_your_own_synchronization_primitive">3. Create your own synchronization primitive</h2>
+<h2 id="_how_can_we_solve_this_problem_correctly">3. How can we solve this problem correctly?</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_create_your_own_synchronization_primitive">3.1. Create your own synchronization primitive</h3>
 <div class="paragraph">
 <p>We need to implement a behavior that describes on the next diagram:</p>
 </div>
@@ -563,7 +587,7 @@ Which will work by the value of the variable, and not by the reference to the ob
 </div>
 <div class="paragraph">
 <p>In order to ensure that the same mutexes are obtained
-for equal values of variables, we will make the mutex factory.</p>
+for equals values of variables, we will make the mutex factory.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -581,17 +605,17 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 </div>
 </div>
 <div class="paragraph">
-<p>In order to implement this behavior, we used WeakReference and WeakHashMap.
+<p>In order to implement this behavior, we used the WeakReference and the WeakHashMap structure.
 I wrote an article about this type of references a week ago, you can consider this in more details here:
 <a href="./weakreference.html">Soft, Weak, Phantom references in Java</a></p>
 </div>
 <div class="paragraph">
 <p>Our mutex factory will be based on the <code>WeakHashMap</code>.
-The mutex factory creates a new mutex only
+The mutex factory creates a new mutex just
 if the mutex for this value(key) is not found in the HashMap.
 Then created mutex is added to the HashMap.
 Using of the <code>WeakHashMap</code> allows us to store a mutex in the HashMap while exist any references to it.
-And the mutex will be removed from HashMap automatically when all references to it are released.</p>
+And the mutex will be removed from a HashMap automatically when all references to it are released.</p>
 </div>
 <div class="paragraph">
 <p>We need to use a synchronized version of <code>WeakHashMap</code>,
@@ -604,8 +628,8 @@ using the Collections.synchronizedMap method.</pre>
 </div>
 </div>
 <div class="paragraph">
-<p>It&#8217;s very sad and a little later we&#8217;ll take a closer look at reason.
-but for now, let&#8217;s consider an example of implementation, which is proposed by the documentation.</p>
+<p>It&#8217;s very sad and a little later we&#8217;ll take a closer look at the reason.
+But for now, let&#8217;s consider an example of implementation, which is proposed by the official documentation.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -635,10 +659,13 @@ private XMutex&lt;KeyT&gt; saveNewReference(KeyT key) {
 }</code></pre>
 </div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_what_about_performance">3.2. What about performance?</h3>
 <div class="paragraph">
 <p>If we look at the code of the <code>Collections.synchronizedMap</code>
-then we find a lot of synchronizations on the global mutex which
-creates with a SynchronizedMap instance.</p>
+then we find a lot of synchronizations on the global mutex which is
+created in pair with a SynchronizedMap instance.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -657,7 +684,7 @@ creates with a SynchronizedMap instance.</p>
 </table>
 </div>
 <div class="paragraph">
-<p>And all other methods are synchronized to it:</p>
+<p>And all other methods of the SynchronizedMap are synchronized on this mutex:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -694,63 +721,68 @@ All of these synchronizations are lead us to permanent locks on each operations 
 </table>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_concurrenthashmap_with_a_weakreference_as_a_key">4. ConcurrentHashMap with a WeakReference as a key</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_concurrenthashmap_with_a_weakreference_as_a_key">3.3. ConcurrentHashMap with a WeakReference as a key</h3>
 <div class="paragraph">
 <p>We need to look at the using of the <code>ConcurrentHashMap</code>.
 It has a better performance than Collections.synchronizedMap.</p>
 </div>
 <div class="paragraph">
-<p>But we have a one problem - the ConcurrentHashMap doesn&#8217;t allow a using of weak-references.</p>
+<p>But we have a one problem - the <code>ConcurrentHashMap</code> doesn&#8217;t allow a using of weak-references.</p>
 </div>
 <div class="paragraph">
-<p>This means that the collector can not delete unused mutexes.
+<p>This means that the garbage collector can not delete unused mutexes.
 I found two ways to solve this problem:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>The first is to create my own <code>ConcurrentMap</code> implementation.
+<p>The first is to create my own <code>ConcurrentMap</code> implementation.<br>
 This is the right decision, but it will take a very long time.</p>
 </li>
 <li>
-<p>The second one is the use of the <code>ConcurrentReferenceHashMap</code> implementation from the Spring Framework.
-This is a good implementation, but it has a couple of nuances. We will consider them below.</p>
+<p>The second one is the use of the <code>ConcurrentReferenceHashMap</code> implementation from the Spring Framework.<br>
+This is a good implementation, but it has a couple of nuances.
+We will consider them below.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s look at the implementation of the XMutexFactory based on the ConcurrentReferenceHashMap:</p>
+<p>Let&#8217;s change the XMutexFactory implementation to use a <code>ConcurrentReferenceHashMap</code>:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">/**
- * Create mutex factory with default settings
- */
-public XMutexFactory() {
-    this.map = new ConcurrentReferenceHashMap&lt;&gt;(DEFAULT_INITIAL_CAPACITY,
-                                                DEFAULT_LOAD_FACTOR,
-                                                DEFAULT_CONCURRENCY_LEVEL,
-                                                DEFAULT_REFERENCE_TYPE);
-}
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class XMutexFactory&lt;KeyT&gt; {
 
-/**
- * Creates and returns a mutex by the key.
- * If the mutex for this key already exists in the weak-map,
- * then returns the same reference of the mutex.
- */
-public XMutex&lt;KeyT&gt; getMutex(KeyT key) {
-    return this.map.compute(key, (k, v) -&gt; (v == null) ? new XMutex&lt;&gt;(k) : v);
+  /**
+   * Create mutex factory with default settings
+   */
+  public XMutexFactory() {
+      this.map = new ConcurrentReferenceHashMap&lt;&gt;(DEFAULT_INITIAL_CAPACITY,
+                                                  DEFAULT_LOAD_FACTOR,
+                                                  DEFAULT_CONCURRENCY_LEVEL,
+                                                  DEFAULT_REFERENCE_TYPE);
+  }
+
+  /**
+   * Creates and returns a mutex by the key.
+   * If the mutex for this key already exists in the weak-map,
+   * then returns the same reference of the mutex.
+   */
+  public XMutex&lt;KeyT&gt; getMutex(KeyT key) {
+      return this.map.compute(key, (k, v) -&gt; (v == null) ? new XMutex&lt;&gt;(k) : v);
+  }
+
 }</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>That&#8217;s cool!<br>
+Less code, but more performance.</p>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_a_simple_benchmark">5. A simple benchmark</h2>
-<div class="sectionbody">
+<div class="sect2">
+<h3 id="_create_a_simple_benchmark">3.4. Create a simple benchmark</h3>
 <div class="paragraph">
 <p>I made a small benchmark in order to select an implementation.</p>
 </div>
@@ -779,20 +811,20 @@ because it not support a using of weak or soft references</p>
 <p>Tests result:</p>
 </div>
 <div class="paragraph">
-<p><span class="image"><img src="./sync_map_bench.png" alt="result of benchmarks"></span></p>
+<p><span class="image"><img src="./concurrent_map_test_result.PNG" alt="result of benchmarks"></span></p>
 </div>
 <div class="paragraph">
-<p>So, the implementation of ConcurrentHashMap justifies its use in this case.</p>
+<p>So, the ConcurrentReferenceHashMap justifies its use in this case.</p>
 </div>
 <div class="paragraph">
-<p>In the benchmark, I create a situation when the factory will read and write mutexes in several threads.
-I must say that the benchmark is quite synthetic and for more comprehensive testing
- of the performance you need to approach to this task a more seriously.</p>
+<p>In this benchmark, I create a situation when several threads computes key-values in the map.
+You can consider this benchmark in more details here <a href="http://github.com/antkorwin">Concurrent map benchmark</a></p>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_getting_started_with_xsync_library">6. Getting started with XSync library</h2>
+<h2 id="_getting_started_with_xsync_library">4. Getting started with XSync library</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>I packed this code into the <a href="https://github.com/antkorwin/xsync">XSync</a> library,
@@ -854,7 +886,7 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_concurrent_tests">7. Concurrent tests</h2>
+<h2 id="_concurrent_tests">5. Concurrent tests</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>In order to be sure that this code works well, I wrote several concurrent tests.</p>
@@ -920,7 +952,7 @@ and try to increment the same nonatomic integer variable in the each stream.</td
 </div>
 </div>
 <div class="sect1">
-<h2 id="_xsync_library_on_github">8. XSync library on github</h2>
+<h2 id="_xsync_library_on_github">6. XSync library on github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/xsync">github.com/antkorwin/xsync</a></p>
@@ -980,7 +1012,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-07-07 23:53:26 +10
+Last updated 2018-07-08 13:15:48 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
