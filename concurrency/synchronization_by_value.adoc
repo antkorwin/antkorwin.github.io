@@ -282,7 +282,7 @@ public class XMutexFactory<KeyT> {
 ----
 
 That's cool! +
-Less code, but more performance.
+Less code, but more performance than before. Let's try to check performance of this solution.
 
 
 ### Create a simple benchmark
@@ -295,41 +295,42 @@ There are three implementation of the Map involved in test:
 * ConcurrentHashMap
 * ConcurrentReferenceHashMap
 
-
-I use the ConcurrentHashMap in benchmark just for interest in measurements,
+I use the ConcurrentHashMap in benchmark just for comparing in measurements,
 this implementation is not suitable for use in the factory of mutexes,
-because it not support a using of weak or soft references
+because it not support a using of weak or soft references.
+
+All benchmarks are written with using the JMH library.
 
 [source]
 ----
-# Run complete. Total time: 00:14:00
+# Run complete. Total time: 00:04:39
 
-Benchmark                            Mode      Cnt   Score    Error   Units
-concurrentHashMap_compute            thrpt       5  12,799 ?  1,613  ops/ms
-concurrentReferenceHashMap_compute   thrpt       5   7,228 ?  0,450  ops/ms
-synchronizedMap_compute              thrpt       5   5,443 ?  0,554  ops/ms
-
-concurrentHashMap_compute             avgt       5   0,302 ?  0,035   ms/op
-concurrentReferenceHashMap_compute    avgt       5   0,553 ?  0,031   ms/op
-synchronizedMap_compute               avgt       5   0,748 ?  0,121   ms/op
-
-concurrentHashMap_compute           sample  333117   0,300 ?  0,001   ms/op
-concurrentReferenceHashMap_compute  sample  194307   0,514 ?  0,002   ms/op
-synchronizedMap_compute             sample  127895   0,781 ?  0,003   ms/op
-
-concurrentHashMap_compute               ss       5   1,029 ?  5,074   ms/op
-concurrentReferenceHashMap_compute      ss       5   3,312 ? 15,187   ms/op
-synchronizedMap_compute                 ss       5   0,943 ?  2,221   ms/op
+Benchmark                                   Mode     Cnt        Score         Error   Units
+ConcurrentMap.ConcurrentHashMap            thrpt       5        0,015 ?       0,004  ops/ns
+ConcurrentMap.ConcurrentReferenceHashMap   thrpt       5        0,008 ?       0,001  ops/ns
+ConcurrentMap.SynchronizedMap              thrpt       5        0,005 ?       0,001  ops/ns
+ConcurrentMap.ConcurrentHashMap             avgt       5      565,515 ?      23,638   ns/op
+ConcurrentMap.ConcurrentReferenceHashMap    avgt       5     1098,939 ?      28,828   ns/op
+ConcurrentMap.SynchronizedMap               avgt       5     1503,593 ?     150,552   ns/op
+ConcurrentMap.ConcurrentHashMap           sample  301796      663,330 ?      11,708   ns/op
+ConcurrentMap.ConcurrentReferenceHashMap  sample  180062     1110,882 ?       6,928   ns/op
+ConcurrentMap.SynchronizedMap             sample  136290     1465,543 ?       5,150   ns/op
+ConcurrentMap.ConcurrentHashMap               ss       5   336419,150 ?  617549,053   ns/op
+ConcurrentMap.ConcurrentReferenceHashMap      ss       5   922844,750 ?  468380,489   ns/op
+ConcurrentMap.SynchronizedMap                 ss       5  1199159,700 ? 4339391,394   ns/op
 ----
 
-image:./chart2.PNG[benchmark result]
+In this micro-benchmark, I create a situation when several threads computes value in the map.
+You can consider the source code of this benchmark in more details here
+https://github.com/antkorwin/concurrent-map-benchmark/blob/master/src/test/java/com/antkorwin/concurrenttests/ConcurrentMapMicroBenchmark.java[Concurrent Map benchmark]
+
+
+Put it on the graph:
+
+image:./bench_result.png[benchmark result]
 
 
 So, the ConcurrentReferenceHashMap justifies its use in this case.
-
-In this benchmark, I create a situation when several threads computes key-values in the map.
-You can consider this benchmark in more details here https://github.com/antkorwin/concurrent-map-benchmark/blob/master/src/test/java/com/antkorwin/concurrenttests/ConcurrentMapPerformanceTest.java[Concurrent Map benchmark]
-
 
 ## Getting started with XSync library
 
