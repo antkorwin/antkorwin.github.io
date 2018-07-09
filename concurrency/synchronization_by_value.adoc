@@ -322,7 +322,7 @@ concurrentReferenceHashMap_compute      ss       5   3,312 ? 15,187   ms/op
 synchronizedMap_compute                 ss       5   0,943 ?  2,221   ms/op
 ----
 
-image:./chart2.png[benchmark result]
+image:./chart2.PNG[benchmark result]
 
 
 So, the ConcurrentReferenceHashMap justifies its use in this case.
