@@ -113,6 +113,12 @@ deactivate XSync
 At the first we need to make a new synchronization primitive - the custom mutex.
 Which will work by the value of the variable, and not by the reference to the object.
 
+It will be something like a **"named mutex"**, but a little wider,
+with the ability to use the value of any object for identification,
+not just the value of a String.
+You can find examples of synchronization primitives to locking by the name,
+in other languages (C++, C#). Now, we will solve this issue in Java.
+
 Something like this:
 
 [source, java]
