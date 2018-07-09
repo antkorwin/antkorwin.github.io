@@ -143,7 +143,7 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 ----
 
 In order to implement this behavior, we used the WeakReference and the WeakHashMap structure.
-I wrote an article about this type of references a week ago, you can consider this in more details here:
+I wrote an article about this type of references a week ago, you can consider it in more details here:
 link:./weakreference.html[Soft, Weak, Phantom references in Java]
 
 Our mutex factory will be based on the `WeakHashMap`.
@@ -307,7 +307,7 @@ image:./concurrent_map_test_result.PNG[result of benchmarks]
 So, the ConcurrentReferenceHashMap justifies its use in this case.
 
 In this benchmark, I create a situation when several threads computes key-values in the map.
-You can consider this benchmark in more details here http://github.com/antkorwin[Concurrent map benchmark]
+You can consider this benchmark in more details here https://github.com/antkorwin/concurrent-map-benchmark/blob/master/src/test/java/com/antkorwin/concurrenttests/ConcurrentMapPerformanceTest.java[Concurrent Map benchmark]
 
 
 ## Getting started with XSync library
