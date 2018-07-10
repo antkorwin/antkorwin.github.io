@@ -10,9 +10,10 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Intro
 
-Sometimes we need to synchronize some blocks of a code by the value of variable, for example on Id of the entity:
+Sometimes we need to synchronize some blocks of a code by the value of variable.
 
-We will consider a simple banking application which makes the following operations on the each transfer of money by the client:
+In order to understand this problem, we will consider a simple banking application
+which makes the following operations on the each transfer of money by the client:
 
 . evaluates the amount of the cash-back by the transaction in an external web service (CashBackService)
 
@@ -26,6 +27,20 @@ The base components of the application are shown on the next diagram:
 image:./scheme.png[component diagram of the application]
 
 {empty} +
+
+I tried to make an example as clear as possible.
+The transfer of money in the payment service depends on the other two services:
+
+- The first one is a CashBackService that interacts with another web application under the REST protocol.
+And in order to calculate the actual cash-back, we need to synchronize transactions with this application.
+Because the next amount of the cash-back may depend on the total amount of user payments.
+
+- The second is a AccountService that communicates with an internal DataBase and store a data relate to accounts of users.
+In this service we can use a JPA transactions for making some actions as atomic operations in a DataBase.
+
+In a real life, I'd will strongly recommend to you refactoring such systems to avoid such situations as much as possible.
+But in our example, imagine that we have no choice.
+
 
 Let's look at the draft code of this application:
 
@@ -108,8 +123,8 @@ public class AccountService {
 However, you can have several objects with the same value (userId - in the example),
 but the synchronization works on the instance of the object and not on its value.
 
-The following code will not work well, because it is incorrectly synchronized,
-the static factory method `UUID.fromString(...)` make a new instance of UUID class on the each call,
+The code below does not work well, because it's incorrectly synchronized,
+the static factory method `UUID.fromString(..)` make a new instance of UUID class on the each call,
 even if you pass there an equal string argument.
 
 So, we get different instances of the UUID for the equal keys.
