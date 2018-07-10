@@ -12,21 +12,111 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 Sometimes we need to synchronize some blocks of a code by the value of variable, for example on Id of the entity:
 
+We will consider a simple banking application which makes the following operations on the each transfer of money by the client:
+
+. evaluates the amount of the cash-back by the transaction in an external web service (CashBackService)
+
+. performs transaction of a money transfer in the database (AccountService)
+
+. updates the data in the cash-back evaluation system  (CashBackService)
+
+
+The base components of the application are shown on the next diagram:
+
+image:./scheme.png[component diagram of the application]
+
+{empty} +
+
+Let's look at the draft code of this application:
+
+
 [source, java]
 ----
-public void withdrawMoney(UUID userId, int amountOfMoney) {
-  synchronized (userId) {
-      Result result = externalPolicySystem.validateTransfer(userId, amountOfMoney, WITHDRAW);
-      if(result.getStatus() != OK) {
-        throw new UnreachableTransfer(result);
-      }
-      accountService.transfer(userId, amountOfMoney, WITHDRAW);
-  }
+@Service
+public class PaymentService {
+
+    @Autowired
+    private ExternalCashBackService externalCashBackService;
+
+    @Autowired
+    private AccountService accountService;
+
+    public void withdrawMoney(UUID userId, int amountOfMoney) {
+        synchronized (userId) {  <1>
+            Result result = externalCashBackService.evaluateCashBack(userId, amountOfMoney);
+            accountService.transfer(userId, amountOfMoney + result.getCashBackAmount());
+            externalCashBackService.cashBackComplete(userId, result.getCashBackAmount());
+        }
+    }
+}
+
+
+@Service
+public class ExternalCashBackService {
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    public Result evaluateCashBack(UUID userId, int amountOfMoney) {
+        return sendRestRequest("evaluate", userId, amountOfMoney);
+    }
+
+    public Result cashBackComplete(UUID userId, int cashBackAmount) {
+        return sendRestRequest("complete", userId, cashBackAmount);
+    }
+
+    private Result sendRestRequest(String action, UUID userId, int value) {
+
+        URI externalCashBackSystemUrl = URI.create("http:/daleko.ko.ko.ko/" + action);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
+        RequestDto requestDto = new RequestDto(userId, value);
+        HttpEntity<?> request = new HttpEntity<>(requestDto, headers);
+
+        ResponseDto responseDto = restTemplate.exchange(externalCashBackSystemUrl,
+                                                        HttpMethod.GET,
+                                                        request,
+                                                        ResponseDto.class)
+                                              .getBody();
+
+        return new Result(responseDto.getStatus(), responseDto.getValue());
+    }
+}
+
+@Service
+public class AccountService {
+
+    @Autowired
+    private AccountRepository accountRepository;
+
+    @Transactional(isolation = REPEATABLE_READ)
+    public void transfer(UUID userId, int amountOfMoney) {
+        Account account = accountRepository.getOne(userId);
+        account.setBalance(account.getBalance() - amountOfMoney);
+        accountRepository.save(account);
+    }
 }
 ----
+<1> synchronization on the instance of UUID
+
 
 However, you can have several objects with the same value (userId - in the example),
 but the synchronization works on the instance of the object and not on its value.
+
+The following code is not synchronized correctly, because UUID.fromString make new instance of UUID class on the each call.
+
+[source, java]
+----
+public void threadA() {
+    paymentService.withdrawMoney(UUID.fromString("11111111-2222-3333-4444-555555555555"), 1000);
+}
+
+
+public void threadB() {
+    paymentService.withdrawMoney(UUID.fromString("11111111-2222-3333-4444-555555555555"), 5000);
+}
+----
 
 In this case you need to obtain a same reference for equals objects to synchronize on it.
 
