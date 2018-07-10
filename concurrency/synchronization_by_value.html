@@ -512,10 +512,10 @@ public class PaymentService {
     private AccountService accountService;
 
     public void withdrawMoney(UUID userId, int amountOfMoney) {
-        synchronized (userId) {  <i class="conum" data-value="1"></i><b>(1)</b>
-            Result result = externalCashBackService.evaluateCashBack(userId, amountOfMoney);
-            accountService.transfer(userId, amountOfMoney + result.getCashBackAmount());
-            externalCashBackService.cashBackComplete(userId, result.getCashBackAmount());
+        synchronized (userId) {  <i class="conum" data-value="4"></i><b>(4)</b>
+            Result result = externalCashBackService.evaluateCashBack(userId, amountOfMoney); <i class="conum" data-value="1"></i><b>(1)</b>
+            accountService.transfer(userId, amountOfMoney + result.getCashBackAmount()); <i class="conum" data-value="2"></i><b>(2)</b>
+            externalCashBackService.cashBackComplete(userId, result.getCashBackAmount()); <i class="conum" data-value="3"></i><b>(3)</b>
         }
     }
 }
@@ -573,6 +573,18 @@ public class AccountService {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>evaluates the amount of the cash-back by the transaction in an external web service</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>performs transaction of a money transfer in the database</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>updates the data in the cash-back evaluation system</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
 <td>synchronization on the instance of UUID</td>
 </tr>
 </table>
@@ -582,7 +594,12 @@ public class AccountService {
 but the synchronization works on the instance of the object and not on its value.</p>
 </div>
 <div class="paragraph">
-<p>The following code is not synchronized correctly, because UUID.fromString make new instance of UUID class on the each call.</p>
+<p>The following code will not work well, because it is incorrectly synchronized,
+the static factory method <code>UUID.fromString(&#8230;&#8203;)</code> make a new instance of UUID class on the each call,
+even if you pass there an equal string argument.</p>
+</div>
+<div class="paragraph">
+<p>So, we get different instances of the UUID for the equal keys.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1149,7 +1166,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-07-10 23:59:17 +10
+Last updated 2018-07-11 00:15:02 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
