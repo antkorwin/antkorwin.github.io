@@ -38,7 +38,7 @@ Because the next amount of the cash-back may depend on the total amount of user 
 - The second is a AccountService that communicates with an internal DataBase and store a data relate to accounts of users.
 In this service we can use a JPA transactions for making some actions as atomic operations in a DataBase.
 
-In a real life, I'd will strongly recommend to you refactoring such systems to avoid such situations as much as possible.
+In a real life, i’d strongly recommend making refactoring in such systems to avoid this situation as it possible.
 But in our example, imagine that we have no choice.
 
 
@@ -168,6 +168,14 @@ In order to ensure that the instance of the class (which contain a user ID)
 will be the same in all synchronized blocks,
 we can serialize it into a String and use the String.intern() for obtain a same link for equals strings.
 
+`String.intern` uses a global pool to store strings which are interned.
+And when you request intern on the string, you get a reference from this pool if such string exist there
+or else this string puts in the pool.
+
+You can find more details about `String.intern` in
+link:https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.5[The Java Language Specification - 3.10.5 String Literals]
+or in the Oracle Java documentation about the link:https://docs.oracle.com/javase/9/docs/api/java/lang/String.html#intern--[String.intern]
+
 [source, java]
 ----
 public void withdrawMoney(UUID userId, int amountOfMoney) {
@@ -180,7 +188,7 @@ public void withdrawMoney(UUID userId, int amountOfMoney) {
 Using intern is not good practice, because the pool of Strings is difficult to clean with the GC.
 And your application can consume too many resources while active use of the `String.intern`.
 
-Also, there is a chance that foreign code blocks is synchronized on
+Also, there is a chance that a foreign code was synchronize on
 the same instance of the string as your application.
 This can lead to deadlocks.
 
@@ -261,7 +269,14 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 }
 ----
 
-In order to implement this behavior, we used the WeakReference and the WeakHashMap structure.
+In order to return a same instance of mutex on the each of requests with equal keys,
+we will need to store the created mutexes.
+If we will store these mutexes in the simple `HashMap`,
+than a size of the map will increase as new keys appears.
+And we don't have a tool to evaluate a time when a mutex not used anywhere.
+
+In this case, we can use a `WeakReference` to save a reference to the mutex in the map, just when it uses.
+In order to implement this behavior, we used the `WeakHashMap` data structure.
 I wrote an article about this type of references a week ago, you can consider it in more details here:
 link:./weakreference.html[Soft, Weak, Phantom references in Java]
 

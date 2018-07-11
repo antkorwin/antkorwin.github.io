@@ -516,7 +516,7 @@ In this service we can use a JPA transactions for making some actions as atomic 
 </ul>
 </div>
 <div class="paragraph">
-<p>In a real life, I&#8217;d will strongly recommend to you refactoring such systems to avoid such situations as much as possible.
+<p>In a real life, i’d strongly recommend making refactoring in such systems to avoid this situation as it possible.
 But in our example, imagine that we have no choice.</p>
 </div>
 <div class="paragraph">
@@ -668,6 +668,16 @@ And if you need to synchronize a different operations in the different classes t
 will be the same in all synchronized blocks,
 we can serialize it into a String and use the String.intern() for obtain a same link for equals strings.</p>
 </div>
+<div class="paragraph">
+<p><code>String.intern</code> uses a global pool to store strings which are interned.
+And when you request intern on the string, you get a reference from this pool if such string exist there
+or else this string puts in the pool.</p>
+</div>
+<div class="paragraph">
+<p>You can find more details about <code>String.intern</code> in
+<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.5">The Java Language Specification - 3.10.5 String Literals</a>
+or in the Oracle Java documentation about the <a href="https://docs.oracle.com/javase/9/docs/api/java/lang/String.html#intern--">String.intern</a></p>
+</div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">public void withdrawMoney(UUID userId, int amountOfMoney) {
@@ -682,7 +692,7 @@ we can serialize it into a String and use the String.intern() for obtain a same 
 And your application can consume too many resources while active use of the <code>String.intern</code>.</p>
 </div>
 <div class="paragraph">
-<p>Also, there is a chance that foreign code blocks is synchronized on
+<p>Also, there is a chance that a foreign code was synchronize on
 the same instance of the string as your application.
 This can lead to deadlocks.</p>
 </div>
@@ -758,7 +768,15 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 </div>
 </div>
 <div class="paragraph">
-<p>In order to implement this behavior, we used the WeakReference and the WeakHashMap structure.
+<p>In order to return a same instance of mutex on the each of requests with equal keys,
+we will need to store the created mutexes.
+If we will store these mutexes in the simple <code>HashMap</code>,
+than a size of the map will increase as new keys appears.
+And we don&#8217;t have a tool to evaluate a time when a mutex not used anywhere.</p>
+</div>
+<div class="paragraph">
+<p>In this case, we can use a <code>WeakReference</code> to save a reference to the mutex in the map, just when it uses.
+In order to implement this behavior, we used the <code>WeakHashMap</code> data structure.
 I wrote an article about this type of references a week ago, you can consider it in more details here:
 <a href="./weakreference.html">Soft, Weak, Phantom references in Java</a></p>
 </div>
@@ -1188,7 +1206,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-07-11 07:47:45 +10
+Last updated 2018-07-11 13:54:42 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
