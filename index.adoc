@@ -50,13 +50,14 @@ link:./hibernate/unproxy.html[разворачиваем прокси (hibernate
 link:./reflection/make_new_instance.html[создаем новый объект через reflection] (Russian) image:./statemachine/rus.png[english,25]::
 Тонкости implicit параметров при создании нового экземпляра объекта.
 
-### Garbage Collector
+### Concurrency & Garbage Collector
 
 link:./concurrency/weakreference.html[Soft, Weak & Phantom References in Java] (English) image:./statemachine/eng.png[english,25]::
 Consider the differences between the types of references in Java.
 And look at examples of using a WeakReference, SoftReference & PhantomReference.
 
-
+link:./concurrency/synchronization_by_value.html[Synchronized by the value of the object] (English) image:./statemachine/eng.png[english,25]::
+An example of the use of WeakReference for the synchronization by value of object. Also a comparing of benchmark for different ConcurrentMap implementations.
 
 ### Code conventions:
 
