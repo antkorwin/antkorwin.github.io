@@ -1,0 +1,237 @@
+= Section A
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+
+# Плохо читаемые тесты
+
+
+## разымытый ассерт
+
+[source, java]
+----
+@Bad
+@Test
+public void testGetConnectionUrl() {
+    // Arrange
+    Sign sign = new Sign("123456");
+
+    // Act
+    String result = connectionService.getConnectionUrl(sing);
+
+    // Assert
+    assertThat(result).isNotNull();
+    assertThat(result).contains(SIGN_SERVICE_URL);
+    assertThat(result).contains("scope=".concat(SIGN_SCOPE));
+    assertThat(result).containsPattern("client_secret=\\w+");
+    assertThat(result).containsPattern("(state=[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{11})");
+    assertThat(result).containsPattern("timestamp=\\w+");
+    assertThat(result).contains("client_id=".concat(esiaClientId));
+    assertThat(result).contains("access_type=online");
+    assertThat(result).contains("response_type=code");
+    assertThat(result).contains("redirect_uri=".concat(URLEncoder.encode(esiaRedirectUrl, "UTF-8")));
+}
+----
+
+[source, java]
+----
+@Good
+@Test
+public void testGetConnectionUrl() {
+    // Arrange
+    Sign sign = new Sign("123456");
+
+    // Act
+    String url = connectionService.getConnectionUrl(sing);
+
+    // Assert
+    assertSignUrl(url).checkAccessHeaders(CLIENT_ID, SECRET_ID)
+                      .checkRedirectTo(REDIRECT_URL)
+                      .checkCreateTimeIsNear(new Date())
+                      .checkSignValue(sign.toString());
+}
+----
+
+## Несколько кейсов в одном тесте
+
+[source, java]
+----
+@Bad
+@Test
+public void testCreate(){
+
+    when(userRepository.save(any(User.class))).thenReturn(user);
+
+    // Act
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+
+    // проверяем создание пользователя
+    assertThat(actualResult).isSameAs(user);
+
+    verify(userRepository).save(userCaptor.capture());
+    CustomAssertion.assertThat(userCaptor.getValue())
+                   .lazyCheck(User::getUsername, USERNAME)
+                   .lazyCheck(User::getAuthorities, AUTHORITIES)
+                   .lazyCheck(User::getStatus, ACTIVE)
+                   .lazyCheck(User::isBlocked, false)
+                   .lazyCheck(User::isSystem, false)
+                   .lazyCheck(User::getProfileInfo, profileInfoMock)
+                   .check();
+
+    // проверяем запись аудита
+    verify(auditService).create(eq(user.getId(), eq("User successful created"));
+
+    // проверяем создание профиля для пользователя
+    verify(profileService).createUserProfile(eq(user.getId));
+
+    // проверяем что созданный пользователь может авторизоваться и получить токен
+    OAuth2AccessToken token = authService.login(USERNAME, PASSSWORD);
+    assertThat(token).isNotNull();
+                     .extracting(OAuth2AccessToken::isExpired,
+                                 OAuth2AccessToken::getTokenType)
+                     .contains(false, "bearer");
+}
+
+----
+
+[source, java]
+----
+@Good
+public TestUserService{
+
+
+  @BeforeEach
+  public setUp(){
+      when(userRepository.save(any(User.class))).thenReturn(user);
+  }
+
+
+  @Test
+  void testUserCreate(){
+    // Act
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+
+    // Assert
+    assertThat(actualResult).isSameAs(user);
+
+    verify(userRepository).save(userCaptor.capture());
+    CustomAssertion.assertThat(userCaptor.getValue())
+                   .lazyCheck(User::getUsername, USERNAME)
+                   .lazyCheck(User::getAuthorities, AUTHORITIES)
+                   .lazyCheck(User::getStatus, ACTIVE)
+                   .lazyCheck(User::isBlocked, false)
+                   .lazyCheck(User::isSystem, false)
+                   .lazyCheck(User::getProfileInfo, profileInfoMock)
+                   .check();
+  }
+
+  @Test
+  void testCreateAProfileAfterCreateANewUser(){
+    // Act
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+    // проверяем создание профиля для пользователя
+    verify(profileService).createUserProfile(eq(user.getId));
+  }
+
+
+  @Test
+  void testWriteAnAuditRecordAfterCreateANewUser(){
+    // Act
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+    // Assert
+    verify(auditService).create(eq(user.getId(), eq("User successful created"));
+  }
+
+
+  @Test
+  void testLoginAfterCreateANewUser(){
+    // Arrange
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+    // Act
+    OAuth2AccessToken token = authService.login(USERNAME, PASSSWORD);
+    // Assert
+    assertThat(token).isNotNull();
+                     .extracting(OAuth2AccessToken::isExpired,
+                                 OAuth2AccessToken::getTokenType)
+                     .contains(false, "bearer");
+  }
+
+}
+----
+
+
+## Проверка условий не относящихся к текущему кейсу
+
+[source, java]
+----
+
+----
+
+## Дублирование кода проверки результатов
+
+[source, java]
+----
+----
+
+
+## Дублирование кода подготовки тестовых данных
+
+[source, java]
+----
+----
+
+
+## Условия или логика в коде теста
+
+[source, java]
+----
+----
+
+
+## Тексты ассертов не помогают
+
+[source, java]
+----
+----
+
+
+## Black magic
+
+[source, java]
+----
+----
+
+
+
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'TDD-A'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
