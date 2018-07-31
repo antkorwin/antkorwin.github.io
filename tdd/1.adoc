@@ -170,13 +170,92 @@ public TestUserService{
 
 [source, java]
 ----
+@Test
+@Ugly
+public void testWhenCreateProfileIsFailed() {
 
+    //Arrange
+    doThrow(new DataIntegrityViolationException())
+            .when(userRepository)
+            .save(any());
+
+    //Act
+    GuardCheck.guardCheck(() -> userService.create(USERNAME, PASSWORD),
+                          DataIntegrityViolationException.class,
+                          DATA_WRITE_ERROR);
+
+    //Assert
+    verify(profileService).getOrCreateProfile(eq(USERNAME);
+    verify(auditService).createRecord(eq(USERNAME), eq(AUDIT_MSG));
+
+    assertThat(profileService.getByName(USERNAME)).isNull();
+    assertThat(auditService.getByUserName(USERNAME)).isEmpty();
+}
 ----
+
+[source, java]
+----
+@Test
+@ExpectedDataSet("empty_database.json")
+public void testNotPersistWhenThrowDataIntegrity() {
+    //Arrange
+    doThrow(new DataIntegrityViolationException())
+            .when(userRepository)
+            .save(any());
+
+    //Act
+    GuardCheck.guardCheck(() -> userService.create(NAME, PASSWORD),
+                          DataIntegrityViolationException.class,
+                          DATA_WRITE_ERROR);
+}
+----
+
+
+## Использование тестируемого кода для проверки
+
+[source, java]
+----
+@Ugly
+@Test
+public void testCreateUser() {
+  // Act
+  User createdUser = userService.create(USERNAME, PASSWORD);
+  // Assert
+  User regettedUser = userService.get(user.getId());
+  assertThat(createdUser).isEqualTo(regettedUser);
+}
+----
+
+[source, java]
+----
+@Good
+@Test
+public void testCreateUser() {
+  // Act
+  User createdUser = userService.create(USERNAME, PASSWORD);
+  // Assert
+  User regettedUser = userRepository.findById(user.getId());
+  assertThat(createdUser).isEqualTo(regettedUser);
+}
+----
+
+[source, java]
+----
+@Good
+@Test
+@ExpectedDataSet("user_create_expected.json")
+public void testCreateUser() {
+  userService.create(USERNAME, PASSWORD);
+}
+----
+
+
 
 ## Дублирование кода проверки результатов
 
 [source, java]
 ----
+
 ----
 
 
