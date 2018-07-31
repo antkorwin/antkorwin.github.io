@@ -1,7 +1,7 @@
-= Section C
+= Хрупкие тесты
 :source-highlighter: prettify
 :icons: font
-:toc: left
+:toc: 
 :experimental:
 :numbered:
 :homepage: http://antkorwin.com
@@ -9,15 +9,170 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
 
-# Хрупкие тесты
-
 ## Тестирование реализации, а не поведения
+
+[source,java]
+----
+@Ugly
+@Test
+public void testCreate() throws Exception {
+    // Arrange.
+    SecurityGroupCreateArgument createArgument = mock(SecurityGroupCreateArgument.class);
+    when(createArgument.getType()).thenReturn(TYPE);
+
+    SecurityGroup.SecurityGroupBuilder createArgumentBuilder = mock(SecurityGroup.SecurityGroupBuilder.class);
+    when(SecurityGroup.builder()).thenReturn(createArgumentBuilder);
+
+    when(createArgumentBuilder.type(any(String.class))).thenReturn(createArgumentBuilder);
+
+    SecurityGroup expectedResult = mock(SecurityGroup.class);
+    when(createArgumentBuilder.build()).thenReturn(expectedResult);
+
+    when(securityGroupRepository.save(any(SecurityGroup.class))).thenReturn(expectedResult);
+
+    // Act.
+    SecurityGroup actualResult = securityGroupService.create(createArgument);
+
+    // Assert.
+    assertThat(actualResult).isSameAs(expectedResult);
+
+    verify(createArgument).getType();
+
+    verifyStatic(only());
+    SecurityGroup.builder();
+
+    verifyStatic(only());
+    SecurityGroupValidator.validateCreateArgument(createArgument);
+
+    verify(createArgumentBuilder).type(TYPE);
+
+    verify(createArgumentBuilder).build();
+
+    verify(securityGroupRepository).save(expectedResult);
+
+    verifyNoMoreInteractions(expectedResult);
+    verifyNoMoreInteractions(createArgument);
+    verifyNoMoreInteractions(createArgumentBuilder);
+    verifyNoMoreInteractions(securityGroupRepository);
+}
+
+
+@Ugly
+@Test
+public void testExecuteImpl() throws Exception {
+    // Arrange.
+    AddEmployeeSidActionArgument argument = mock(AddEmployeeSidActionArgument.class);
+    when(argument.getSecurityGroupId()).thenReturn(SECURITY_GROUP_ID);
+    when(argument.getEmployeeId()).thenReturn(EMPLOYEE_ID);
+
+    SecurityGroup securityGroup = mock(SecurityGroup.class);
+    when(securityGroupService.getExisting(any(UUID.class))).thenReturn(securityGroup);
+
+    EmployeeDTO employee = mock(EmployeeDTO.class, RETURNS_DEEP_STUBS);
+    when(employeeFeign.get(any(UUID.class))).thenReturn(employee);
+
+    when(employee.getId()).thenReturn(EMPLOYEE_ID);
+    when(employee.getName()).thenReturn(EMPLOYEE_NAME);
+    when(employee.getPost().getName()).thenReturn(EMPLOYEE_POST_NAME);
+    when(employee.getWorkPlace().getName()).thenReturn(EMPLOYEE_WORKPLACE_NAME);
+
+    when(employeeSidService.existsBySecurityGroupIdEmployeeIdAndReason(any(UUID.class), any(UUID.class), any(Reason.class))).thenReturn(false);
+
+    EmployeeSid expectedResult = mock(EmployeeSid.class);
+    when(employeeSidService.create(any(EmployeeSidCreateArgument.class))).thenReturn(expectedResult);
+
+    // Act.
+    EmployeeSid actualResult = addManualEmployeeSidAction.executeImpl(argument);
+
+    // Assert.
+    assertThat(actualResult).isSameAs(expectedResult);
+
+    verify(argument).getSecurityGroupId();
+    verify(argument).getEmployeeId();
+
+    verify(securityGroupService).getExisting(SECURITY_GROUP_ID);
+
+    verify(employeeFeign).get(EMPLOYEE_ID);
+
+    verify(employeeSidService).existsBySecurityGroupIdEmployeeIdAndReason(SECURITY_GROUP_ID, EMPLOYEE_ID, MANUAL);
+
+    verify(employee).getId();
+    verify(employee).getName();
+    verify(employee.getPost()).getName();
+    verify(employee.getWorkPlace()).getName();
+
+    ArgumentCaptor<EmployeeSidCreateArgument> employeeSidCreateArgumentCaptor = ArgumentCaptor.forClass(EmployeeSidCreateArgument.class);
+    verify(employeeSidService).create(employeeSidCreateArgumentCaptor.capture());
+
+    CustomAssertion.assertThat(employeeSidCreateArgumentCaptor.getValue())
+                   .lazyCheck(EmployeeSidCreateArgument::getSecurityGroup, securityGroup)
+                   .lazyCheck(EmployeeSidCreateArgument::getEmployeeId, EMPLOYEE_ID)
+                   .lazyCheck(EmployeeSidCreateArgument::getEmployeeName, EMPLOYEE_NAME)
+                   .lazyCheck(EmployeeSidCreateArgument::getEmployeePostName, EMPLOYEE_POST_NAME)
+                   .lazyCheck(EmployeeSidCreateArgument::getEmployeeWorkplaceName, EMPLOYEE_WORKPLACE_NAME)
+                   .lazyCheck(EmployeeSidCreateArgument::getReason, MANUAL)
+                   .check();
+}
+----
+
 
 ## Зависимость от неизолированных данных
 
+[source, java]
+----
+@Ugly
+@Test
+@DataSet(cleanBefore = true, value = "datasets/users.json")
+public void testGetProfilesAndReturnSuccess() throws Exception {
+
+    //Arrange
+    List<UserProfile> profiles = profileRepository.findAll();
+    Set<UserProfile> testProfiles = ImmutableSet.of(profiles.get(0), profiles.get(profiles.size() - 1));
+    Set<String> userIds = testProfiles.stream().map(p -> p.getUser().getId().toString()).collect(Collectors.toSet());
+    String params = String.join(",", userIds);
+    int count = testProfiles.size();
+
+    //Act
+    CollectionDTO<UserProfileDTO> result = MvcRequester.on(mockMvc)
+                                                       .to(GET_PROFILES_PATTERN)
+                                                       .withParam("userIds", params)
+                                                       .get()
+                                                       .doExpect(status().isOk())
+                                                       .doReturn(new TypeReference<CollectionDTO<UserProfileDTO>>() {});
+
+    //Assert
+    Assertions.assertThat(result).isNotNull();
+    Assertions.assertThat(result.getTotalCount()).isEqualTo(count);
+    Assertions.assertThat(result.getItems().containsAll(testProfiles));
+}
+----
+
 ## Зависимость от окружения
 
+[source, java]
+----
+@Ugly
+@Test
+void testDateFormat(){
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy");
+    // Act
+    String result = dateFormat.format(new Date());
+    assertThat(result).isEqualTo("05-九月-2018")
+}
 
+@Good
+@Test
+void testDateFormat(){
+    // Arrange
+    Locale locale = new Locale("zh","CN");
+    SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", locale);
+    // Act
+    String result = dateFormat.format(new Date());
+    // Assert
+    assertThat(result).isEqualTo("05-九月-2018")
+}
+
+----
 
 
 // END OF CONTENT

@@ -1,15 +1,12 @@
-= Section A
+= Плохо читаемые тесты
 :source-highlighter: prettify
 :icons: font
-:toc: left
+:toc:
 :experimental:
 :numbered:
 :homepage: http://antkorwin.com
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
-
-
-# Плохо читаемые тесты
 
 
 ## разымытый ассерт
@@ -97,7 +94,6 @@ public void testCreate(){
                                  OAuth2AccessToken::getTokenType)
                      .contains(false, "bearer");
 }
-
 ----
 
 [source, java]
@@ -166,6 +162,69 @@ public TestUserService{
 ----
 
 
+[source, java]
+----
+@Ugly
+@Test
+public void testLoginWithValidVerificationCodeAndReturnSuccess() {
+    //Arrange
+    UsernamePasswordAuthenticationToken authentication =
+          new UsernamePasswordAuthenticationToken(USERNAME, PASSWORD);
+
+    //Act
+    UUID result = socialAuthService.createVerificationCode(authentication);
+
+    //Assert
+    assertThat(result).isNotNull();
+
+    // проверяем что по коду можно авторизоваться
+    socialAuthService.login(result);
+    verify(authService).login(username, password);
+
+    // Проверяем что с данный код действителен только для одноразового подтверждения!!!
+    GuardCheck.guardCheck(() -> socialAuthService.login(result), WSArgumentException.class, ApiErrorInfo.INVALID_VERIFICATION);
+}
+----
+
+разделим на два кейса:
+
+[source, java]
+----
+@Good
+@Test
+public void testLogin() {
+    //Arrange
+    //  получаем код подтверждения
+    UUID result = socialAuthService.createVerificationCode(authentication);
+
+    //Act
+    //  пытаемся авторизоваться с полученным кодом
+    socialAuthService.login(result);
+
+    //Assert
+    assertThat(result).isNotNull();
+    verify(authService).login(username,password);
+}
+
+@Good
+@Test
+public void testVirificationTwiceExpectedError(){
+    //Arrange
+    //  получаем код подтверждения
+    UUID result = socialAuthService.createVerificationCode(authentication);
+    //  пытаемся авторизоваться с полученным кодом, первый раз
+    socialAuthService.login(result);
+
+    //Act & Assert
+    //  пытаемся авторизоваться с тем же кодом второй раз, ждем исключение
+    GuardCheck.guardCheck(() -> socialAuthService.login(result),
+                           WSArgumentException.class, ApiErrorInfo.INVALID_VERIFICATION);
+}
+----
+
+
+
+
 ## Проверка условий не относящихся к текущему кейсу
 
 [source, java]
@@ -210,6 +269,50 @@ public void testNotPersistWhenThrowDataIntegrity() {
 }
 ----
 
+[source, java]
+----
+@Ugly
+@DataSet(cleanBefore = true, value = "datasets/users.json")
+@Test
+public void loginWithValidVerificationCodeAndReturnAccessToken() throws Exception {
+
+    String username = UserTestHelper.socialUsername;
+    // Act
+    UUID code = socialAuthService.createVerificationCode(new UsernamePasswordAuthenticationToken(username, "N/A"));
+    OAuth2AccessToken token = MvcRequester.on(mockMvc)
+                                          .to(LOGIN_PATH)
+                                          .post(new SocialAuthCompleteForm(code))
+                                          .returnAs(OAuth2AccessToken.class);
+    // Asserts
+    Assertions.assertThat(token).isNotNull();
+
+    CustomAssertion.assertThat(token)
+                   .lazyMatch(OAuth2AccessToken::getValue, Matchers.notNullValue())
+                   .lazyMatch(OAuth2AccessToken::getRefreshToken, Matchers.notNullValue())
+                   .lazyMatch(OAuth2AccessToken::getExpiration, Matchers.notNullValue())
+                   .lazyMatch(OAuth2AccessToken::getExpiresIn, Matchers.notNullValue())
+                   .lazyCheck(OAuth2AccessToken::getTokenType, "bearer")
+                   .check();
+
+
+    // Проверяем пользователя ?
+    UserDTO userDTO = MvcRequester.on(mockMvc)
+                                  .to("/auth/user")
+                                  .getWithAuth(token.getValue())
+                                  .doExpect(status().isOk())
+                                  .doReturn(new TypeReference<UserDTO>() {});
+
+    CustomAssertion.assertThat(userDTO)
+                   .lazyCheck(UserDTO::getUsername, username)
+                   .lazyCheck(UserDTO::getId, UserTestHelper.socialUserId)
+                   .lazyCheck(UserDTO::getAccountType, UserAccountType.VK)
+                   .lazyMatch(UserDTO::getAuthorities, Matchers.contains(RoleType.USER))
+                   .lazyMatch(UserDTO::getProfile, Matchers.notNullValue())
+                   .check();
+}
+----
+
+
 
 ## Использование тестируемого кода для проверки
 
@@ -221,8 +324,8 @@ public void testCreateUser() {
   // Act
   User createdUser = userService.create(USERNAME, PASSWORD);
   // Assert
-  User regettedUser = userService.get(user.getId());
-  assertThat(createdUser).isEqualTo(regettedUser);
+  User user = userService.get(createdUser.getId());
+  assertThat(createdUser).isEqualTo(user);
 }
 ----
 
@@ -234,8 +337,8 @@ public void testCreateUser() {
   // Act
   User createdUser = userService.create(USERNAME, PASSWORD);
   // Assert
-  User regettedUser = userRepository.findById(user.getId());
-  assertThat(createdUser).isEqualTo(regettedUser);
+  User user = userRepository.findById(createdUser.getId());
+  assertThat(createdUser).isEqualTo(user);
 }
 ----
 
@@ -255,6 +358,76 @@ public void testCreateUser() {
 
 [source, java]
 ----
+@Test
+@Ugly
+public void testGetExecutionsWithAscOrder() throws Exception {
+    // Act
+    CollectionDTO<ExecutionDTO> result = MvcRequester.on(mockMvc)
+                                                     .to(GET_EXECUTIONS_PATTERN, COMPLAINT_ID)
+                                                     .withParam("orderByDirection", "ASC")
+                                                     .get()
+                                                     .doExpect(status().isOk())
+                                                     .doReturn(new TypeReference<CollectionDTO<ExecutionDTO>>() {});
+    // Assert
+    assertThat(result).hasSize(2);
+
+    assertThat(result.getItems().get(0)).extracting(ExecutionDTO::getInitiatorUserId,
+                                                    ExecutionDTO::getContent,
+                                                    ExecutionDTO::getOrder)
+                                        .contains(INITIATOR_USER_ID,
+                                                  CONTENT_FIRST,
+                                                  ORDER_FIRST);
+    assertThat(result.getItems().get(0).getCreateDate()).isNotNull();
+
+    assertThat(result.getItems().get(1)).extracting(ExecutionDTO::getInitiatorUserId,
+                                                    ExecutionDTO::getContent,
+                                                    ExecutionDTO::getOrder)
+                                        .contains(INITIATOR_USER_ID,
+                                                  CONTENT_SECOND,
+                                                  ORDER_SECOND);
+    assertThat(result.getItems().get(1).getCreateDate()).isNotNull();
+}
+
+@Good
+@Test
+public void testGetExecutionsWithAscOrder() throws Exception {
+    // Act
+    CollectionDTO<ExecutionDTO> result = MvcRequester.on(mockMvc)
+                                                     .to(GET_EXECUTIONS_PATTERN, COMPLAINT_ID)
+                                                     .withParam("orderByDirection", "ASC")
+                                                     .get()
+                                                     .doExpect(status().isOk())
+                                                     .doReturn(new TypeReference<CollectionDTO<ExecutionDTO>>() {});
+    // Assert
+    assertThat(result).hasSize(2);
+    assertExecution(result.getItems.get(0),
+                    INITIATOR_USER_ID,
+                    CONTENT_FIRST,
+                    ORDER_FIRST);
+    assertExecution(result.getItems.get(1),
+                    INITIATOR_USER_ID,
+                    CONTENT_SECOND,
+                    ORDER_SECOND);
+}
+
+private void assertExecution(ExecutionDTO execution,
+                             UUID expectedInitiatorId,
+                             String expectedContent,
+                             int expected expectedOrder){
+
+   assertThat(execution).extracting(ExecutionDTO::getInitiatorUserId,
+                                    ExecutionDTO::getType,
+                                    ExecutionDTO::isReadOnly,
+                                    ExecutionDTO::getContent,
+                                    ExecutionDTO::getOrder)
+                        .contains(expectedInitiatorId,
+                                  DEFAULT_EXECUTION_TYPE,
+                                  true,
+                                  expectedContent,
+                                  expectedOrder);
+
+   assertThat(execution.getCreateDate()).isNotNull();
+}
 
 ----
 
@@ -270,6 +443,35 @@ public void testCreateUser() {
 
 [source, java]
 ----
+
+@Ugly
+@Test
+void testRegistrationViaSocialNetwork(){
+
+    User user = userService.registration(USER_DATA);
+
+    if(user.getProfile().getType() == VK){
+        assertThat(user.getProfile().getEmail()).isNotNull();
+        assertThat(user.getProfile().getCountry()).isNotNull();
+    } else {
+        assertThat(user.getProfile().getPhone()).isNotNull();
+    }
+}
+
+@Test
+void testRegistrationViaSocialVK(){
+
+    User user = userService.registration(VK_USER_DATA);
+    assertThat(user.getProfile().getEmail()).isNotNull();
+    assertThat(user.getProfile().getCountry()).isNotNull();
+}
+
+@Test
+void testRegistrationWithoutSocial(){
+    User user = userService.registration(PLAIN_USER_DATA);
+    assertThat(user.getProfile().getPhone()).isNotNull();
+}
+
 ----
 
 
@@ -277,6 +479,37 @@ public void testCreateUser() {
 
 [source, java]
 ----
+@Ugly
+@Test
+public void host_dinner_party_where_nobody_dies() {
+   Mansion mansion = new Mansion();
+   mansion.hostPotentiallyMurderousDinnerParty();
+   SoftAssertions softly = new SoftAssertions();
+   softly.assertThat(mansion.guests()).isEqualTo(7);
+   softly.assertThat(mansion.kitchen()).isEqualTo("clean");
+   softly.assertThat(mansion.library()).isEqualTo("clean");
+   softly.assertThat(mansion.revolverAmmo()).isEqualTo(6);
+   softly.assertThat(mansion.candlestick()).isEqualTo("pristine");
+   softly.assertThat(mansion.colonel()).isEqualTo("well kempt");
+   softly.assertThat(mansion.professor()).isEqualTo("well kempt");
+   softly.assertAll();
+}
+
+@Good
+@Test
+public void host_dinner_party_where_nobody_dies() {
+   Mansion mansion = new Mansion();
+   mansion.hostPotentiallyMurderousDinnerParty();
+   SoftAssertions softly = new SoftAssertions();
+   assertThat(mansion.guests()).as("Living Guests").isEqualTo(7);
+   assertThat(mansion.kitchen()).as("Kitchen").isEqualTo("clean");
+   assertThat(mansion.library()).as("Library").isEqualTo("clean");
+   assertThat(mansion.revolverAmmo()).as("Revolver Ammo").isEqualTo(6);
+   assertThat(mansion.candlestick()).as("Candlestick").isEqualTo("pristine");
+   assertThat(mansion.colonel()).as("Colonel").isEqualTo("well kempt");
+   assertThat(mansion.professor()).as("Professor").isEqualTo("well kempt");
+   softly.assertAll();
+}
 ----
 
 
@@ -284,8 +517,42 @@ public void testCreateUser() {
 
 [source, java]
 ----
-----
+@Ugly
+@Test
+public void testBlackMagicNumbers() throws Exception {
 
+    // Given
+    GeneralBlock generalBlock = new GeneralBlock("COMMAND_23", 3);
+
+    // When
+    BasicHeaderBlock block = BasicHeaderBlock.of(generalBlock);
+
+    // Then
+    assertThat(block).isNotNull();
+    assertThat(block.getApplicationId()).isEqualTo("FULLCODE");
+    assertThat(block.getServiceId()).isEqualTo("03");
+    assertThat(block.getLogicalTerminalAddress()).isEqualTo("SH22COMMAND_23");
+    assertThat(block.getSessionName()).isEqualTo("CMD23");
+}
+
+@Good
+@Test
+public void testBlackMagicNumbers() throws Exception {
+
+    // Given
+    GeneralBlock generalBlock = new GeneralBlock(TEST_COMMAND, SERVICE_ID);
+
+    // When
+    BasicHeaderBlock block = BasicHeaderBlock.of(generalBlock);
+
+    // Then
+    assertThat(block).isNotNull();
+    assertThat(block.getApplicationId()).isEqualTo(TEST_COMMAND_TYPE);
+    assertThat(block.getServiceId()).isEqualTo(SERVICE_ID);
+    assertThat(block.getLogicalTerminalAddress()).isEqualTo(TERMINAL_ADDR+TEST_COMMAND);
+    assertThat(block.getSessionName()).isEqualTo(TEST_COMMAND_SESSION);
+}
+----
 
 
 

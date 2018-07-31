@@ -1,38 +1,131 @@
-= Secton D
+= Как писать тесты
 :source-highlighter: prettify
 :icons: font
-:toc: left
+:toc:
 :experimental:
 :numbered:
 :homepage: http://antkorwin.com
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
-# Как писать тесты
-
 ## Интеграционные
+
 ### БД (JPA, mongo)
+
+
+- примеры работы с БД через Testcontainers
+-- через jdbc driver tc
+
+- тестируем хранимые процедуры
+
+- подготовка и проверка тестовых данных в БД
+-- DataSetExport
+-- DataSet init
+-- ExpectedDataSet
+
+- тестовый контекст в спринге DataJpa
+-- чем отличается от обычного
+-- для каких тестов подойдет
+
+- пример подключения MongoDb через testcontainers
+-- создаем при помощи generic container
+
 ### Cache
+
+- пример как тестировать работу кэша в спринге
+
+
 ### Конфигурация (DI)
+
+- тестируем вайринг всех бинов и пропертей
+
 ### Cloud (REST, Feign)
 
+- пример тестирования клиента для rest сервиса
+
+- пример тестирования для feign client
+
 ## Concurrency
-### локи на БД
+
+пример тестирования АПИ, которое должно работать под конкурентными запросами
+
+
+[source, java]
+----
+ @Test
+ public void testIsPassedParallel() throws Exception {
+     // Arrange
+     doReturn(true).when(voteResultService).existsByPollAndActor(any(UUID.class), any(UUID.class));
+
+     // Act
+     Set<Integer> actualResult = IntStream.range(0, 100)
+                                          .boxed()
+                                          .parallel()
+                                          .map(index -> {
+                                              try {
+                                                  MvcRequester.on(mockMvc)
+                                                              .to(VOTE_IS_PASSED_URL_PATTERN, POLL_ID)
+                                                              .get()
+                                                              .doExpect(status().isOk());
+                                                  return 200;
+                                              } catch (Exception e) {
+                                                  System.out.println(e);
+                                                  return 500;
+                                              }
+                                          }).collect(Collectors.toSet());
+
+     // Assert
+     Assertions.assertThat(actualResult).containsOnly(200);
+ }
+----
+
 
 ## Async
+
+- wrong way (stop using Thread.sleep(1000))
+
+- как написать ожидание создания записи в БД
+
+- как ждать на verify блоке теста
+
+- деадлоки и таймауты
+
+
 ### Spring Events
+
+- как написать тест ожидающий поступления ивента
+
 ### JMS / AMQP
+
+- пример тестирования RabbitMq в докере(testcontainers)
++ ожидание обработки ивента
+
 ### Scheduler
+
+- как тестировать паланировщики
+
+- стоит менять настройки таймаутов для тестов
 
 ## Performance
 ### JMH
+- пример теста перформанса ConcurrentHashMap
+- какая задача тестов перформанса
+- нужно знать тестовое окружение
 
 
 ## Report systems
-### Jasper Reports
+
+- пример тестирования отчета построенного в JasperReports
+- что даст юнит тест, а что интеграционный? и нужны ли и те и другие
+- подход 1: делаем экстракт данных и сравниваем их с ожидаемыми
+- подход 2: сравниваем файлы с эталоном
+- плюсы / минусы
+
+
 
 ## E2E
-### Тесты в прод
+- Тестирование в продакшене
+- задания и отчеты при неудачах
 
 
 ## Junit5

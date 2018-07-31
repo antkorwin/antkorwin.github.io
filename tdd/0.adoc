@@ -1,7 +1,7 @@
 = Section 0
 :source-highlighter: prettify
 :icons: font
-:toc: left
+:toc: 
 :experimental:
 :numbered:
 :homepage: http://antkorwin.com
@@ -9,12 +9,12 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
 
-# Clean Tests
+## Clean Tests
 
-## Наглядность тестов
-## Плохо тестируемый код
-## Хрупкие тесты
-## Как писать тесты
+### link:./1.html[Наглядность тестов]
+### link:./2.html[Плохо тестируемый код]
+### link:./3.html[Хрупкие тесты]
+### link:./4.html[Как писать тесты]
 
 
 
