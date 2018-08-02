@@ -8,71 +8,46 @@
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
-## Интеграционные
+## Тестирование специфичных для БД кейсов
+### тестируем хранимые процедуры
+### custom query
+### подготовка и проверка тестовых данных в БД
+### тестовый контекст в спринге DataJpa
+### mongodb + testcontainers
 
-### БД (JPA, mongo)
+## Cache
+### пример как тестировать работу кэша в спринге
 
+## Cloud и микросервисы
+### пример тестирования клиента для rest сервиса на restTemplate
+### пример тестирования для feign client
 
-- примеры работы с БД через Testcontainers
--- через jdbc driver tc
-
-- тестируем хранимые процедуры
-
-- подготовка и проверка тестовых данных в БД
--- DataSetExport
--- DataSet init
--- ExpectedDataSet
-
-- тестовый контекст в спринге DataJpa
--- чем отличается от обычного
--- для каких тестов подойдет
-
-- пример подключения MongoDb через testcontainers
--- создаем при помощи generic container
-
-### Cache
-
-- пример как тестировать работу кэша в спринге
-
-
-### Конфигурация (DI)
-
-- тестируем вайринг всех бинов и пропертей
-
-### Cloud (REST, Feign)
-
-- пример тестирования клиента для rest сервиса
-
-- пример тестирования для feign client
 
 ## Concurrency
-
 пример тестирования АПИ, которое должно работать под конкурентными запросами
-
 
 [source, java]
 ----
  @Test
- public void testIsPassedParallel() throws Exception {
-     // Arrange
-     doReturn(true).when(voteResultService).existsByPollAndActor(any(UUID.class), any(UUID.class));
+ public void testParallelCreatedSubTasks() throws Exception {
 
-     // Act
-     Set<Integer> actualResult = IntStream.range(0, 100)
-                                          .boxed()
-                                          .parallel()
-                                          .map(index -> {
-                                              try {
-                                                  MvcRequester.on(mockMvc)
-                                                              .to(VOTE_IS_PASSED_URL_PATTERN, POLL_ID)
-                                                              .get()
-                                                              .doExpect(status().isOk());
-                                                  return 200;
-                                              } catch (Exception e) {
-                                                  System.out.println(e);
-                                                  return 500;
-                                              }
-                                          }).collect(Collectors.toSet());
+     Set<Integer> actualResult =
+                     IntStream.range(0, 1000)
+                              .boxed()
+                              .parallel()
+                              .map(index -> {
+                                  try {
+                                      // Act
+                                      MvcRequester.on(mockMvc)
+                                                  .to(CREATE_SUBTASK_URL, TASK_ID)
+                                                  .post()
+                                                  .doExpect(status().isOk());
+                                      return 200;
+                                  } catch (Exception e) {
+                                      System.out.println(e);
+                                      return 500;
+                                  }
+                              }).collect(Collectors.toSet());
 
      // Assert
      Assertions.assertThat(actualResult).containsOnly(200);
@@ -82,23 +57,41 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Async
 
-- wrong way (stop using Thread.sleep(1000))
+### wrong way (stop using Thread.sleep(1000))
+
+[source, java]
+----
+@Test
+void testCreateTaskAndSendEvent() {
+    // Act
+    taskService.create(TASK_TITILE, TASK_ESTIMATE);
+
+    await().atMost(10, TimeUnit.SECONDS)
+           .untilAsserted(() -> verify(reportService).createTask(captor.capture()));
+
+    // Arrange
+    assertThat(captor.getValue())
+            .extracting(Task::getTitle, Task::getEstimate)
+            .contains(TASK_TITILE, TASK_ESTIMATE);
+}
+----
 
 - как написать ожидание создания записи в БД
 
 - как ждать на verify блоке теста
 
+- ожидание пока assert не станет true
+
 - деадлоки и таймауты
-
-
-### Spring Events
-
-- как написать тест ожидающий поступления ивента
 
 ### JMS / AMQP
 
 - пример тестирования RabbitMq в докере(testcontainers)
 + ожидание обработки ивента
+
+### Spring Events
+
+- как написать тест ожидающий поступления ивента
 
 ### Scheduler
 
@@ -129,9 +122,11 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 
 ## Junit5
-### избавляемся от иерархии
-заворачиваем extendswith в метаанотации
+
+### избавляемся от иерархии (заворачиваем extendswith в метаанотации)
+
 ### тестовые интерфейсы (BaseCrud)
+
 ### группировка методов
 
 

@@ -444,32 +444,47 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_Интеграционные">1. Интеграционные</a>
+<li><a href="#_Тестирование_специфичных_для_БД_кейсов">1. Тестирование специфичных для БД кейсов</a>
 <ul class="sectlevel2">
-<li><a href="#_БД_jpa_mongo">1.1. БД (JPA, mongo)</a></li>
-<li><a href="#_cache">1.2. Cache</a></li>
-<li><a href="#_Конфигурация_di">1.3. Конфигурация (DI)</a></li>
-<li><a href="#_cloud_rest_feign">1.4. Cloud (REST, Feign)</a></li>
+<li><a href="#_тестируем_хранимые_процедуры">1.1. тестируем хранимые процедуры</a></li>
+<li><a href="#_custom_query">1.2. custom query</a></li>
+<li><a href="#_подготовка_и_проверка_тестовых_данных_в_БД">1.3. подготовка и проверка тестовых данных в БД</a></li>
+<li><a href="#_тестовый_контекст_в_спринге_datajpa">1.4. тестовый контекст в спринге DataJpa</a></li>
+<li><a href="#_mongodb_testcontainers">1.5. mongodb + testcontainers</a></li>
 </ul>
 </li>
-<li><a href="#_concurrency">2. Concurrency</a></li>
-<li><a href="#_async">3. Async</a>
+<li><a href="#_cache">2. Cache</a>
 <ul class="sectlevel2">
-<li><a href="#_spring_events">3.1. Spring Events</a></li>
-<li><a href="#_jms_amqp">3.2. JMS / AMQP</a></li>
-<li><a href="#_scheduler">3.3. Scheduler</a></li>
+<li><a href="#_пример_как_тестировать_работу_кэша_в_спринге">2.1. пример как тестировать работу кэша в спринге</a></li>
 </ul>
 </li>
-<li><a href="#_performance">4. Performance</a>
+<li><a href="#_cloud_и_микросервисы">3. Cloud и микросервисы</a>
 <ul class="sectlevel2">
-<li><a href="#_jmh">4.1. JMH</a></li>
+<li><a href="#_пример_тестирования_клиента_для_rest_сервиса_на_resttemplate">3.1. пример тестирования клиента для rest сервиса на restTemplate</a></li>
+<li><a href="#_пример_тестирования_для_feign_client">3.2. пример тестирования для feign client</a></li>
 </ul>
 </li>
-<li><a href="#_report_systems">5. Report systems</a></li>
-<li><a href="#_e2e">6. E2E</a></li>
-<li><a href="#_junit5">7. Junit5</a>
+<li><a href="#_concurrency">4. Concurrency</a></li>
+<li><a href="#_async">5. Async</a>
 <ul class="sectlevel2">
-<li><a href="#_избавляемся_от_иерархии">7.1. избавляемся от иерархии</a></li>
+<li><a href="#_wrong_way_stop_using_thread_sleep1000">5.1. wrong way (stop using Thread.sleep(1000))</a></li>
+<li><a href="#_jms_amqp">5.2. JMS / AMQP</a></li>
+<li><a href="#_spring_events">5.3. Spring Events</a></li>
+<li><a href="#_scheduler">5.4. Scheduler</a></li>
+</ul>
+</li>
+<li><a href="#_performance">6. Performance</a>
+<ul class="sectlevel2">
+<li><a href="#_jmh">6.1. JMH</a></li>
+</ul>
+</li>
+<li><a href="#_report_systems">7. Report systems</a></li>
+<li><a href="#_e2e">8. E2E</a></li>
+<li><a href="#_junit5">9. Junit5</a>
+<ul class="sectlevel2">
+<li><a href="#_избавляемся_от_иерархии_заворачиваем_extendswith_в_метаанотации">9.1. избавляемся от иерархии (заворачиваем extendswith в метаанотации)</a></li>
+<li><a href="#_тестовые_интерфейсы_basecrud">9.2. тестовые интерфейсы (BaseCrud)</a></li>
+<li><a href="#_группировка_методов">9.3. группировка методов</a></li>
 </ul>
 </li>
 </ul>
@@ -477,91 +492,80 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_Интеграционные">1. Интеграционные</h2>
+<h2 id="_Тестирование_специфичных_для_БД_кейсов">1. Тестирование специфичных для БД кейсов</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_БД_jpa_mongo">1.1. БД (JPA, mongo)</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>примеры работы с БД через Testcontainers</p>
-</li>
-<li>
-<p>популяторы тестовых данных</p>
-</li>
-<li>
-<p>тестовый контекст в спринге DataJpa</p>
-</li>
-<li>
-<p>пример подключения MongoDb через testcontainers</p>
-</li>
-</ul>
-</div>
+<h3 id="_тестируем_хранимые_процедуры">1.1. тестируем хранимые процедуры</h3>
+
 </div>
 <div class="sect2">
-<h3 id="_cache">1.2. Cache</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>пример как тестировать работу кэша в спринге</p>
-</li>
-</ul>
-</div>
+<h3 id="_custom_query">1.2. custom query</h3>
+
 </div>
 <div class="sect2">
-<h3 id="_Конфигурация_di">1.3. Конфигурация (DI)</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>тестируем вайринг всех бинов и пропертей</p>
-</li>
-</ul>
-</div>
+<h3 id="_подготовка_и_проверка_тестовых_данных_в_БД">1.3. подготовка и проверка тестовых данных в БД</h3>
+
 </div>
 <div class="sect2">
-<h3 id="_cloud_rest_feign">1.4. Cloud (REST, Feign)</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>пример тестирования rest сервиса</p>
-</li>
-<li>
-<p>пример тестирования для feign client</p>
-</li>
-</ul>
+<h3 id="_тестовый_контекст_в_спринге_datajpa">1.4. тестовый контекст в спринге DataJpa</h3>
+
 </div>
+<div class="sect2">
+<h3 id="_mongodb_testcontainers">1.5. mongodb + testcontainers</h3>
+
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_concurrency">2. Concurrency</h2>
+<h2 id="_cache">2. Cache</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_пример_как_тестировать_работу_кэша_в_спринге">2.1. пример как тестировать работу кэша в спринге</h3>
+
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_cloud_и_микросервисы">3. Cloud и микросервисы</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_пример_тестирования_клиента_для_rest_сервиса_на_resttemplate">3.1. пример тестирования клиента для rest сервиса на restTemplate</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_пример_тестирования_для_feign_client">3.2. пример тестирования для feign client</h3>
+
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_concurrency">4. Concurrency</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>пример тестирования АПИ, которое не должно падать под конкурентными запросами</p>
+<p>пример тестирования АПИ, которое должно работать под конкурентными запросами</p>
 </div>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java"> @Test
- public void testIsPassedParallel() throws Exception {
-     // Arrange
-     doReturn(true).when(voteResultService).existsByPollAndActor(any(UUID.class), any(UUID.class));
+ public void testParallelCreatedSubTasks() throws Exception {
 
-     // Act
-     Set&lt;Integer&gt; actualResult = IntStream.range(0, 100)
-                                          .boxed()
-                                          .parallel()
-                                          .map(index -&gt; {
-                                              try {
-                                                  MvcRequester.on(mockMvc)
-                                                              .to(VOTE_IS_PASSED_URL_PATTERN, POLL_ID)
-                                                              .get()
-                                                              .doExpect(status().isOk());
-                                                  return 200;
-                                              } catch (Exception e) {
-                                                  System.out.println(e);
-                                                  return 500;
-                                              }
-                                          }).collect(Collectors.toSet());
+     Set&lt;Integer&gt; actualResult =
+                     IntStream.range(0, 1000)
+                              .boxed()
+                              .parallel()
+                              .map(index -&gt; {
+                                  try {
+                                      // Act
+                                      MvcRequester.on(mockMvc)
+                                                  .to(CREATE_SUBTASK_URL, TASK_ID)
+                                                  .post()
+                                                  .doExpect(status().isOk());
+                                      return 200;
+                                  } catch (Exception e) {
+                                      System.out.println(e);
+                                      return 500;
+                                  }
+                              }).collect(Collectors.toSet());
 
      // Assert
      Assertions.assertThat(actualResult).containsOnly(200);
@@ -571,8 +575,27 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_async">3. Async</h2>
+<h2 id="_async">5. Async</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_wrong_way_stop_using_thread_sleep1000">5.1. wrong way (stop using Thread.sleep(1000))</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
+void testCreateTaskAndSendEvent() {
+    // Act
+    taskService.create(TASK_TITILE, TASK_ESTIMATE);
+
+    await().atMost(10, TimeUnit.SECONDS)
+           .untilAsserted(() -&gt; verify(reportService).createTask(captor.capture()));
+
+    // Arrange
+    assertThat(captor.getValue())
+            .extracting(Task::getTitle, Task::getEstimate)
+            .contains(TASK_TITILE, TASK_ESTIMATE);
+}</code></pre>
+</div>
+</div>
 <div class="ulist">
 <ul>
 <li>
@@ -582,22 +605,16 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p>как ждать на verify блоке теста</p>
 </li>
 <li>
+<p>ожидание пока assert не станет true</p>
+</li>
+<li>
 <p>деадлоки и таймауты</p>
 </li>
 </ul>
 </div>
-<div class="sect2">
-<h3 id="_spring_events">3.1. Spring Events</h3>
-<div class="ulist">
-<ul>
-<li>
-<p>как написать тест ожидающий поступления ивента</p>
-</li>
-</ul>
-</div>
 </div>
 <div class="sect2">
-<h3 id="_jms_amqp">3.2. JMS / AMQP</h3>
+<h3 id="_jms_amqp">5.2. JMS / AMQP</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -608,7 +625,17 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect2">
-<h3 id="_scheduler">3.3. Scheduler</h3>
+<h3 id="_spring_events">5.3. Spring Events</h3>
+<div class="ulist">
+<ul>
+<li>
+<p>как написать тест ожидающий поступления ивента</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_scheduler">5.4. Scheduler</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -623,10 +650,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_performance">4. Performance</h2>
+<h2 id="_performance">6. Performance</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_jmh">4.1. JMH</h3>
+<h3 id="_jmh">6.1. JMH</h3>
 <div class="ulist">
 <ul>
 <li>
@@ -644,12 +671,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_report_systems">5. Report systems</h2>
+<h2 id="_report_systems">7. Report systems</h2>
 <div class="sectionbody">
 <div class="ulist">
 <ul>
 <li>
 <p>пример тестирования отчета построенного в JasperReports</p>
+</li>
+<li>
+<p>что даст юнит тест, а что интеграционный? и нужны ли и те и другие</p>
 </li>
 <li>
 <p>подход 1: делаем экстракт данных и сравниваем их с ожидаемыми</p>
@@ -665,7 +695,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_e2e">6. E2E</h2>
+<h2 id="_e2e">8. E2E</h2>
 <div class="sectionbody">
 <div class="ulist">
 <ul>
@@ -680,15 +710,18 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="sect1">
-<h2 id="_junit5">7. Junit5</h2>
+<h2 id="_junit5">9. Junit5</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_избавляемся_от_иерархии">7.1. избавляемся от иерархии</h3>
-<div class="paragraph">
-<p>заворачиваем extendswith в метаанотации
-<mark># тестовые интерфейсы (BaseCrud)
-</mark># группировка методов</p>
+<h3 id="_избавляемся_от_иерархии_заворачиваем_extendswith_в_метаанотации">9.1. избавляемся от иерархии (заворачиваем extendswith в метаанотации)</h3>
+
 </div>
+<div class="sect2">
+<h3 id="_тестовые_интерфейсы_basecrud">9.2. тестовые интерфейсы (BaseCrud)</h3>
+
+</div>
+<div class="sect2">
+<h3 id="_группировка_методов">9.3. группировка методов</h3>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
     (function (d, w, c) {
@@ -742,7 +775,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-01 07:49:16 +10
+Last updated 2018-08-02 23:43:41 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

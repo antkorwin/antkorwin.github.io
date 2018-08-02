@@ -9,6 +9,29 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
 
+## Названия тестовых методов не отражают их смысл
+
+[source, java]
+----
+@Ugly
+@Test
+public void testSuccess() {
+    //Act
+    Token token = authService.login(USER, PASSWORD);
+    //Assert
+    assertThat(token).isNotNull();
+}
+
+@Ugly
+@Test
+public void testAuth() {
+  //Act
+  Status result = authService.logout(TOKEN);
+  //Assert
+  assertThat(result).isEqualTo(OK);
+}
+----
+
 ## разымытый ассерт
 
 [source, java]

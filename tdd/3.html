@@ -456,6 +456,28 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Service
+public class SecurityGroupServiceImpl implements SecurityGroupService {
+    private final SecurityGroupRepository securityGroupRepository;
+
+    @Autowired
+    public SecurityGroupServiceImpl(SecurityGroupRepository securityGroupRepository) {this.securityGroupRepository = securityGroupRepository;}
+
+    @Override
+    public SecurityGroup create(SecurityGroupCreateArgument createArgument) {
+        validateCreateArgument(createArgument);
+
+        SecurityGroup creatingGroup = SecurityGroup.builder()
+                                                   .type(createArgument.getType())
+                                                   .build();
+
+        return securityGroupRepository.save(creatingGroup);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Ugly
 @Test
 public void testCreate() throws Exception {
@@ -673,7 +695,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-01 07:49:12 +10
+Last updated 2018-08-02 08:37:59 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

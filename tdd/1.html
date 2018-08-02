@@ -444,21 +444,48 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_разымытый_ассерт">1. разымытый ассерт</a></li>
-<li><a href="#_Несколько_кейсов_в_одном_тесте">2. Несколько кейсов в одном тесте</a></li>
-<li><a href="#_Проверка_условий_не_относящихся_к_текущему_кейсу">3. Проверка условий не относящихся к текущему кейсу</a></li>
-<li><a href="#_Использование_тестируемого_кода_для_проверки">4. Использование тестируемого кода для проверки</a></li>
-<li><a href="#_Дублирование_кода_проверки_результатов">5. Дублирование кода проверки результатов</a></li>
-<li><a href="#_Дублирование_кода_подготовки_тестовых_данных">6. Дублирование кода подготовки тестовых данных</a></li>
-<li><a href="#_Условия_или_логика_в_коде_теста">7. Условия или логика в коде теста</a></li>
-<li><a href="#_Тексты_ассертов_не_помогают">8. Тексты ассертов не помогают</a></li>
-<li><a href="#_black_magic">9. Black magic</a></li>
+<li><a href="#_Названия_тестовых_методов_не_отражают_их_смысл">1. Названия тестовых методов не отражают их смысл</a></li>
+<li><a href="#_разымытый_ассерт">2. разымытый ассерт</a></li>
+<li><a href="#_Несколько_кейсов_в_одном_тесте">3. Несколько кейсов в одном тесте</a></li>
+<li><a href="#_Проверка_условий_не_относящихся_к_текущему_кейсу">4. Проверка условий не относящихся к текущему кейсу</a></li>
+<li><a href="#_Использование_тестируемого_кода_для_проверки">5. Использование тестируемого кода для проверки</a></li>
+<li><a href="#_Дублирование_кода_проверки_результатов">6. Дублирование кода проверки результатов</a></li>
+<li><a href="#_Дублирование_кода_подготовки_тестовых_данных">7. Дублирование кода подготовки тестовых данных</a></li>
+<li><a href="#_Условия_или_логика_в_коде_теста">8. Условия или логика в коде теста</a></li>
+<li><a href="#_Тексты_ассертов_не_помогают">9. Тексты ассертов не помогают</a></li>
+<li><a href="#_black_magic">10. Black magic</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_разымытый_ассерт">1. разымытый ассерт</h2>
+<h2 id="_Названия_тестовых_методов_не_отражают_их_смысл">1. Названия тестовых методов не отражают их смысл</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Ugly
+@Test
+public void testSuccess() {
+    //Act
+    Token token = authService.login(USER, PASSWORD);
+    //Assert
+    assertThat(token).isNotNull();
+}
+
+@Ugly
+@Test
+public void testAuth() {
+  //Act
+  Status result = authService.logout(TOKEN);
+  //Assert
+  assertThat(result).isEqualTo(OK);
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_разымытый_ассерт">2. разымытый ассерт</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -507,7 +534,7 @@ public void testGetConnectionUrl() {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Несколько_кейсов_в_одном_тесте">2. Несколько кейсов в одном тесте</h2>
+<h2 id="_Несколько_кейсов_в_одном_тесте">3. Несколько кейсов в одном тесте</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -677,7 +704,7 @@ public void testVirificationTwiceExpectedError(){
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Проверка_условий_не_относящихся_к_текущему_кейсу">3. Проверка условий не относящихся к текущему кейсу</h2>
+<h2 id="_Проверка_условий_не_относящихся_к_текущему_кейсу">4. Проверка условий не относящихся к текущему кейсу</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -767,7 +794,7 @@ public void loginWithValidVerificationCodeAndReturnAccessToken() throws Exceptio
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Использование_тестируемого_кода_для_проверки">4. Использование тестируемого кода для проверки</h2>
+<h2 id="_Использование_тестируемого_кода_для_проверки">5. Использование тестируемого кода для проверки</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -808,7 +835,7 @@ public void testCreateUser() {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Дублирование_кода_проверки_результатов">5. Дублирование кода проверки результатов</h2>
+<h2 id="_Дублирование_кода_проверки_результатов">6. Дублирование кода проверки результатов</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -860,8 +887,8 @@ public void testGetExecutionsWithAscOrder() throws Exception {
                     ORDER_FIRST);
     assertExecution(result.getItems.get(1),
                     INITIATOR_USER_ID,
-                    CONTENT_FIRST,
-                    ORDER_FIRST);
+                    CONTENT_SECOND,
+                    ORDER_SECOND);
 }
 
 private void assertExecution(ExecutionDTO execution,
@@ -887,7 +914,7 @@ private void assertExecution(ExecutionDTO execution,
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Дублирование_кода_подготовки_тестовых_данных">6. Дублирование кода подготовки тестовых данных</h2>
+<h2 id="_Дублирование_кода_подготовки_тестовых_данных">7. Дублирование кода подготовки тестовых данных</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -897,7 +924,7 @@ private void assertExecution(ExecutionDTO execution,
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Условия_или_логика_в_коде_теста">7. Условия или логика в коде теста</h2>
+<h2 id="_Условия_или_логика_в_коде_теста">8. Условия или логика в коде теста</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -933,7 +960,7 @@ void testRegistrationWithoutSocial(){
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Тексты_ассертов_не_помогают">8. Тексты ассертов не помогают</h2>
+<h2 id="_Тексты_ассертов_не_помогают">9. Тексты ассертов не помогают</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -942,13 +969,15 @@ void testRegistrationWithoutSocial(){
 public void host_dinner_party_where_nobody_dies() {
    Mansion mansion = new Mansion();
    mansion.hostPotentiallyMurderousDinnerParty();
-   assertThat(mansion.guests()).isEqualTo(7);
-   assertThat(mansion.kitchen()).isEqualTo("clean");
-   assertThat(mansion.library()).isEqualTo("clean");
-   assertThat(mansion.revolverAmmo()).isEqualTo(6);
-   assertThat(mansion.candlestick()).isEqualTo("pristine");
-   assertThat(mansion.colonel()).isEqualTo("well kempt");
-   assertThat(mansion.professor()).isEqualTo("well kempt");
+   SoftAssertions softly = new SoftAssertions();
+   softly.assertThat(mansion.guests()).isEqualTo(7);
+   softly.assertThat(mansion.kitchen()).isEqualTo("clean");
+   softly.assertThat(mansion.library()).isEqualTo("clean");
+   softly.assertThat(mansion.revolverAmmo()).isEqualTo(6);
+   softly.assertThat(mansion.candlestick()).isEqualTo("pristine");
+   softly.assertThat(mansion.colonel()).isEqualTo("well kempt");
+   softly.assertThat(mansion.professor()).isEqualTo("well kempt");
+   softly.assertAll();
 }
 
 @Good
@@ -956,6 +985,7 @@ public void host_dinner_party_where_nobody_dies() {
 public void host_dinner_party_where_nobody_dies() {
    Mansion mansion = new Mansion();
    mansion.hostPotentiallyMurderousDinnerParty();
+   SoftAssertions softly = new SoftAssertions();
    assertThat(mansion.guests()).as("Living Guests").isEqualTo(7);
    assertThat(mansion.kitchen()).as("Kitchen").isEqualTo("clean");
    assertThat(mansion.library()).as("Library").isEqualTo("clean");
@@ -963,13 +993,14 @@ public void host_dinner_party_where_nobody_dies() {
    assertThat(mansion.candlestick()).as("Candlestick").isEqualTo("pristine");
    assertThat(mansion.colonel()).as("Colonel").isEqualTo("well kempt");
    assertThat(mansion.professor()).as("Professor").isEqualTo("well kempt");
+   softly.assertAll();
 }</code></pre>
 </div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_black_magic">9. Black magic</h2>
+<h2 id="_black_magic">10. Black magic</h2>
 <div class="sectionbody">
 <div class="listingblock">
 <div class="content">
@@ -1062,7 +1093,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-01 07:49:04 +10
+Last updated 2018-08-02 09:05:50 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

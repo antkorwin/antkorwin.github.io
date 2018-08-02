@@ -1,7 +1,7 @@
 = Хрупкие тесты
 :source-highlighter: prettify
 :icons: font
-:toc: 
+:toc:
 :experimental:
 :numbered:
 :homepage: http://antkorwin.com
@@ -10,6 +10,29 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 
 ## Тестирование реализации, а не поведения
+
+[source, java]
+----
+@Service
+public class SecurityGroupServiceImpl implements SecurityGroupService {
+    private final SecurityGroupRepository securityGroupRepository;
+
+    @Autowired
+    public SecurityGroupServiceImpl(SecurityGroupRepository securityGroupRepository) {this.securityGroupRepository = securityGroupRepository;}
+
+    @Override
+    public SecurityGroup create(SecurityGroupCreateArgument createArgument) {
+        validateCreateArgument(createArgument);
+
+        SecurityGroup creatingGroup = SecurityGroup.builder()
+                                                   .type(createArgument.getType())
+                                                   .build();
+
+        return securityGroupRepository.save(creatingGroup);
+    }
+}
+----
+
 
 [source,java]
 ----
