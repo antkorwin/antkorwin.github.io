@@ -46,6 +46,16 @@ void testSomething() {
 }
 ----
 
+## Avoid of static methods
+
+XxxUtils -> XxxServices
+
+## Shared contracts
+
+RestController + Feign contracts
+
+## Autowired + lombok
+
 
 
 // END OF CONTENT
