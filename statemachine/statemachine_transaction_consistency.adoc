@@ -9,20 +9,52 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
 
-## How to guarantee a consistency of transactions within using of a state machine
+## Problem of consistency between state machines and other systems.
 
 Often, we have a business domain model that separate from the state machine.
-In ours projects state machines used just for an organization of a business workflow.
-We store an all domain-specific data in other objects.
+In our projects state machines used just for an organization of a business workflow.
+We store all domain-specific data in other objects.
 Usually, we store this objects in its own database and operate with it by using transactions.
 
 In this chapter we will consider how to safety work with a state machine.
 And how to guarantee a consistency between the state machine and other systems.
 
+Consider an example of a task management system:
+
+image:./jpa_plus_sm_schem.png[table]
+
+The part attributes of a task, we can get from a `Task` JPA entity.
+However we need to retrieve a second part from the State Machine.
+
+image:./jpa_sm_table.png[schem]
+
+Also, we need to maintain a consistency of the state machine and Task-entity in a database:
+
+- When we **create a new task**,
+we need to make a new state machine instance for this task,
+then persist it to the state machine storage.
+
+- After a some *event applies* on the state machine,
+we need to save a new `StateMachineContext` in the state machine storage and
+also we need to refresh a state of the `Task` entity in the database.
+
+- Often, when we use an interface with a list of tasks,
+then we need to know **available actions(events)** for each task.
+
+- Usually, when we use a list of task,
+we need to know *current state* for each task in the list.
+
+
+## How to guarantee a consistency of transactions within using of a state machine
+
+The first case is when we want to update the entity in the database and move the state machine to a next state.
+
+
+
 
 ## Source code of this project on the github
 
-//image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine-utils-xservice-example[github.com/antkorwin/statemachine-utils-xservice-example]
 
 
 // END OF CONTENT
