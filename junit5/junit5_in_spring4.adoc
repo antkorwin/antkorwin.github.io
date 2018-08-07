@@ -14,7 +14,7 @@ If you have a project with the Spring Framework older than 5.0
 or a project with the SpringBoot older than 2.0
 then you cannot find SpringExtension class in sources of spring libs.
 
-To fix this you need to add Sam Brannen's dependency:
+To fix this you need to add a Sam Brannen's dependency:
 
 [source, xml]
 ----
@@ -26,7 +26,7 @@ To fix this you need to add Sam Brannen's dependency:
 </dependency>
 ----
 
-also you need to add the jitpack in repositories block of your pom file:
+Also you need to add the jitpack in repositories block of your pom file:
 
 [source, xml]
 ----
@@ -40,7 +40,7 @@ also you need to add the jitpack in repositories block of your pom file:
 
 ## Example
 
-Make a new spring boot project with parent link to the 1.5.9:
+Let's make a new spring boot project with parent link to the 1.5.9:
 
 [source, xml]
 ----
@@ -207,7 +207,7 @@ On this level, we can see how to use JUnit5 repeatable annotation `ExtendWith` t
 
 
 // END OF CONTENT
-include::metrica.adoc[]
+include::../metrica.adoc[]
 
 ++++
 <div id="disqus_thread"></div>
