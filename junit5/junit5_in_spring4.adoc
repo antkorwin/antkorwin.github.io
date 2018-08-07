@@ -1,0 +1,232 @@
+= How to use JUnit5 in Spring Framework 4
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+## Resolve a SpringExtension
+
+If you have a project with the Spring Framework older than 5.0
+or a project with the SpringBoot older than 2.0
+then you cannot find SpringExtension class in sources of spring libs.
+
+To fix this you need to add Sam Brannen's dependency:
+
+[source, xml]
+----
+<dependency>
+	<groupId>com.github.sbrannen</groupId>
+	<artifactId>spring-test-junit5</artifactId>
+	<version>1.2.0</version>
+	<scope>test</scope>
+</dependency>
+----
+
+also you need to add the jitpack in repositories block of your pom file:
+
+[source, xml]
+----
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+----
+
+## Example
+
+Make a new spring boot project with parent link to the 1.5.9:
+
+[source, xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.antkorwin</groupId>
+  <artifactId>junit5-utils-demo</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>junit5-utils-demo</name>
+  <description>Demo project for Spring Boot</description>
+
+  <parent>
+  	<groupId>org.springframework.boot</groupId>
+  	<artifactId>spring-boot-starter-parent</artifactId>
+  	<version>1.5.9.RELEASE</version>   <1>
+  	<relativePath/> <!-- lookup parent from repository -->
+  </parent>
+
+  <properties>
+  	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  	<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  	<java.version>1.8</java.version>
+  </properties>
+
+  <repositories>
+      <repository>
+          <id>jitpack.io</id>
+          <url>https://jitpack.io</url>   <2>
+      </repository>
+  </repositories>
+
+  <dependencies>
+  	<dependency>
+  		<groupId>org.springframework.boot</groupId>
+  		<artifactId>spring-boot-starter-data-jpa</artifactId>
+  	</dependency>
+        ...  <3>
+
+    <!-- JUnit5 test utils and extensions -->
+  	<dependency>
+  	    <groupId>com.github.antkorwin</groupId>
+  	    <artifactId>junit5-integration-test-utils</artifactId>   <4>
+  	    <version>0.35</version>
+  	    <scope>test</scope>
+  	</dependency>
+    <!-- JUnit5 test utils and extensions -->
+
+  	<!-- The support for the JUnit5 for a spring boot older than 2.0 -->
+  	<dependency>
+  		<groupId>com.github.sbrannen</groupId>
+  		<artifactId>spring-test-junit5</artifactId>   <5>
+  		<version>1.2.0</version>
+  		<scope>test</scope>
+  	</dependency>
+  	<!-- The support for the JUnit5 for a spring boot older than 2.0 -->
+
+  </dependencies>
+
+  <build>
+  	<plugins>
+  		<plugin>
+  			<groupId>org.springframework.boot</groupId>
+  			<artifactId>spring-boot-maven-plugin</artifactId>
+  		</plugin>
+  	</plugins>
+  </build>
+
+
+</project>
+----
+<1> spring boot older than 2.0 version
+<2> jitpack repository
+<3> all dependencies which you need
+<4> my custom junit5 extensions to work with a testcontainers and other useful things
+<5> Sam Brannen's junit5 supports for SpringFramework4
+
+
+Add one simple entity and repository:
+
+[source, java]
+----
+@Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Task {
+    @Id
+    @GeneratedValue
+    @Type(type = "uuid-char")
+    private UUID id;
+
+    private String name;
+}
+
+
+
+public interface TaskRepository extends JpaRepository<Task, UUID> {
+}
+----
+
+Now we can write a JUnit5 test for this repository:
+
+[source, java]
+----
+@PostgresIntegrationTests
+class TaskRepositoryTest {
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Test
+    @ExpectedDataSet("dataset/expected.json")
+    void name() throws Exception {
+        // Arrange
+        Task task = Task.builder()
+                        .name("name")
+                        .build();
+        // Act
+        taskRepository.save(task);
+    }
+}
+----
+
+In this test we use a PostgreSQL docker container with testcontainers library.
+
+image:./pgtc.PNG[postgres tc test result]
+
+Look at the PostgresIntegrationTests annotation in more details :
+
+[source, java]
+----
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+@EnableIntegrationTests
+@EnableRiderTests
+@EnablePostgresTestContainers
+public @interface PostgresIntegrationTests {
+}
+----
+
+Deeper and deeper, with meta-annotations:
+
+[source, java]
+----
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@ContextConfiguration
+@ExtendWith(PostgresTcExtension.class)
+@ExtendWith(TraceSqlExtension.class)
+@Tag("pg")
+public @interface EnablePostgresTestContainers {
+}
+----
+
+On this level, we can see how to use JUnit5 repeatable annotation `ExtendWith` to add multiple extension in one meta-annotation:
+
+
+
+// END OF CONTENT
+include::metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'TITLE'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
