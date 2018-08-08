@@ -445,8 +445,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_problem_of_consistency_between_state_machines_and_other_systems">1. Problem of consistency between state machines and other systems.</a></li>
-<li><a href="#_how_to_guarantee_a_consistency_of_transactions_within_using_of_a_state_machine">2. How to guarantee a consistency of transactions within using of a state machine</a></li>
-<li><a href="#_source_code_of_this_project_on_the_github">3. Source code of this project on the github</a></li>
+<li><a href="#_creating_a_state_machine_and_assisted_entity_in_the_database">2. Creating a state machine and assisted entity in the database.</a></li>
+<li><a href="#_how_to_guarantee_a_consistency_of_transactions_within_using_of_a_state_machine">3. How to guarantee a consistency of transactions within using of a state machine</a></li>
+<li><a href="#_source_code_of_this_project_on_the_github">4. Source code of this project on the github</a></li>
 </ul>
 </div>
 </div>
@@ -466,6 +467,14 @@ And how to guarantee a consistency between the state machine and other systems.<
 </div>
 <div class="paragraph">
 <p>Consider an example of a task management system:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="diag-8c647f7f6bee7dff9a64cd1b3b9eaf4f.png" alt="diag 8c647f7f6bee7dff9a64cd1b3b9eaf4f" width="178" height="488">
+</div>
+</div>
+<div class="paragraph">
+<p>The Task-entity have a list of attributes, which we can read/write in any time.</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./jpa_plus_sm_schem.png" alt="table"></span></p>
@@ -505,7 +514,51 @@ we need to know <strong>current state</strong> for each task in the list.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_how_to_guarantee_a_consistency_of_transactions_within_using_of_a_state_machine">2. How to guarantee a consistency of transactions within using of a state machine</h2>
+<h2 id="_creating_a_state_machine_and_assisted_entity_in_the_database">2. Creating a state machine and assisted entity in the database.</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When we create a new task, we need to create a new instance of the state machine,
+then persist it, also we need to create a new Task entity to store additional data in the database.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">protected Task executeImpl(CreateTaskActionArgument argument) {
+
+    Task task = taskService.create(argument.getTaskTitle(), argument.getTaskEstimate());
+
+    StateMachine&lt;States, Events&gt; machine =
+            evaluateWithRollback(() -&gt; xStateMachineService.create(task.getId()),
+                                 () -&gt; taskService.delete(task.getId()));
+
+    return evaluateWithRollback(() -&gt; taskService.updateState(task.getId(),
+                                                              machine.getState().getId()),
+                                () -&gt; {
+                                    taskService.delete(task.getId());
+                                    xStateMachineService.delete(task.getId());
+                                });
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can see here two blocks for a manual processing of rollback, they are needed because:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>If we get any exception while create a Task entity then we not try to create a state machine.</p>
+</li>
+<li>
+<p>If any exception throws while you create a state machine, you need to remove an already created task entity.</p>
+</li>
+<li>
+<p>If you catch an exception when you try to update a status of the task in database(synchronize with a state machine), then you need to rollback all which you already create (remove state machine and task in database).</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_to_guarantee_a_consistency_of_transactions_within_using_of_a_state_machine">3. How to guarantee a consistency of transactions within using of a state machine</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>The first case is when we want to update the entity in the database and move the state machine to a next state.</p>
@@ -513,7 +566,7 @@ we need to know <strong>current state</strong> for each task in the list.</p>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_source_code_of_this_project_on_the_github">3. Source code of this project on the github</h2>
+<h2 id="_source_code_of_this_project_on_the_github">4. Source code of this project on the github</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine-utils-xservice-example">github.com/antkorwin/statemachine-utils-xservice-example</a></p>
@@ -570,7 +623,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-06 08:55:57 +10
+Last updated 2018-08-09 08:40:45 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
