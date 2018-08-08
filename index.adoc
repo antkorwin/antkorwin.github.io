@@ -8,6 +8,11 @@ My thoughts about Java application development, Spring Framework, TDD and other.
 
 ## My Articles and Blog Posts:
 
+### TDD
+
+link:./junit5/junit5_in_spring4.html[How to use the JUnit5 in the Spring Framework 4] (English) image:./statemachine/eng.png[english,25] ::
+The workaround for using a modern version of Junit (the JUnit5 Jupiter) with a Spring Framework version older than 5, or SpringBoot version earlier than 2.0.
+
 ### Spring State Machine:
 
 link:./statemachine/statemachine.html[Spring State machine workshop] (English) image:./statemachine/eng.png[english,25] ::
