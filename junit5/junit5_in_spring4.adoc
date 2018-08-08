@@ -175,7 +175,14 @@ In this test we use a PostgreSQL docker container with testcontainers library.
 
 image:./pgtc.PNG[postgres tc test result]
 
-Look at the PostgresIntegrationTests annotation in more details :
+Look at the PostgresIntegrationTests annotation in more details.
+This annotation comes from the `junit5-integration-test-utils` artifact,
+I made it to create new integration tests with PostgreSQL
+faster than make it manually.
+Now, all what you need to run an integration test
+with the PostgreSQL docker image is a using of `@PostgresIntegrationTests` annotation.
+You can read about an using this meta-annotation in more details here: https://github.com/antkorwin/junit5-integration-test-utils
+
 
 [source, java]
 ----
@@ -204,6 +211,11 @@ public @interface EnablePostgresTestContainers {
 
 On this level, we can see how to use JUnit5 repeatable annotation `ExtendWith` to add multiple extension in one meta-annotation:
 
+## The source code
+
+This project available on github by this link:
+
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
 
 
 // END OF CONTENT

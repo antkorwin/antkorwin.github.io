@@ -446,6 +446,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel1">
 <li><a href="#_resolve_a_springextension">1. Resolve a SpringExtension</a></li>
 <li><a href="#_example">2. Example</a></li>
+<li><a href="#_the_source_code">3. The source code</a></li>
 </ul>
 </div>
 </div>
@@ -648,7 +649,13 @@ class TaskRepositoryTest {
 <p><span class="image"><img src="./pgtc.PNG" alt="postgres tc test result"></span></p>
 </div>
 <div class="paragraph">
-<p>Look at the PostgresIntegrationTests annotation in more details :</p>
+<p>Look at the PostgresIntegrationTests annotation in more details.
+This annotation comes from the <code>junit5-integration-test-utils</code> artifact,
+I made it to create new integration tests with PostgreSQL
+faster than make it manually.
+Now, all what you need to run an integration test
+with the PostgreSQL docker image is a using of <code>@PostgresIntegrationTests</code> annotation.
+You can read about an using this meta-annotation in more details here: <a href="https://github.com/antkorwin/junit5-integration-test-utils" class="bare">https://github.com/antkorwin/junit5-integration-test-utils</a></p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -678,6 +685,17 @@ public @interface EnablePostgresTestContainers {
 </div>
 <div class="paragraph">
 <p>On this level, we can see how to use JUnit5 repeatable annotation <code>ExtendWith</code> to add multiple extension in one meta-annotation:</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_source_code">3. The source code</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This project available on github by this link:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -731,7 +749,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-07 18:32:08 RTZ 9 (чшьр)
+Last updated 2018-08-08 14:24:59 RTZ 9 (чшьр)
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
