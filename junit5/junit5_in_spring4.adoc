@@ -1,4 +1,4 @@
-= How to use JUnit5 in Spring Framework 4
+= How to use the JUnit5 in the Spring Framework 4
 :source-highlighter: prettify
 :icons: font
 :toc: left
@@ -118,12 +118,12 @@ Let's make a new spring boot project with parent link to the 1.5.9:
 ----
 <1> spring boot older than 2.0 version
 <2> jitpack repository
-<3> all dependencies which you need
+<3> all other dependencies that you need
 <4> my custom junit5 extensions to work with a testcontainers and other useful things
-<5> Sam Brannen's junit5 supports for SpringFramework4
+<5> Sam Brannen's tools to support a junit5 in the SpringFramework4
 
 
-Add one simple entity and repository:
+Add an one simple entity:
 
 [source, java]
 ----
@@ -141,14 +141,17 @@ public class Task {
 
     private String name;
 }
+----
 
+And repository:
 
-
+[source, java]
+----
 public interface TaskRepository extends JpaRepository<Task, UUID> {
 }
 ----
 
-Now we can write a JUnit5 test for this repository:
+Now we can write a JUnit5 integration test for this repository:
 
 [source, java]
 ----
@@ -176,13 +179,6 @@ In this test we use a PostgreSQL docker container with testcontainers library.
 image:./pgtc.PNG[postgres tc test result]
 
 Look at the PostgresIntegrationTests annotation in more details.
-This annotation comes from the `junit5-integration-test-utils` artifact,
-I made it to create new integration tests with PostgreSQL
-faster than make it manually.
-Now, all what you need to run an integration test
-with the PostgreSQL docker image is a using of `@PostgresIntegrationTests` annotation.
-You can read about an using this meta-annotation in more details here: https://github.com/antkorwin/junit5-integration-test-utils
-
 
 [source, java]
 ----
@@ -194,6 +190,15 @@ You can read about an using this meta-annotation in more details here: https://g
 public @interface PostgresIntegrationTests {
 }
 ----
+
+This annotation comes from the `junit5-integration-test-utils` artifact,
+I made it to create new integration tests with the PostgreSQL docker container
+faster than make it manually.
+
+And now, all what you need to create an integration test
+with the PostgreSQL docker image is a using of `@PostgresIntegrationTests` annotation.
+
+You can read about an using this meta-annotation in more details here: https://github.com/antkorwin/junit5-integration-test-utils
 
 Deeper and deeper, with meta-annotations:
 
@@ -209,7 +214,7 @@ public @interface EnablePostgresTestContainers {
 }
 ----
 
-On this level, we can see how to use JUnit5 repeatable annotation `ExtendWith` to add multiple extension in one meta-annotation:
+On this level, we can see how to use JUnit5 repeatable annotation `ExtendWith` to add multiple extensions by using a single meta-annotation
 
 ## The source code
 

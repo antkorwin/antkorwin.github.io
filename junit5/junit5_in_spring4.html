@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7.1">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>How to use JUnit5 in Spring Framework 4</title>
+<title>How to use the JUnit5 in the Spring Framework 4</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,7 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>How to use JUnit5 in Spring Framework 4</h1>
+<h1>How to use the JUnit5 in the Spring Framework 4</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
@@ -580,7 +580,7 @@ then you cannot find SpringExtension class in sources of spring libs.</p>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>all dependencies which you need</td>
+<td>all other dependencies that you need</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="4"></i><b>4</b></td>
@@ -588,12 +588,12 @@ then you cannot find SpringExtension class in sources of spring libs.</p>
 </tr>
 <tr>
 <td><i class="conum" data-value="5"></i><b>5</b></td>
-<td>Sam Brannen&#8217;s junit5 supports for SpringFramework4</td>
+<td>Sam Brannen&#8217;s tools to support a junit5 in the SpringFramework4</td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>Add one simple entity and repository:</p>
+<p>Add an one simple entity:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -610,16 +610,20 @@ public class Task {
     private UUID id;
 
     private String name;
-}
-
-
-
-public interface TaskRepository extends JpaRepository&lt;Task, UUID&gt; {
 }</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Now we can write a JUnit5 test for this repository:</p>
+<p>And repository:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public interface TaskRepository extends JpaRepository&lt;Task, UUID&gt; {
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we can write a JUnit5 integration test for this repository:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -649,13 +653,7 @@ class TaskRepositoryTest {
 <p><span class="image"><img src="./pgtc.PNG" alt="postgres tc test result"></span></p>
 </div>
 <div class="paragraph">
-<p>Look at the PostgresIntegrationTests annotation in more details.
-This annotation comes from the <code>junit5-integration-test-utils</code> artifact,
-I made it to create new integration tests with PostgreSQL
-faster than make it manually.
-Now, all what you need to run an integration test
-with the PostgreSQL docker image is a using of <code>@PostgresIntegrationTests</code> annotation.
-You can read about an using this meta-annotation in more details here: <a href="https://github.com/antkorwin/junit5-integration-test-utils" class="bare">https://github.com/antkorwin/junit5-integration-test-utils</a></p>
+<p>Look at the PostgresIntegrationTests annotation in more details.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -667,6 +665,18 @@ You can read about an using this meta-annotation in more details here: <a href="
 public @interface PostgresIntegrationTests {
 }</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>This annotation comes from the <code>junit5-integration-test-utils</code> artifact,
+I made it to create new integration tests with the PostgreSQL docker container
+faster than make it manually.</p>
+</div>
+<div class="paragraph">
+<p>And now, all what you need to create an integration test
+with the PostgreSQL docker image is a using of <code>@PostgresIntegrationTests</code> annotation.</p>
+</div>
+<div class="paragraph">
+<p>You can read about an using this meta-annotation in more details here: <a href="https://github.com/antkorwin/junit5-integration-test-utils" class="bare">https://github.com/antkorwin/junit5-integration-test-utils</a></p>
 </div>
 <div class="paragraph">
 <p>Deeper and deeper, with meta-annotations:</p>
@@ -684,7 +694,7 @@ public @interface EnablePostgresTestContainers {
 </div>
 </div>
 <div class="paragraph">
-<p>On this level, we can see how to use JUnit5 repeatable annotation <code>ExtendWith</code> to add multiple extension in one meta-annotation:</p>
+<p>On this level, we can see how to use JUnit5 repeatable annotation <code>ExtendWith</code> to add multiple extensions by using a single meta-annotation</p>
 </div>
 </div>
 </div>
@@ -749,7 +759,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-08 14:24:59 RTZ 9 (чшьр)
+Last updated 2018-08-10 11:20:00 RTZ 9 (чшьр)
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
