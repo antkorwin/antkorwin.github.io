@@ -21,6 +21,16 @@ And how to guarantee a consistency between the state machine and other systems.
 
 Consider an example of a task management system:
 
+[plantuml]
+....
+[*] --> BACKLOG
+BACKLOG --> IN_PROGRESS : START_FEATURE
+IN_PROGRESS --> DONE : FINISH_FEATURE
+DONE --> [*]
+....
+
+The Task-entity have a list of attributes, which we can read/write in any time.
+
 image:./jpa_plus_sm_schem.png[table]
 
 The part attributes of a task, we can get from a `Task` JPA entity.
@@ -43,6 +53,40 @@ then we need to know **available actions(events)** for each task.
 
 - Usually, when we use a list of task,
 we need to know *current state* for each task in the list.
+
+
+## Creating a state machine and assisted entity in the database.
+
+When we create a new task, we need to create a new instance of the state machine,
+then persist it, also we need to create a new Task entity to store additional data in the database.
+
+
+[source, java]
+----
+protected Task executeImpl(CreateTaskActionArgument argument) {
+
+    Task task = taskService.create(argument.getTaskTitle(), argument.getTaskEstimate());
+
+    StateMachine<States, Events> machine =
+            evaluateWithRollback(() -> xStateMachineService.create(task.getId()),
+                                 () -> taskService.delete(task.getId()));
+
+    return evaluateWithRollback(() -> taskService.updateState(task.getId(),
+                                                              machine.getState().getId()),
+                                () -> {
+                                    taskService.delete(task.getId());
+                                    xStateMachineService.delete(task.getId());
+                                });
+}
+----
+
+You can see here two blocks for a manual processing of rollback, they are needed because:
+
+- If we get any exception while create a Task entity then we not try to create a state machine.
+
+- If any exception throws while you create a state machine, you need to remove an already created task entity.
+
+- If you catch an exception when you try to update a status of the task in database(synchronize with a state machine), then you need to rollback all which you already create (remove state machine and task in database).
 
 
 ## How to guarantee a consistency of transactions within using of a state machine
