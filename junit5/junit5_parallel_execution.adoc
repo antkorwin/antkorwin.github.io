@@ -228,10 +228,12 @@ public class TestSuiteProfilerExtension implements BeforeAllCallback, AfterAllCa
 
         int testClassCount = (int) getStore(context).get("testClassCount") - 1;  <4>
 
-        if (testClassCount <= 0) {
-            double duration = ((double) System.currentTimeMillis() - getStartTime(context)) / 1000;
-            System.out.println("\n>> Execution Time = " + duration + " sec.\n");
-        }
+				if (testClassCount <= 0) {
+						double duration = ((double) System.currentTimeMillis() -
+															 getStartTime(context)) / 1000;
+
+						System.out.println("\n>> Execution Time = " + duration + " sec.\n");
+				}
 
         getStore(context).put("testClassCount", testClassCount);
     }

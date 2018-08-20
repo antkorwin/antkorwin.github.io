@@ -696,10 +696,12 @@ Also you can use a <code>@ResourceLock</code> annotation to write a more complic
 
         int testClassCount = (int) getStore(context).get("testClassCount") - 1;  <i class="conum" data-value="4"></i><b>(4)</b>
 
-        if (testClassCount &lt;= 0) {
-            double duration = ((double) System.currentTimeMillis() - getStartTime(context)) / 1000;
-            System.out.println("\n&gt;&gt; Execution Time = " + duration + " sec.\n");
-        }
+				if (testClassCount &lt;= 0) {
+						double duration = ((double) System.currentTimeMillis() -
+															 getStartTime(context)) / 1000;
+
+						System.out.println("\n&gt;&gt; Execution Time = " + duration + " sec.\n");
+				}
 
         getStore(context).put("testClassCount", testClassCount);
     }
@@ -820,7 +822,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-21 09:21:02 +10
+Last updated 2018-08-21 09:26:11 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
