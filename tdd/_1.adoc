@@ -1,0 +1,639 @@
+= Плохо читаемые тесты
+:source-highlighter: prettify
+:icons: font
+:toc:
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+
+## Набор антипаттернов
+
+[source, java]
+----
+@Bad
+@Test
+void test() {
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+
+    // проверяем создание пользователя
+    User user = userService.get(createdUser.getId());
+    assertThat(createdUser).isEqualTo(user);
+
+    verify(userRepository).save(userCaptor.capture());
+    assertThat(userCaptor.getValue()).extracting(User::getUsername,
+                                                 User::getStatus,
+                                                 User::getAuthorities
+                                     .contains(USERNAME,
+                                               ACTIVE,
+                                               AUTHORITIES);
+
+    // проверяем запись аудита
+    verify(auditService).create(eq(user.getId(), eq("User successful created"));
+
+    // проверяем url для авторизации
+    String result = authService.getConnectionUrl(actualResult.getSing());
+    assertThat(result).isNotNull();
+    assertThat(result).contains(SIGN_SERVICE_URL);
+    assertThat(result).contains("scope=".concat(SIGN_SCOPE));
+    assertThat(result).containsPattern("client_secret=\\w+");
+    assertThat(result).contains("client_id=".concat("id_22984672"));
+    assertThat(result).containsPattern("(state=[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{11})");
+    assertThat(result).containsPattern("timestamp=\\w+");
+    assertThat(result).contains("redirect_uri=".concat(URLEncoder.encode(redirectUrl, utf8)));
+
+    // проверяем что созданный пользователь может авторизоваться и получить токен
+    OAuth2AccessToken token = authService.login(USERNAME, PASSSWORD);
+    assertThat(token).isNotNull()
+                     .extracting(OAuth2AccessToken::isExpired,
+                                 OAuth2AccessToken::getTokenType)
+                     .contains(false, "bearer");
+}
+----
+
+
+
+
+
+## Названия тестовых методов не отражают их смысл
+
+[source, java]
+----
+
+----
+
+
+## разымытый ассерт
+
+[source, java]
+----
+@Bad
+@Test
+public void testGetConnectionUrl() {
+    // Arrange
+    Sign sign = new Sign("123456");
+
+    // Act
+    String result = connectionService.getConnectionUrl(sing);
+
+    // Assert
+    assertThat(result).isNotNull();
+    assertThat(result).contains(SIGN_SERVICE_URL);
+    assertThat(result).contains("scope=".concat(SIGN_SCOPE));
+    assertThat(result).containsPattern("client_secret=\\w+");
+    assertThat(result).containsPattern("(state=[a-f0-9]{8}(-[a-f0-9]{4}){3}-[a-f0-9]{11})");
+    assertThat(result).containsPattern("timestamp=\\w+");
+    assertThat(result).contains("client_id=".concat(esiaClientId));
+    assertThat(result).contains("access_type=online");
+    assertThat(result).contains("response_type=code");
+    assertThat(result).contains("redirect_uri=".concat(URLEncoder.encode(esiaRedirectUrl, "UTF-8")));
+}
+----
+
+[source, java]
+----
+@Good
+@Test
+public void testGetConnectionUrl() {
+    // Arrange
+    Sign sign = new Sign("123456");
+
+    // Act
+    String url = connectionService.getConnectionUrl(sing);
+
+    // Assert
+    assertSignUrl(url).checkAccessHeaders(CLIENT_ID, SECRET_ID)
+                      .checkRedirectTo(REDIRECT_URL)
+                      .checkCreateTimeIsNear(new Date())
+                      .checkSignValue(sign.toString());
+}
+----
+
+## Несколько кейсов в одном тесте
+
+[source, java]
+----
+@Bad
+@Test
+public void testCreate(){
+
+    when(userRepository.save(any(User.class))).thenReturn(user);
+
+    // Act
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+
+    // проверяем создание пользователя
+    assertThat(actualResult).isSameAs(user);
+
+    verify(userRepository).save(userCaptor.capture());
+    CustomAssertion.assertThat(userCaptor.getValue())
+                   .lazyCheck(User::getUsername, USERNAME)
+                   .lazyCheck(User::getAuthorities, AUTHORITIES)
+                   .lazyCheck(User::getStatus, ACTIVE)
+                   .lazyCheck(User::isBlocked, false)
+                   .lazyCheck(User::isSystem, false)
+                   .lazyCheck(User::getProfileInfo, profileInfoMock)
+                   .check();
+
+    // проверяем запись аудита
+    verify(auditService).create(eq(user.getId(), eq("User successful created"));
+
+    // проверяем создание профиля для пользователя
+    verify(profileService).createUserProfile(eq(user.getId));
+
+    // проверяем что созданный пользователь может авторизоваться и получить токен
+    OAuth2AccessToken token = authService.login(USERNAME, PASSSWORD);
+    assertThat(token).isNotNull();
+                     .extracting(OAuth2AccessToken::isExpired,
+                                 OAuth2AccessToken::getTokenType)
+                     .contains(false, "bearer");
+}
+----
+
+[source, java]
+----
+@Good
+public TestUserService{
+
+
+  @BeforeEach
+  public setUp(){
+      when(userRepository.save(any(User.class))).thenReturn(user);
+  }
+
+
+  @Test
+  void testUserCreate(){
+    // Act
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+
+    // Assert
+    assertThat(actualResult).isSameAs(user);
+
+    verify(userRepository).save(userCaptor.capture());
+    CustomAssertion.assertThat(userCaptor.getValue())
+                   .lazyCheck(User::getUsername, USERNAME)
+                   .lazyCheck(User::getAuthorities, AUTHORITIES)
+                   .lazyCheck(User::getStatus, ACTIVE)
+                   .lazyCheck(User::isBlocked, false)
+                   .lazyCheck(User::isSystem, false)
+                   .lazyCheck(User::getProfileInfo, profileInfoMock)
+                   .check();
+  }
+
+  @Test
+  void testCreateAProfileAfterCreateANewUser(){
+    // Act
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+    // проверяем создание профиля для пользователя
+    verify(profileService).createUserProfile(eq(user.getId));
+  }
+
+
+  @Test
+  void testWriteAnAuditRecordAfterCreateANewUser(){
+    // Act
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+    // Assert
+    verify(auditService).create(eq(user.getId(), eq("User successful created"));
+  }
+
+
+  @Test
+  void testLoginAfterCreateANewUser(){
+    // Arrange
+    User actualResult = userService.create(USERNAME, PASSSWORD, EMAIL);
+    // Act
+    OAuth2AccessToken token = authService.login(USERNAME, PASSSWORD);
+    // Assert
+    assertThat(token).isNotNull();
+                     .extracting(OAuth2AccessToken::isExpired,
+                                 OAuth2AccessToken::getTokenType)
+                     .contains(false, "bearer");
+  }
+
+}
+----
+
+
+[source, java]
+----
+@Ugly
+@Test
+public void testLoginWithValidVerificationCodeAndReturnSuccess() {
+    //Arrange
+    UsernamePasswordAuthenticationToken authentication =
+          new UsernamePasswordAuthenticationToken(USERNAME, PASSWORD);
+
+    //Act
+    UUID result = socialAuthService.createVerificationCode(authentication);
+
+    //Assert
+    assertThat(result).isNotNull();
+
+    // проверяем что по коду можно авторизоваться
+    socialAuthService.login(result);
+    verify(authService).login(username, password);
+
+    // Проверяем что с данный код действителен только для одноразового подтверждения!!!
+    GuardCheck.guardCheck(() -> socialAuthService.login(result), WSArgumentException.class, ApiErrorInfo.INVALID_VERIFICATION);
+}
+----
+
+разделим на два кейса:
+
+[source, java]
+----
+@Good
+@Test
+public void testLogin() {
+    //Arrange
+    //  получаем код подтверждения
+    UUID result = socialAuthService.createVerificationCode(authentication);
+
+    //Act
+    //  пытаемся авторизоваться с полученным кодом
+    socialAuthService.login(result);
+
+    //Assert
+    assertThat(result).isNotNull();
+    verify(authService).login(username,password);
+}
+
+@Good
+@Test
+public void testVirificationTwiceExpectedError(){
+    //Arrange
+    //  получаем код подтверждения
+    UUID result = socialAuthService.createVerificationCode(authentication);
+    //  пытаемся авторизоваться с полученным кодом, первый раз
+    socialAuthService.login(result);
+
+    //Act & Assert
+    //  пытаемся авторизоваться с тем же кодом второй раз, ждем исключение
+    GuardCheck.guardCheck(() -> socialAuthService.login(result),
+                           WSArgumentException.class, ApiErrorInfo.INVALID_VERIFICATION);
+}
+----
+
+
+
+
+## Проверка условий не относящихся к текущему кейсу
+
+[source, java]
+----
+@Test
+@Ugly
+public void testWhenCreateProfileIsFailed() {
+
+    //Arrange
+    doThrow(new DataIntegrityViolationException())
+            .when(userRepository)
+            .save(any());
+
+    //Act
+    GuardCheck.guardCheck(() -> userService.create(USERNAME, PASSWORD),
+                          DataIntegrityViolationException.class,
+                          DATA_WRITE_ERROR);
+
+    //Assert
+    verify(profileService).getOrCreateProfile(eq(USERNAME);
+    verify(auditService).createRecord(eq(USERNAME), eq(AUDIT_MSG));
+
+    assertThat(profileService.getByName(USERNAME)).isNull();
+    assertThat(auditService.getByUserName(USERNAME)).isEmpty();
+}
+----
+
+[source, java]
+----
+@Test
+@ExpectedDataSet("empty_database.json")
+public void testNotPersistWhenThrowDataIntegrity() {
+    //Arrange
+    doThrow(new DataIntegrityViolationException())
+            .when(userRepository)
+            .save(any());
+
+    //Act
+    GuardCheck.guardCheck(() -> userService.create(NAME, PASSWORD),
+                          DataIntegrityViolationException.class,
+                          DATA_WRITE_ERROR);
+}
+----
+
+[source, java]
+----
+@Ugly
+@DataSet(cleanBefore = true, value = "datasets/users.json")
+@Test
+public void loginWithValidVerificationCodeAndReturnAccessToken() throws Exception {
+
+    String username = UserTestHelper.socialUsername;
+    // Act
+    UUID code = socialAuthService.createVerificationCode(new UsernamePasswordAuthenticationToken(username, "N/A"));
+    OAuth2AccessToken token = MvcRequester.on(mockMvc)
+                                          .to(LOGIN_PATH)
+                                          .post(new SocialAuthCompleteForm(code))
+                                          .returnAs(OAuth2AccessToken.class);
+    // Asserts
+    Assertions.assertThat(token).isNotNull();
+
+    CustomAssertion.assertThat(token)
+                   .lazyMatch(OAuth2AccessToken::getValue, Matchers.notNullValue())
+                   .lazyMatch(OAuth2AccessToken::getRefreshToken, Matchers.notNullValue())
+                   .lazyMatch(OAuth2AccessToken::getExpiration, Matchers.notNullValue())
+                   .lazyMatch(OAuth2AccessToken::getExpiresIn, Matchers.notNullValue())
+                   .lazyCheck(OAuth2AccessToken::getTokenType, "bearer")
+                   .check();
+
+
+    // Проверяем пользователя ?
+    UserDTO userDTO = MvcRequester.on(mockMvc)
+                                  .to("/auth/user")
+                                  .getWithAuth(token.getValue())
+                                  .doExpect(status().isOk())
+                                  .doReturn(new TypeReference<UserDTO>() {});
+
+    CustomAssertion.assertThat(userDTO)
+                   .lazyCheck(UserDTO::getUsername, username)
+                   .lazyCheck(UserDTO::getId, UserTestHelper.socialUserId)
+                   .lazyCheck(UserDTO::getAccountType, UserAccountType.VK)
+                   .lazyMatch(UserDTO::getAuthorities, Matchers.contains(RoleType.USER))
+                   .lazyMatch(UserDTO::getProfile, Matchers.notNullValue())
+                   .check();
+}
+----
+
+
+
+## Использование тестируемого кода для проверки
+
+[source, java]
+----
+@Ugly
+@Test
+public void testCreateUser() {
+  // Act
+  User createdUser = userService.create(USERNAME, PASSWORD);
+  // Assert
+  User user = userService.get(createdUser.getId());
+  assertThat(createdUser).isEqualTo(user);
+}
+----
+
+[source, java]
+----
+@Good
+@Test
+public void testCreateUser() {
+  // Act
+  User createdUser = userService.create(USERNAME, PASSWORD);
+  // Assert
+  User user = userRepository.findById(createdUser.getId());
+  assertThat(createdUser).isEqualTo(user);
+}
+----
+
+[source, java]
+----
+@Good
+@Test
+@ExpectedDataSet("user_create_expected.json")
+public void testCreateUser() {
+  userService.create(USERNAME, PASSWORD);
+}
+----
+
+
+
+## Дублирование кода проверки результатов
+
+[source, java]
+----
+@Test
+@Ugly
+public void testGetExecutionsWithAscOrder() throws Exception {
+    // Act
+    CollectionDTO<ExecutionDTO> result = MvcRequester.on(mockMvc)
+                                                     .to(GET_EXECUTIONS_PATTERN, COMPLAINT_ID)
+                                                     .withParam("orderByDirection", "ASC")
+                                                     .get()
+                                                     .doExpect(status().isOk())
+                                                     .doReturn(new TypeReference<CollectionDTO<ExecutionDTO>>() {});
+    // Assert
+    assertThat(result).hasSize(2);
+
+    assertThat(result.getItems().get(0)).extracting(ExecutionDTO::getInitiatorUserId,
+                                                    ExecutionDTO::getContent,
+                                                    ExecutionDTO::getOrder)
+                                        .contains(INITIATOR_USER_ID,
+                                                  CONTENT_FIRST,
+                                                  ORDER_FIRST);
+    assertThat(result.getItems().get(0).getCreateDate()).isNotNull();
+
+    assertThat(result.getItems().get(1)).extracting(ExecutionDTO::getInitiatorUserId,
+                                                    ExecutionDTO::getContent,
+                                                    ExecutionDTO::getOrder)
+                                        .contains(INITIATOR_USER_ID,
+                                                  CONTENT_SECOND,
+                                                  ORDER_SECOND);
+    assertThat(result.getItems().get(1).getCreateDate()).isNotNull();
+}
+
+@Good
+@Test
+public void testGetExecutionsWithAscOrder() throws Exception {
+    // Act
+    CollectionDTO<ExecutionDTO> result = MvcRequester.on(mockMvc)
+                                                     .to(GET_EXECUTIONS_PATTERN, COMPLAINT_ID)
+                                                     .withParam("orderByDirection", "ASC")
+                                                     .get()
+                                                     .doExpect(status().isOk())
+                                                     .doReturn(new TypeReference<CollectionDTO<ExecutionDTO>>() {});
+    // Assert
+    assertThat(result).hasSize(2);
+    assertExecution(result.getItems.get(0),
+                    INITIATOR_USER_ID,
+                    CONTENT_FIRST,
+                    ORDER_FIRST);
+    assertExecution(result.getItems.get(1),
+                    INITIATOR_USER_ID,
+                    CONTENT_SECOND,
+                    ORDER_SECOND);
+}
+
+private void assertExecution(ExecutionDTO execution,
+                             UUID expectedInitiatorId,
+                             String expectedContent,
+                             int expected expectedOrder){
+
+   assertThat(execution).extracting(ExecutionDTO::getInitiatorUserId,
+                                    ExecutionDTO::getType,
+                                    ExecutionDTO::isReadOnly,
+                                    ExecutionDTO::getContent,
+                                    ExecutionDTO::getOrder)
+                        .contains(expectedInitiatorId,
+                                  DEFAULT_EXECUTION_TYPE,
+                                  true,
+                                  expectedContent,
+                                  expectedOrder);
+
+   assertThat(execution.getCreateDate()).isNotNull();
+}
+
+----
+
+
+## Дублирование кода подготовки тестовых данных
+
+[source, java]
+----
+----
+
+
+## Условия или логика в коде теста
+
+[source, java]
+----
+
+@Ugly
+@Test
+void testRegistrationViaSocialNetwork(){
+
+    User user = userService.registration(USER_DATA);
+
+    if(user.getProfile().getType() == VK){
+        assertThat(user.getProfile().getEmail()).isNotNull();
+        assertThat(user.getProfile().getCountry()).isNotNull();
+    } else {
+        assertThat(user.getProfile().getPhone()).isNotNull();
+    }
+}
+
+@Test
+void testRegistrationViaSocialVK(){
+
+    User user = userService.registration(VK_USER_DATA);
+    assertThat(user.getProfile().getEmail()).isNotNull();
+    assertThat(user.getProfile().getCountry()).isNotNull();
+}
+
+@Test
+void testRegistrationWithoutSocial(){
+    User user = userService.registration(PLAIN_USER_DATA);
+    assertThat(user.getProfile().getPhone()).isNotNull();
+}
+
+----
+
+
+## Тексты ассертов не помогают
+
+[source, java]
+----
+@Ugly
+@Test
+public void host_dinner_party_where_nobody_dies() {
+   Mansion mansion = new Mansion();
+   mansion.hostPotentiallyMurderousDinnerParty();
+   SoftAssertions softly = new SoftAssertions();
+   softly.assertThat(mansion.guests()).isEqualTo(7);
+   softly.assertThat(mansion.kitchen()).isEqualTo("clean");
+   softly.assertThat(mansion.library()).isEqualTo("clean");
+   softly.assertThat(mansion.revolverAmmo()).isEqualTo(6);
+   softly.assertThat(mansion.candlestick()).isEqualTo("pristine");
+   softly.assertThat(mansion.colonel()).isEqualTo("well kempt");
+   softly.assertThat(mansion.professor()).isEqualTo("well kempt");
+   softly.assertAll();
+}
+
+@Good
+@Test
+public void host_dinner_party_where_nobody_dies() {
+   Mansion mansion = new Mansion();
+   mansion.hostPotentiallyMurderousDinnerParty();
+   SoftAssertions softly = new SoftAssertions();
+   assertThat(mansion.guests()).as("Living Guests").isEqualTo(7);
+   assertThat(mansion.kitchen()).as("Kitchen").isEqualTo("clean");
+   assertThat(mansion.library()).as("Library").isEqualTo("clean");
+   assertThat(mansion.revolverAmmo()).as("Revolver Ammo").isEqualTo(6);
+   assertThat(mansion.candlestick()).as("Candlestick").isEqualTo("pristine");
+   assertThat(mansion.colonel()).as("Colonel").isEqualTo("well kempt");
+   assertThat(mansion.professor()).as("Professor").isEqualTo("well kempt");
+   softly.assertAll();
+}
+----
+
+
+## Black magic
+
+[source, java]
+----
+@Ugly
+@Test
+public void testBlackMagicNumbers() throws Exception {
+
+    // Given
+    GeneralBlock generalBlock = new GeneralBlock("COMMAND_23", 3);
+
+    // When
+    BasicHeaderBlock block = BasicHeaderBlock.of(generalBlock);
+
+    // Then
+    assertThat(block).isNotNull();
+    assertThat(block.getApplicationId()).isEqualTo("FULLCODE");
+    assertThat(block.getServiceId()).isEqualTo("03");
+    assertThat(block.getLogicalTerminalAddress()).isEqualTo("SH22COMMAND_23");
+    assertThat(block.getSessionName()).isEqualTo("CMD23");
+}
+
+@Good
+@Test
+public void testBlackMagicNumbers() throws Exception {
+
+    // Given
+    GeneralBlock generalBlock = new GeneralBlock(TEST_COMMAND, SERVICE_ID);
+
+    // When
+    BasicHeaderBlock block = BasicHeaderBlock.of(generalBlock);
+
+    // Then
+    assertThat(block).isNotNull();
+    assertThat(block.getApplicationId()).isEqualTo(TEST_COMMAND_TYPE);
+    assertThat(block.getServiceId()).isEqualTo(SERVICE_ID);
+    assertThat(block.getLogicalTerminalAddress()).isEqualTo(TERMINAL_ADDR+TEST_COMMAND);
+    assertThat(block.getSessionName()).isEqualTo(TEST_COMMAND_SESSION);
+}
+----
+
+
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'TDD-A'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
