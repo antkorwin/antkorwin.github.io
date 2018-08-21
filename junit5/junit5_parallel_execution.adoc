@@ -108,6 +108,9 @@ junit.jupiter.execution.parallel.config.strategy=fixed
 junit.jupiter.execution.parallel.config.fixed.parallelism=4
 ----
 
+NOTE: You can see more details of the JUnit5
+configuration in the official documentation link:https://junit.org/junit5/docs/snapshot/user-guide/#writing-tests-parallel-execution[junit.org/junit5/docs/snapshot/user-guide/#writing-tests-parallel-execution]
+
 
 ## Let's try to check parallel execution of tests
 
