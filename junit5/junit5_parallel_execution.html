@@ -456,8 +456,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_configuration_dependencies">1. Configuration &amp; dependencies</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Parallel execution of tests is an experimental feature in the JUnit5 which available from version 5.3.0-RC1.
-Until the <code>JUnit 5.3.0</code> version is ready to production,
+<p>Parallel execution of tests is an experimental feature in the JUnit5 which available from version 5.3.0-RC1.</p>
+</div>
+<div class="paragraph">
+<p>Until the <code>JUnit 5.3.0</code> version is ready to production,
 you can use snapshots of release candidates, for this we need to add the following dependencies:</p>
 </div>
 <div class="listingblock">
@@ -639,7 +641,8 @@ class FirstTest {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>we used this assumption to make assertions only if the current configuration provides a parallel execution.</td>
+<td>we used this assumption to make assertions only if the current configuration provides a parallel execution.
+You can find source code of assumption here: <a href="https://github.com/antkorwin/junit5-prallel-execution/blob/master/src/test/java/com/antkorwin/parallelexecution/FirstTest.java">FirstTest.java</a></td>
 </tr>
 </table>
 </div>
@@ -675,7 +678,8 @@ Also you can use a <code>@ResourceLock</code> annotation to write a more complic
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class TestSuiteProfilerExtension implements BeforeAllCallback, AfterAllCallback {
 
-    private ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create("antkorwin", "parallel", "test");
+    private ExtensionContext.Namespace NAMESPACE =
+                ExtensionContext.Namespace.create("antkorwin", "parallel", "test");
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
@@ -754,7 +758,7 @@ Also you can use a <code>@ResourceLock</code> annotation to write a more complic
 <p>As you can see with the use of parallel execution, we got the result three times faster.</p>
 </div>
 <div class="paragraph">
-<p>It&#8217;s a brilliant feature in JUnit5!</p>
+<p>This is a brilliant feature in <code>JUnit5</code>!</p>
 </div>
 <div class="paragraph">
 <p>If you are still using junit4, think hard about migration to Junit5.</p>
@@ -822,7 +826,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-21 11:04:02 RTZ 9 (чшьр)
+Last updated 2018-08-21 11:20:37 RTZ 9 (чшьр)
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
