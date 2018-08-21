@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 1.5.7">
+<meta name="generator" content="Asciidoctor 1.5.7.1">
 <meta name="author" content="Korovin Anatoliy, Home">
 <title>JUnit5 Parallel Execution of tests</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
@@ -198,7 +198,7 @@ body.toc2.toc-right{padding-left:0;padding-right:20em}}
 .admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
 table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
 .paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
-table.tableblock #preamble>.sectionbody>.paragraph:first-of-type p{font-size:inherit}
+table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
 .admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
 .admonitionblock>table td.icon{text-align:center;width:80px}
 .admonitionblock>table td.icon img{max-width:none}
@@ -456,7 +456,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_configuration_dependencies">1. Configuration &amp; dependencies</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Parallel Execution of tests is experimental available from version 5.3.0-RC1 of JUnit.
+<p>Parallel execution of tests is an experimental feature in the JUnit5 which available from version 5.3.0-RC1.
 Until the <code>JUnit 5.3.0</code> version is ready to production,
 you can use snapshots of release candidates, for this we need to add the following dependencies:</p>
 </div>
@@ -546,7 +546,7 @@ you can use snapshots of release candidates, for this we need to add the followi
 </div>
 </div>
 <div class="paragraph">
-<p>And the last step to set up is the properties file <code>junit-platform.properties</code>,
+<p>And the last step in the set up is the properties file <code>junit-platform.properties</code>,
 here we need to turn on parallelism and set up the properties of thread pool:</p>
 </div>
 <div class="listingblock">
@@ -562,7 +562,7 @@ junit.jupiter.execution.parallel.config.fixed.parallelism=4</code></pre>
 <h2 id="_lets_try_to_check_parallel_execution_of_tests">2. Let&#8217;s try to check parallel execution of tests</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Let&#8217;s start with a simple example of one test class with two test-methods:</p>
+<p>Let&#8217;s start with a simple example of a one test class with two test-methods:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -590,7 +590,7 @@ class FirstTest {
 <p><span class="image"><img src="./parallel_execution_1.png" alt="execution(CONCURRENT) tests result"></span></p>
 </div>
 <div class="paragraph">
-<p>if we look at the console output, we see names of two different threads, it&#8217;s good, parallel execution works.
+<p>if we look at the console output, we can see names of two different threads, it&#8217;s good, parallel execution works.
 But if we look at the test case timing in IDE,
 we can see that a result time is a sum of times of the each test case(not a real elapsed time).
 A little later I&#8217;ll show you how to check it.</p>
@@ -639,7 +639,7 @@ class FirstTest {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>I used this assumption to make assertions only if the current configuration provides a parallel execution.</td>
+<td>we used this assumption to make assertions only if the current configuration provides a parallel execution.</td>
 </tr>
 </table>
 </div>
@@ -654,7 +654,7 @@ You can configure the behavior of execution within the test class by using the <
 Also you can use a <code>@ResourceLock</code> annotation to write a more complicated synchronization between tests.</p>
 </div>
 <div class="paragraph">
-<p>Add an one more test class and return to the question about a elapsed time:</p>
+<p>Add a one more test class and return to the question about the elapsed time:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -722,7 +722,7 @@ Also you can use a <code>@ResourceLock</code> annotation to write a more complic
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>on the first call of the beforeAll method, we store current time in extension context storage(if it absent)</td>
+<td>on the first call of the <code>beforeAll</code> method, we store the current time in the extension context storage(if it absent)</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
@@ -730,7 +730,7 @@ Also you can use a <code>@ResourceLock</code> annotation to write a more complic
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>this is not clean construction but for our&#8217;s testing purpose it&#8217;s possible to use it for obtain a number of all test classes that&#8217;s run.</td>
+<td>this is not clean construction but for our testing purpose it&#8217;s possible to use it to obtain a number of all test classes that will run.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="4"></i><b>4</b></td>
@@ -757,7 +757,7 @@ Also you can use a <code>@ResourceLock</code> annotation to write a more complic
 <p>It&#8217;s a brilliant feature in JUnit5!</p>
 </div>
 <div class="paragraph">
-<p>If you are still using junit4, think hard about migration.</p>
+<p>If you are still using junit4, think hard about migration to Junit5.</p>
 </div>
 </div>
 </div>
@@ -768,7 +768,7 @@ Also you can use a <code>@ResourceLock</code> annotation to write a more complic
 <p>This project available on github by this link:</p>
 </div>
 <div class="paragraph">
-<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/junit5-prallel-execution">github.com/antkorwin/junit5-prallel-execution</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -806,7 +806,7 @@ Also you can use a <code>@ResourceLock</code> annotation to write a more complic
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'TITLE'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'junit5_parallel_execution'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
@@ -822,7 +822,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-21 09:26:11 +10
+Last updated 2018-08-21 11:04:02 RTZ 9 (чшьр)
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

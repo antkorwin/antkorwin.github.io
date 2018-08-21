@@ -10,10 +10,9 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Configuration & dependencies
 
-Parallel Execution of tests is experimental available from version 5.3.0-RC1 of JUnit.
+Parallel execution of tests is an experimental feature in the JUnit5 which available from version 5.3.0-RC1.
 Until the `JUnit 5.3.0` version is ready to production,
 you can use snapshots of release candidates, for this we need to add the following dependencies:
-
 
 [source, xml]
 ----
@@ -98,7 +97,7 @@ Also, you need to add a next configuration of the maven-surefire-plugin:
 </plugin>
 ----
 
-And the last step to set up is the properties file `junit-platform.properties`,
+And the last step in the set up is the properties file `junit-platform.properties`,
 here we need to turn on parallelism and set up the properties of thread pool:
 
 [source]
@@ -111,7 +110,7 @@ junit.jupiter.execution.parallel.config.fixed.parallelism=4
 
 ## Let's try to check parallel execution of tests
 
-Let's start with a simple example of one test class with two test-methods:
+Let's start with a simple example of a one test class with two test-methods:
 
 [source, java]
 ----
@@ -136,7 +135,7 @@ Run tests and see the following result:
 
 image:./parallel_execution_1.png[execution(CONCURRENT) tests result]
 
-if we look at the console output, we see names of two different threads, it's good, parallel execution works.
+if we look at the console output, we can see names of two different threads, it's good, parallel execution works.
 But if we look at the test case timing in IDE,
 we can see that a result time is a sum of times of the each test case(not a real elapsed time).
 A little later I'll show you how to check it.
@@ -178,7 +177,7 @@ class FirstTest {
     }
 }
 ----
-<1> I used this assumption to make assertions only if the current configuration provides a parallel execution.
+<1> we used this assumption to make assertions only if the current configuration provides a parallel execution.
 
 
 ## Run multiple test classes
@@ -187,7 +186,7 @@ Parallel execution in JUnit5 runs all tests concurrently by default.
 You can configure the behavior of execution within the test class by using the `@Execution` annotation.
 Also you can use a `@ResourceLock` annotation to write a more complicated synchronization between tests.
 
-Add an one more test class and return to the question about a elapsed time:
+Add a one more test class and return to the question about the elapsed time:
 
 [source, java]
 ----
@@ -249,9 +248,9 @@ public class TestSuiteProfilerExtension implements BeforeAllCallback, AfterAllCa
 
 }
 ----
-<1> on the first call of the beforeAll method, we store current time in extension context storage(if it absent)
+<1> on the first call of the `beforeAll` method, we store the current time in the extension context storage(if it absent)
 <2> store the number of all test classes in the context
-<3> this is not clean construction but for our's testing purpose it's possible to use it for obtain a number of all test classes that's run.
+<3> this is not clean construction but for our testing purpose it's possible to use it to obtain a number of all test classes that will run.
 <4> after execution of each test we can decrement a variable in the junit5 extension context storage
 
 Let's look at the result:
@@ -266,7 +265,7 @@ As you can see with the use of parallel execution, we got the result three times
 
 It's a brilliant feature in JUnit5!
 
-If you are still using junit4, think hard about migration.
+If you are still using junit4, think hard about migration to Junit5.
 
 
 
@@ -274,7 +273,7 @@ If you are still using junit4, think hard about migration.
 
 This project available on github by this link:
 
-image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/junit5-prallel-execution[github.com/antkorwin/junit5-prallel-execution]
 
 
 // END OF CONTENT
@@ -289,7 +288,7 @@ include::../metrica.adoc[]
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'TITLE'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'junit5_parallel_execution'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
