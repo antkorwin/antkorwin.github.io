@@ -112,7 +112,7 @@ NOTE: You can see more details of the JUnit5
 configuration in the official documentation link:https://junit.org/junit5/docs/snapshot/user-guide/#writing-tests-parallel-execution[junit.org/junit5/docs/snapshot/user-guide/#writing-tests-parallel-execution]
 
 
-## Let's try to check parallel execution of tests
+## Let's try to check the parallel execution of tests
 
 Let's start with a simple example of a one test class with two test-methods:
 
@@ -147,7 +147,7 @@ A little later I'll show you how to check it.
 Now we consider how to write a simple assert on the parallel execution of tests.
 
 We add an each thread name in the global list of thread names, and we need to write a `AfterAll` callback.
-In this callback, we will check the size of list after all threads have completed.
+In this callback, we will check the size of the list after all threads have completed.
 
 [source, java]
 ----
