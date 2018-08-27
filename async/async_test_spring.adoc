@@ -1,0 +1,171 @@
+= Asynchronous tests, the Awaitility and exceptions
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+## Intro
+
+A couple of weeks ago I ran all tests in the spring-framework project
+and found that sometimes some of them do not pass.
+These were tests of asynchronous events and a thread pool.
+
+These tests were written using fixed pauses through Thread.sleep(1000)
+
+for example :
+
+[source, java]
+----
+@Test
+public void asyncMethodListener() throws Exception {
+	// Arrange
+	originalThreadName = Thread.currentThread().getName();
+	listenerCalled = 0;
+	GenericApplicationContext context = new GenericApplicationContext();
+	context.registerBeanDefinition("asyncTest", new RootBeanDefinition(AsyncMethodListener.class));
+	context.registerBeanDefinition("autoProxyCreator", new RootBeanDefinition(DefaultAdvisorAutoProxyCreator.class));
+	context.registerBeanDefinition("asyncAdvisor", new RootBeanDefinition(AsyncAnnotationAdvisor.class));
+	// Act
+	context.refresh();
+	Thread.sleep(1000);
+	assertEquals(1, listenerCalled);
+}
+----
+
+There is a more efficient way to test asynchronous behavior - for example using the Awaitility library.
+
+I found all the tests that could be refactored and started rewriting them.
+
+When I ran them, it was a little surprised,
+tests that were successful before began to fall, but not always.
+Thus, the behavior became even more fragile.
+
+
+Add an one simple entity:
+
+[source, java]
+----
+@Entity
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class Task {
+    @Id
+    @GeneratedValue
+    @Type(type = "uuid-char")
+    private UUID id;
+
+    private String name;
+}
+----
+
+And repository:
+
+[source, java]
+----
+public interface TaskRepository extends JpaRepository<Task, UUID> {
+}
+----
+
+Now we can write a JUnit5 integration test for this repository:
+
+[source, java]
+----
+@PostgresIntegrationTests
+class TaskRepositoryTest {
+
+    @Autowired
+    private TaskRepository taskRepository;
+
+    @Test
+    @ExpectedDataSet("dataset/expected.json")
+    void name() throws Exception {
+        // Arrange
+        Task task = Task.builder()
+                        .name("name")
+                        .build();
+        // Act
+        taskRepository.save(task);
+    }
+}
+----
+
+In this test we use a PostgreSQL docker container with testcontainers library.
+
+image:./pgtc.PNG[postgres tc test result]
+
+Look at the PostgresIntegrationTests annotation in more details.
+
+[source, java]
+----
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+@EnableIntegrationTests
+@EnableRiderTests
+@EnablePostgresTestContainers
+public @interface PostgresIntegrationTests {
+}
+----
+
+This annotation comes from the `junit5-integration-test-utils` artifact,
+I made it to create new integration tests with the PostgreSQL docker container
+faster than make it manually.
+
+And now, all what you need to create an integration test
+with the PostgreSQL docker image is a using of `@PostgresIntegrationTests` annotation.
+
+You can read about an using this meta-annotation in more details here: https://github.com/antkorwin/junit5-integration-test-utils
+
+Deeper and deeper, with meta-annotations:
+
+[source, java]
+----
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@ContextConfiguration
+@ExtendWith(PostgresTcExtension.class)
+@ExtendWith(TraceSqlExtension.class)
+@Tag("pg")
+public @interface EnablePostgresTestContainers {
+}
+----
+
+On this level, we can see how to use JUnit5 repeatable annotation `ExtendWith` to add multiple extensions by using a single meta-annotation
+
+## The source code
+
+This project available on github by this link:
+
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'junit5_in_spring4'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
