@@ -10,13 +10,20 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Intro
 
-A couple of weeks ago I ran all tests in the spring-framework project
+A couple of weeks ago I'm tried to run all tests in the spring-framework project
 and found that sometimes some of them do not pass.
 These were tests of asynchronous events and a thread pool.
 
-These tests were written using fixed pauses through Thread.sleep(1000)
+Sometimes tests fall because an iteration takes a different time on different machines.
+But tests were written with the expectation for a specific value of delay - not more than 100 milliseconds.
 
-for example :
+Also I found some tests where the duration time of delay is hardcoded by using the `Thread.sleep(1000)`.
+
+This is not a good practice because each of these tests is waiting at least one second
+even if the test case completes after 10 ms.
+If we've a lot of such tests than we will wait a long time before they finishes
+
+One example of such test:
 
 [source, java]
 ----
@@ -26,9 +33,12 @@ public void asyncMethodListener() throws Exception {
 	originalThreadName = Thread.currentThread().getName();
 	listenerCalled = 0;
 	GenericApplicationContext context = new GenericApplicationContext();
-	context.registerBeanDefinition("asyncTest", new RootBeanDefinition(AsyncMethodListener.class));
-	context.registerBeanDefinition("autoProxyCreator", new RootBeanDefinition(DefaultAdvisorAutoProxyCreator.class));
-	context.registerBeanDefinition("asyncAdvisor", new RootBeanDefinition(AsyncAnnotationAdvisor.class));
+	context.registerBeanDefinition("asyncTest",
+								new RootBeanDefinition(AsyncMethodListener.class));
+	context.registerBeanDefinition("autoProxyCreator",
+								new RootBeanDefinition(DefaultAdvisorAutoProxyCreator.class));
+	context.registerBeanDefinition("asyncAdvisor",
+								new RootBeanDefinition(AsyncAnnotationAdvisor.class));
 	// Act
 	context.refresh();
 	Thread.sleep(1000);
@@ -40,103 +50,72 @@ There is a more efficient way to test asynchronous behavior - for example using 
 
 I found all the tests that could be refactored and started rewriting them.
 
-When I ran them, it was a little surprised,
+When I replaced all the use of the `Thread.sleep` on the `Awaitility.await` and ran them, I was unpleasantly surprised,
 tests that were successful before began to fall, but not always.
+
 Thus, the behavior became even more fragile.
 
+## Research
 
-Add an one simple entity:
+Most often the problem was reproduced in children tests of the `AbstractSchedulingTaskExecutorTests`
 
-[source, java]
-----
-@Entity
-@Getter
-@Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Task {
-    @Id
-    @GeneratedValue
-    @Type(type = "uuid-char")
-    private UUID id;
-
-    private String name;
-}
-----
-
-And repository:
+Test before using of the Awaitility:
 
 [source, java]
 ----
-public interface TaskRepository extends JpaRepository<Task, UUID> {
+@Test
+public void submitFailingListenableRunnable() throws Exception {
+	TestTask task = new TestTask(0);
+	ListenableFuture<?> future = executor.submitListenable(task);
+	future.addCallback(result -> outcome = result, ex -> outcome = ex);
+	Thread.sleep(1000);
+	assertTrue(future.isDone());
+	assertSame(RuntimeException.class, outcome.getClass());
 }
 ----
+you can see full version here: link:https://github.com/spring-projects/spring-framework/blob/912c270f2bebf3f24dd16dcaea576a58d500852e/spring-context/src/test/java/org/springframework/scheduling/concurrent/AbstractSchedulingTaskExecutorTests.java[AbstractSchedulingTaskExecutorTests.java]
 
-Now we can write a JUnit5 integration test for this repository:
+
+And the source code of this test with the Awaitility:
 
 [source, java]
 ----
-@PostgresIntegrationTests
-class TaskRepositoryTest {
+@Test
+public void submitFailingListenableRunnable() throws Exception {
+    TestTask task = new TestTask(0);
+    ListenableFuture<?> future = executor.submitListenable(task);
+    future.addCallback(result -> outcome = result, ex -> outcome = ex);
 
-    @Autowired
-    private TaskRepository taskRepository;
+    Awaitility.await()
+              .atMost(1, TimeUnit.SECONDS)
+              .pollInterval(10, TimeUnit.MILLISECONDS)
+              .until(() -> future.isDone() && outcome != null);
 
-    @Test
-    @ExpectedDataSet("dataset/expected.json")
-    void name() throws Exception {
-        // Arrange
-        Task task = Task.builder()
-                        .name("name")
-                        .build();
-        // Act
-        taskRepository.save(task);
-    }
+    assertSame(RuntimeException.class, outcome.getClass());
 }
 ----
 
-In this test we use a PostgreSQL docker container with testcontainers library.
-
-image:./pgtc.PNG[postgres tc test result]
-
-Look at the PostgresIntegrationTests annotation in more details.
+In this code `executor` is a `ThreadPoolTaskExecutor` instance with settings depends on the child test.
+Let's look at the next implementation (DecoratedThreadPoolTaskExecutorTests)
 
 [source, java]
 ----
-@Retention(RetentionPolicy.RUNTIME)
-@Target({ElementType.TYPE})
-@EnableIntegrationTests
-@EnableRiderTests
-@EnablePostgresTestContainers
-public @interface PostgresIntegrationTests {
+@Override
+protected AsyncListenableTaskExecutor buildExecutor() {
+	ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+	executor.setTaskDecorator(runnable ->  <1>
+			new DelegatingErrorHandlingRunnable(runnable, TaskUtils.LOG_AND_PROPAGATE_ERROR_HANDLER));
+	executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
+	executor.setMaxPoolSize(1);
+	executor.afterPropertiesSet();
+	return executor;
 }
 ----
+<1> execution of tasks will be decorated by handler
+and also if this task throws exception,
+then will propagate this exception to the next level.
 
-This annotation comes from the `junit5-integration-test-utils` artifact,
-I made it to create new integration tests with the PostgreSQL docker container
-faster than make it manually.
 
-And now, all what you need to create an integration test
-with the PostgreSQL docker image is a using of `@PostgresIntegrationTests` annotation.
-
-You can read about an using this meta-annotation in more details here: https://github.com/antkorwin/junit5-integration-test-utils
-
-Deeper and deeper, with meta-annotations:
-
-[source, java]
-----
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-@ContextConfiguration
-@ExtendWith(PostgresTcExtension.class)
-@ExtendWith(TraceSqlExtension.class)
-@Tag("pg")
-public @interface EnablePostgresTestContainers {
-}
-----
-
-On this level, we can see how to use JUnit5 repeatable annotation `ExtendWith` to add multiple extensions by using a single meta-annotation
 
 ## The source code
 
@@ -157,7 +136,7 @@ include::../metrica.adoc[]
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'junit5_in_spring4'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'async_test_spring'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
