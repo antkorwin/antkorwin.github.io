@@ -115,6 +115,83 @@ protected AsyncListenableTaskExecutor buildExecutor() {
 and also if this task throws exception,
 then will propagate this exception to the next level.
 
+## Let's compare results of this tests
+
+The result of test with Thread.Sleep:
+image:./thread_sleep_result.png[thread_sleep_result]
+
+The result of test with the Awaitility:
+image:./awaitility_wrong_test.png[awaitility wrog test]
+
+This is unexpected behavior, the use of awaitility for tests breaks their result.
+However, when I run only failed test without inherited test suite.
+
+It's also interesting that sometimes tests pass.
+I thought it depends on something what happened before this test,
+but really the reason of fail hide in a parallel thread for our test.
+
+Let's look on the test case in more detail:
+
+[source, java]
+----
+@Test
+public void submitFailingListenableRunnable() throws Exception {
+	TestTask task = new TestTask(0); <1>
+	ListenableFuture<?> future = executor.submitListenable(task); <2>
+	future.addCallback(result -> outcome = result, ex -> outcome = ex);  <3>
+
+	Thread.sleep(1000); <4>
+
+	assertTrue(future.isDone());
+	assertSame(RuntimeException.class, outcome.getClass());
+}
+----
+<1> creation of the new TestTask, with the failed setting
+(submit of this task will create a thread which will throw an error after a small delay)
+<2> submit of this task in the ThreadPoolTaskExecutor
+<3> add a handler for the result of execution of the task
+<4> the main thread of our test will sleep for a second
+
+
+## Isolate test problem
+
+I don't like working with unstable tests then I decided to isolate a problem and write a stable failed test.
+
+
+[source, java]
+----
+public ThreadPoolTaskExecutor setUpExecutor(ErrorHandler errorHandler) {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
+    executor.setMaxPoolSize(1);
+    executor.afterPropertiesSet();
+    return executor;
+}
+
+@Test
+public void catchUncaught() throws InterruptedException {
+
+    ThreadPoolTaskExecutor taskExecutor = setUpExecutor(TaskUtils.LOG_AND_PROPAGATE_ERROR_HANDLER);
+    taskExecutor.execute(new ErrorTestTask());
+    ListenableFuture<?> future = taskExecutor.submitListenable(new ErrorTestTask());
+    Awaitility.await()
+              .atMost(1, TimeUnit.SECONDS)
+              .pollInterval(10, TimeUnit.MILLISECONDS)
+              .until(future::isDone);
+}
+
+private static class ErrorTestTask implements Runnable {
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException(Thread.currentThread().getName() + " -> Error");
+    }
+}
+----
 
 
 ## The source code

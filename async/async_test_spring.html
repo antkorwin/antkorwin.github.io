@@ -446,7 +446,9 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel1">
 <li><a href="#_intro">1. Intro</a></li>
 <li><a href="#_research">2. Research</a></li>
-<li><a href="#_the_source_code">3. The source code</a></li>
+<li><a href="#_lets_compare_results_of_this_tests">3. Let&#8217;s compare results of this tests</a></li>
+<li><a href="#_isolate_test_problem">4. Isolate test problem</a></li>
+<li><a href="#_the_source_code">5. The source code</a></li>
 </ul>
 </div>
 </div>
@@ -586,7 +588,111 @@ then will propagate this exception to the next level.</td>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_the_source_code">3. The source code</h2>
+<h2 id="_lets_compare_results_of_this_tests">3. Let&#8217;s compare results of this tests</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The result of test with Thread.Sleep:
+<span class="image"><img src="./thread_sleep_result.png" alt="thread_sleep_result"></span></p>
+</div>
+<div class="paragraph">
+<p>The result of test with the Awaitility:
+<span class="image"><img src="./awaitility_wrong_test.png" alt="awaitility wrog test"></span></p>
+</div>
+<div class="paragraph">
+<p>This is unexpected behavior, the use of awaitility for tests breaks their result.
+However, when I run only failed test without inherited test suite.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s also interesting that sometimes tests pass.
+I thought it depends on something what happened before this test,
+but really the reason of fail hide in a parallel thread for our test.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s look on the test case in more detail:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
+public void submitFailingListenableRunnable() throws Exception {
+	TestTask task = new TestTask(0); <i class="conum" data-value="1"></i><b>(1)</b>
+	ListenableFuture&lt;?&gt; future = executor.submitListenable(task); <i class="conum" data-value="2"></i><b>(2)</b>
+	future.addCallback(result -&gt; outcome = result, ex -&gt; outcome = ex);  <i class="conum" data-value="3"></i><b>(3)</b>
+
+	Thread.sleep(1000); <i class="conum" data-value="4"></i><b>(4)</b>
+
+	assertTrue(future.isDone());
+	assertSame(RuntimeException.class, outcome.getClass());
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>creation of the new TestTask, with the failed setting
+(submit of this task will create a thread which will throw an error after a small delay)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>submit of this task in the ThreadPoolTaskExecutor</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>add a handler for the result of execution of the task</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>the main thread of our test will sleep for a second</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_isolate_test_problem">4. Isolate test problem</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>I don&#8217;t like working with unstable tests then I decided to isolate a problem and write a stable failed test.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public ThreadPoolTaskExecutor setUpExecutor(ErrorHandler errorHandler) {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
+    executor.setMaxPoolSize(1);
+    executor.afterPropertiesSet();
+    return executor;
+}
+
+@Test
+public void catchUncaught() throws InterruptedException {
+
+    ThreadPoolTaskExecutor taskExecutor = setUpExecutor(TaskUtils.LOG_AND_PROPAGATE_ERROR_HANDLER);
+    taskExecutor.execute(new ErrorTestTask());
+    ListenableFuture&lt;?&gt; future = taskExecutor.submitListenable(new ErrorTestTask());
+    Awaitility.await()
+              .atMost(1, TimeUnit.SECONDS)
+              .pollInterval(10, TimeUnit.MILLISECONDS)
+              .until(future::isDone);
+}
+
+private static class ErrorTestTask implements Runnable {
+    @Override
+    public void run() {
+        try {
+            Thread.sleep(100);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException(Thread.currentThread().getName() + " -&gt; Error");
+    }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_source_code">5. The source code</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>This project available on github by this link:</p>
@@ -646,7 +752,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-29 00:05:36 +10
+Last updated 2018-08-30 09:42:39 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
