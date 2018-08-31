@@ -448,7 +448,6 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_research">2. Research</a></li>
 <li><a href="#_lets_compare_results_of_this_tests">3. Let&#8217;s compare results of this tests</a></li>
 <li><a href="#_isolate_test_problem">4. Isolate test problem</a></li>
-<li><a href="#_the_source_code">5. The source code</a></li>
 </ul>
 </div>
 </div>
@@ -656,7 +655,7 @@ public void submitFailingListenableRunnable() throws Exception {
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public ThreadPoolTaskExecutor setUpExecutor(ErrorHandler errorHandler) {
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private ThreadPoolTaskExecutor setUpExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
     executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
     executor.setMaxPoolSize(1);
@@ -667,7 +666,7 @@ public void submitFailingListenableRunnable() throws Exception {
 @Test
 public void catchUncaught() throws InterruptedException {
 
-    ThreadPoolTaskExecutor taskExecutor = setUpExecutor(TaskUtils.LOG_AND_PROPAGATE_ERROR_HANDLER);
+    ThreadPoolTaskExecutor taskExecutor = setUpExecutor();
     taskExecutor.execute(new ErrorTestTask());
     ListenableFuture&lt;?&gt; future = taskExecutor.submitListenable(new ErrorTestTask());
     Awaitility.await()
@@ -689,16 +688,12 @@ private static class ErrorTestTask implements Runnable {
 }</code></pre>
 </div>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_the_source_code">5. The source code</h2>
-<div class="sectionbody">
 <div class="paragraph">
-<p>This project available on github by this link:</p>
+<p><code>ErrorTestTask</code> sleeps 100 ms. and throws the RuntimeException.
+If you run this test, awaitility will catch all exceptions even if they are thrown in  another thread and then test will be failed.</p>
 </div>
 <div class="paragraph">
-<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/statemachine">github.com/antkorwin/statemachine</a></p>
+<p><span class="image"><img src="./isolate_wrong_test.png" alt="wrong test result"></span></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -752,7 +747,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-30 09:42:39 +10
+Last updated 2018-08-31 23:57:57 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

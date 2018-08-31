@@ -160,7 +160,7 @@ I don't like working with unstable tests then I decided to isolate a problem and
 
 [source, java]
 ----
-public ThreadPoolTaskExecutor setUpExecutor(ErrorHandler errorHandler) {
+private ThreadPoolTaskExecutor setUpExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
     executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
     executor.setMaxPoolSize(1);
@@ -171,7 +171,7 @@ public ThreadPoolTaskExecutor setUpExecutor(ErrorHandler errorHandler) {
 @Test
 public void catchUncaught() throws InterruptedException {
 
-    ThreadPoolTaskExecutor taskExecutor = setUpExecutor(TaskUtils.LOG_AND_PROPAGATE_ERROR_HANDLER);
+    ThreadPoolTaskExecutor taskExecutor = setUpExecutor();
     taskExecutor.execute(new ErrorTestTask());
     ListenableFuture<?> future = taskExecutor.submitListenable(new ErrorTestTask());
     Awaitility.await()
@@ -193,12 +193,10 @@ private static class ErrorTestTask implements Runnable {
 }
 ----
 
+`ErrorTestTask` sleeps 100 ms. and throws the RuntimeException.
+If you run this test, awaitility will catch all exceptions even if they are thrown in  another thread and then test will be failed.
 
-## The source code
-
-This project available on github by this link:
-
-image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+image:./isolate_wrong_test.png[wrong test result]
 
 
 // END OF CONTENT
