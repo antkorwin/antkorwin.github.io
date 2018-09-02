@@ -4,6 +4,8 @@
 :toc:
 :experimental:
 :numbered:
+:description: Differences between the types of references in Java. Examples of using a WeakReference, SoftReference and PhantomReference.
+:keywords: WeakReference, SoftReference, PhantomReference, WeakHashMap, Java, JVM, Garbage Collector, GC, Test, TDD, LeakDetector, System.gc
 :homepage: http://antkorwin.com
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
