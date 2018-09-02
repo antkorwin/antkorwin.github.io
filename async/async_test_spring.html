@@ -448,6 +448,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_research">2. Research</a></li>
 <li><a href="#_lets_compare_results_of_this_tests">3. Let&#8217;s compare results of this tests</a></li>
 <li><a href="#_isolate_test_problem">4. Isolate test problem</a></li>
+<li><a href="#_conclusion">5. Conclusion:</a></li>
 </ul>
 </div>
 </div>
@@ -695,6 +696,48 @@ If you run this test, awaitility will catch all exceptions even if they are thro
 <div class="paragraph">
 <p><span class="image"><img src="./isolate_wrong_test.png" alt="wrong test result"></span></p>
 </div>
+<div class="paragraph">
+<p>If you read a documentation of Awaitility, you can find a note about exception handling and the advice how to avoid this.
+But who reads the documentation?!
+In my opinion this is unexpected behavior for a testing tool like the awaitility.</p>
+</div>
+<div class="paragraph">
+<p>The right way to write our test case:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
+public void testSubmit() throws InterruptedException {
+
+		ThreadPoolTaskExecutor taskExecutor = setUpExecutor();
+		taskExecutor.execute(new ErrorTestTask());
+		ListenableFuture&lt;?&gt; future = taskExecutor.submitListenable(new ErrorTestTask());
+
+		Awaitility.await()
+							.dontCatchUncaughtExceptions() <i class="conum" data-value="1"></i><b>(1)</b>
+							.atMost(1, TimeUnit.SECONDS)
+							.pollInterval(10, TimeUnit.MILLISECONDS)
+							.until(future::isDone);
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>awaitility must be ignored exceptions from other threads</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">5. Conclusion:</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You need to understand the mechanics of the tools that you use for testing,
+especially if these are cases like asynchronous events and multithreading.</p>
+</div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
     (function (d, w, c) {
@@ -747,7 +790,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-08-31 23:57:57 +10
+Last updated 2018-09-02 23:14:00 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

@@ -198,6 +198,35 @@ If you run this test, awaitility will catch all exceptions even if they are thro
 
 image:./isolate_wrong_test.png[wrong test result]
 
+If you read a documentation of Awaitility, you can find a note about exception handling and the advice how to avoid this.
+But who reads the documentation?!
+In my opinion this is unexpected behavior for a testing tool like the awaitility.
+
+The right way to write our test case:
+
+[source, java]
+----
+@Test
+public void testSubmit() throws InterruptedException {
+
+		ThreadPoolTaskExecutor taskExecutor = setUpExecutor();
+		taskExecutor.execute(new ErrorTestTask());
+		ListenableFuture<?> future = taskExecutor.submitListenable(new ErrorTestTask());
+
+		Awaitility.await()
+							.dontCatchUncaughtExceptions() <1>
+							.atMost(1, TimeUnit.SECONDS)
+							.pollInterval(10, TimeUnit.MILLISECONDS)
+							.until(future::isDone);
+}
+----
+<1> awaitility must be ignored exceptions from other threads
+
+
+## Conclusion:
+
+You need to understand the mechanics of the tools that you use for testing,
+especially if these are cases like asynchronous events and multithreading.
 
 // END OF CONTENT
 include::../metrica.adoc[]
