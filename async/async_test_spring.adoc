@@ -228,6 +228,8 @@ public void testSubmit() throws InterruptedException {
 You need to understand the mechanics of the tools that you use for testing,
 especially if these are cases like asynchronous events and multithreading.
 
+When I replaced all `Thread.sleep(1000)`, asynchronous tests began to pass two-thirds faster, and I reduced the time of passage of all the tests in the Spring Framework about by twenty seconds.
+
 // END OF CONTENT
 include::../metrica.adoc[]
 
