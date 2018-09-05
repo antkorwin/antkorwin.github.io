@@ -599,8 +599,8 @@ then will propagate this exception to the next level.</td>
 <span class="image"><img src="./awaitility_wrong_test.png" alt="awaitility wrog test"></span></p>
 </div>
 <div class="paragraph">
-<p>This is unexpected behavior, the use of awaitility for tests breaks their result.
-However, when I run only failed test without inherited test suite.</p>
+<p>I think this is unexpected behavior, the use of awaitility for tests breaks their result.
+However, when I run only failed test without inherited test suite, it may successful pass or not.</p>
 </div>
 <div class="paragraph">
 <p>It&#8217;s also interesting that sometimes tests pass.
@@ -656,15 +656,7 @@ public void submitFailingListenableRunnable() throws Exception {
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">private ThreadPoolTaskExecutor setUpExecutor() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
-    executor.setMaxPoolSize(1);
-    executor.afterPropertiesSet();
-    return executor;
-}
-
-@Test
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@Test
 public void catchUncaught() throws InterruptedException {
 
     ThreadPoolTaskExecutor taskExecutor = setUpExecutor();
@@ -674,6 +666,14 @@ public void catchUncaught() throws InterruptedException {
               .atMost(1, TimeUnit.SECONDS)
               .pollInterval(10, TimeUnit.MILLISECONDS)
               .until(future::isDone);
+}
+
+private ThreadPoolTaskExecutor setUpExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
+    executor.setMaxPoolSize(1);
+    executor.afterPropertiesSet();
+    return executor;
 }
 
 private static class ErrorTestTask implements Runnable {
@@ -714,10 +714,10 @@ public void testSubmit() throws InterruptedException {
 		ListenableFuture&lt;?&gt; future = taskExecutor.submitListenable(new ErrorTestTask());
 
 		Awaitility.await()
-							.dontCatchUncaughtExceptions() <i class="conum" data-value="1"></i><b>(1)</b>
-							.atMost(1, TimeUnit.SECONDS)
-							.pollInterval(10, TimeUnit.MILLISECONDS)
-							.until(future::isDone);
+				  .dontCatchUncaughtExceptions() <i class="conum" data-value="1"></i><b>(1)</b>
+				  .atMost(1, TimeUnit.SECONDS)
+				  .pollInterval(10, TimeUnit.MILLISECONDS)
+				  .until(future::isDone);
 }</code></pre>
 </div>
 </div>
@@ -740,6 +740,11 @@ especially if these are cases like asynchronous events and multithreading.</p>
 </div>
 <div class="paragraph">
 <p>When I replaced all <code>Thread.sleep(1000)</code>, asynchronous tests began to pass two-thirds faster, and I reduced the time of passage of all the tests in the Spring Framework about by twenty seconds.</p>
+</div>
+<div class="paragraph">
+<p>After this small research I submitted a pull request in the SpringFramework (<a href="https://github.com/spring-projects/spring-framework/pull/1941">Spr-17211 - Async tests refactoring</a>)
+and  suggested to improve the documentation in Awaitility library.
+All of these are successfully done.</p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -793,7 +798,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-09-04 23:50:05 +10
+Last updated 2018-09-06 09:24:53 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

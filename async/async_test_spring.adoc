@@ -123,8 +123,8 @@ image:./thread_sleep_result.png[thread_sleep_result]
 The result of test with the Awaitility:
 image:./awaitility_wrong_test.png[awaitility wrog test]
 
-This is unexpected behavior, the use of awaitility for tests breaks their result.
-However, when I run only failed test without inherited test suite.
+I think this is unexpected behavior, the use of awaitility for tests breaks their result.
+However, when I run only failed test without inherited test suite, it may successful pass or not.
 
 It's also interesting that sometimes tests pass.
 I thought it depends on something what happened before this test,
@@ -160,14 +160,6 @@ I don't like working with unstable tests then I decided to isolate a problem and
 
 [source, java]
 ----
-private ThreadPoolTaskExecutor setUpExecutor() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
-    executor.setMaxPoolSize(1);
-    executor.afterPropertiesSet();
-    return executor;
-}
-
 @Test
 public void catchUncaught() throws InterruptedException {
 
@@ -178,6 +170,14 @@ public void catchUncaught() throws InterruptedException {
               .atMost(1, TimeUnit.SECONDS)
               .pollInterval(10, TimeUnit.MILLISECONDS)
               .until(future::isDone);
+}
+
+private ThreadPoolTaskExecutor setUpExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setThreadNamePrefix(THREAD_NAME_PREFIX);
+    executor.setMaxPoolSize(1);
+    executor.afterPropertiesSet();
+    return executor;
 }
 
 private static class ErrorTestTask implements Runnable {
@@ -214,10 +214,10 @@ public void testSubmit() throws InterruptedException {
 		ListenableFuture<?> future = taskExecutor.submitListenable(new ErrorTestTask());
 
 		Awaitility.await()
-							.dontCatchUncaughtExceptions() <1>
-							.atMost(1, TimeUnit.SECONDS)
-							.pollInterval(10, TimeUnit.MILLISECONDS)
-							.until(future::isDone);
+				  .dontCatchUncaughtExceptions() <1>
+				  .atMost(1, TimeUnit.SECONDS)
+				  .pollInterval(10, TimeUnit.MILLISECONDS)
+				  .until(future::isDone);
 }
 ----
 <1> awaitility must be ignored exceptions from other threads
@@ -229,6 +229,10 @@ You need to understand the mechanics of the tools that you use for testing,
 especially if these are cases like asynchronous events and multithreading.
 
 When I replaced all `Thread.sleep(1000)`, asynchronous tests began to pass two-thirds faster, and I reduced the time of passage of all the tests in the Spring Framework about by twenty seconds.
+
+After this small research I submitted a pull request in the SpringFramework (link:https://github.com/spring-projects/spring-framework/pull/1941[Spr-17211 - Async tests refactoring])
+and  suggested to improve the documentation in Awaitility library.
+All of these are successfully done.
 
 // END OF CONTENT
 include::../metrica.adoc[]
