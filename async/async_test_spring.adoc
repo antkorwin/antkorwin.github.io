@@ -1,4 +1,4 @@
-= Asynchronous tests, the Awaitility and exceptions
+= Asynchronous tests, the Awaitility and uncaught exceptions from other threads.
 :source-highlighter: prettify
 :icons: font
 :toc: left
@@ -200,7 +200,6 @@ image:./isolate_wrong_test.png[wrong test result]
 
 If you read a documentation of Awaitility, you can find a note about exception handling and the advice how to avoid this.
 But who reads the documentation?!
-In my opinion this is unexpected behavior for a testing tool like the awaitility.
 
 The right way to write our test case:
 
@@ -231,8 +230,9 @@ especially if these are cases like asynchronous events and multithreading.
 When I replaced all `Thread.sleep(1000)`, asynchronous tests began to pass two-thirds faster, and I reduced the time of passage of all the tests in the Spring Framework about by twenty seconds.
 
 After this small research I submitted a pull request in the SpringFramework (link:https://github.com/spring-projects/spring-framework/pull/1941[Spr-17211 - Async tests refactoring])
-and  suggested to improve the documentation in Awaitility library.
-All of these are successfully done.
+and  suggested to improve the documentation in Awaitility library (link:https://github.com/awaitility/awaitility/issues/119[dontCatchUncaughtExceptions #119]).
+
+All of these are successfully done(thanks to Sam Brannen and Johan Haleby), and now I can published this article.
 
 // END OF CONTENT
 include::../metrica.adoc[]

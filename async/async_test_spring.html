@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 1.5.7">
 <meta name="author" content="Korovin Anatoliy, Home">
-<title>Asynchronous tests, the Awaitility and exceptions</title>
+<title>Asynchronous tests, the Awaitility and uncaught exceptions from other threads.</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -434,7 +434,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Asynchronous tests, the Awaitility and exceptions</h1>
+<h1>Asynchronous tests, the Awaitility and uncaught exceptions from other threads.</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
@@ -698,8 +698,7 @@ If you run this test, awaitility will catch all exceptions even if they are thro
 </div>
 <div class="paragraph">
 <p>If you read a documentation of Awaitility, you can find a note about exception handling and the advice how to avoid this.
-But who reads the documentation?!
-In my opinion this is unexpected behavior for a testing tool like the awaitility.</p>
+But who reads the documentation?!</p>
 </div>
 <div class="paragraph">
 <p>The right way to write our test case:</p>
@@ -743,8 +742,10 @@ especially if these are cases like asynchronous events and multithreading.</p>
 </div>
 <div class="paragraph">
 <p>After this small research I submitted a pull request in the SpringFramework (<a href="https://github.com/spring-projects/spring-framework/pull/1941">Spr-17211 - Async tests refactoring</a>)
-and  suggested to improve the documentation in Awaitility library.
-All of these are successfully done.</p>
+and  suggested to improve the documentation in Awaitility library (<a href="https://github.com/awaitility/awaitility/issues/119">dontCatchUncaughtExceptions #119</a>).</p>
+</div>
+<div class="paragraph">
+<p>All of these are successfully done(thanks to Sam Brannen and Johan Haleby), and now I can published this article.</p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -798,7 +799,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-09-06 09:24:53 +10
+Last updated 2018-09-09 22:48:25 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

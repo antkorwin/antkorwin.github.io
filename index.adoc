@@ -16,7 +16,8 @@ The workaround for using a modern version of Junit (the JUnit5 Jupiter) with a S
 link:./junit5/junit5_parallel_execution.html[How to use the Parallel Execution of tests in the JUnit5] (English) image:./statemachine/eng.png[english,25] ::
 Example of usage the `JUnit5 5.3.0-RC1` to run tests in parallel execution mode.
 
-
+link:./async/async_test_spring.html[Asynchronous tests, the Awaitility and uncaught exceptions from other threads] (English) image:./statemachine/eng.png[english,25] ::
+The story of my research of fragile asynchronous tests in the Spring Framework and uncaught exceptions handling by the Awaitility.
 
 ### Spring State Machine:
 
