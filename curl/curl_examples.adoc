@@ -40,7 +40,7 @@ And we got the next result:
 ----
 
 
-## How to a new token and use it
+## How to get new token and immediately use it
 
 [source, sh]
 ----
