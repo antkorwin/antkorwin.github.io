@@ -220,7 +220,7 @@ On this level, we can see how to use JUnit5 repeatable annotation `ExtendWith` t
 
 This project available on github by this link:
 
-image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/statemachine[github.com/antkorwin/statemachine]
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/junit5-and-spring4[github.com/antkorwin/junit5-and-spring4]
 
 
 // END OF CONTENT
