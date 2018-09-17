@@ -1,0 +1,226 @@
+= Cloud Contract + JUnit5
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+## Provider configuration
+
+Now time, support for Junit5 isn't available from current release of Spring Cloud Contract.
+We need to add snapshots repository to use it.
+
+### Dependencies
+
+[source, xml]
+----
+<repositories>
+    <repository>
+        <id>spring-snapshots</id>
+        <name>Spring Snapshots</name>
+        <url>https://repo.spring.io/libs-snapshot</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+----
+
+also we need to use a snapshot for plugins, because Cloud Contract generate source code throght maven plugin.
+
+[source, xml]
+----
+<pluginRepositories>
+    <pluginRepository>
+        <id>spring-snapshots</id>
+        <name>Spring Snapshots</name>
+        <url>https://repo.spring.io/libs-snapshot</url>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </pluginRepository>
+</pluginRepositories>
+----
+
+and now we can add next dependency
+
+[source, xml]
+----
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-contract-verifier</artifactId>
+    <scope>test</scope>
+</dependency>
+----
+
+also we need to add a dependency management for spring cloud 2.1.0 snapshot:
+
+[source, xml]
+----
+<dependencyManagement>
+    <dependencies>
+        <!-- If you're adding this dependency explicitly you have to
+               add it *BEFORE* the Release Train BOM-->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-contract-dependencies</artifactId>
+            <version>2.1.0.BUILD-SNAPSHOT</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-dependencies</artifactId>
+            <version>${spring-cloud.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+----
+
+In the plugin section, we need
+
+[source, xml]
+----
+<build>
+    <plugins>
+        <plugin>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-contract-maven-plugin</artifactId>
+            <version>2.1.0.BUILD-SNAPSHOT</version>
+
+            <extensions>true</extensions>
+            <configuration>
+                <baseClassForTests>com.antkorwin.predictionservice.service.api.Junit5MvcTest</baseClassForTests> <1>
+                <testFramework>JUNIT5</testFramework>
+            </configuration>
+        </plugin>
+
+        ..
+
+    </plugins>
+<build>
+----
+<1> Provide the base class for your auto-generated tests
+
+### BaseClass for contract tests
+
+This class will be used for generating contract verification tests.
+
+[source, java]
+----
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+public class Junit5MvcTest {
+
+    @Autowired
+    private WebApplicationContext context;
+
+    @BeforeEach
+    void setup() {
+        RestAssuredMockMvc.webAppContextSetup(context);
+    }
+
+}
+---
+
+### Add contract
+
+[source, groovy]
+----
+import org.springframework.cloud.contract.spec.Contract
+Contract.make {
+    description "should return even when number input is even"
+    request{
+        method POST()
+        url("/prediction/estimate") {
+            queryParameters {
+                parameter("title", "build new docker swarm")
+            }
+        }
+    }
+    response {
+        //  body(file("response.json"))
+        body(
+                estimate: 44
+        )
+        headers {
+            contentType(applicationJson())
+        }
+        status 200
+    }
+}
+----
+
+
+## Consumer configuration
+
+
+
+## How to use a Stub Runner
+
+You can download stub runner server here:
+link:https://search.maven.org/remotecontent?filepath=org/springframework/cloud/spring-cloud-contract-stub-runner-boot/2.0.1.RELEASE/spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar[spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar]
+
+
+let's run the next command under directory with jars of contract stubs:
+
+[source]
+----
+ java -jar ../spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar --stubrunner.stubs-mode="local" --stubrunner.ids=com.a ntkorwin:prediction-service:+:stubs:8088
+----
+
+then you can send a request to stub server:
+
+[source]
+----
+$ curl '127.0.0.1:8088/prediction/estimate'
+
+                                        Request was not matched
+                                        =======================
+
+-----------------------------------------------------------------------------------------------------------------------
+| Closest stub                                             | Request                                                  |
+-----------------------------------------------------------------------------------------------------------------------
+                                                    |
+GET                                                        | GET
+/prediction/estimate                                       | /prediction/estimate
+                                                    |
+Query: title = build new docker swarm                      |                                                     <<<<< Query is not present
+                                                    |
+                                                    |
+-----------------------------------------------------------------------------------------------------------------------
+----
+
+
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'TITLE'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
