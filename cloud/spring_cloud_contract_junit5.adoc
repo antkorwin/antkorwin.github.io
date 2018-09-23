@@ -1,4 +1,4 @@
-= Cloud Contract + JUnit5
+= How to use JUnit5 and Spring Cloud Contract
 :source-highlighter: prettify
 :icons: font
 :toc: left
@@ -8,10 +8,34 @@
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
+## Intro
+
+In this article, we will consider an example of microservice application.
+
+This application consists of `task-service` and `report-service`.
+
+image:./microservices_diagram.png[diagram of microservices]
+
+In the `task-service` we can create and get tasks.
+The `report-service` provides to us the statistics of tasks distribution.
+For creating these statistics, the `report-service` is using the API has provided by the `task-service`.
+
+image:./report_service.png[report service result]
+
+So, we've a two services that communicate together.
+The **"contract"** is the API which is using between a pair of microservices.
+In this article, we will consider a tool to maintain the consistency of the contract between microservices.
+
+In terms of the Consumer Driven Contracts,
+the `task-service` is a provider of the API, and `report-service` is a consumer.
+
+
 ## Provider configuration
 
-Now time, support for Junit5 isn't available from current release of Spring Cloud Contract.
-We need to add snapshots repository to use it.
+Support for JUnit5 is currently unavailable in stable release of Spring Cloud Contract.
+But this feature already completed and we can use it from the snapshots.
+
+We need to add the next repository of snapshots:
 
 ### Dependencies
 
@@ -29,7 +53,8 @@ We need to add snapshots repository to use it.
 </repositories>
 ----
 
-also we need to use a snapshot for plugins, because Cloud Contract generate source code throght maven plugin.
+Also we need to use a snapshot for plugins,
+because Spring Cloud Contract generates source code with the help of maven plugin:
 
 [source, xml]
 ----
@@ -45,7 +70,7 @@ also we need to use a snapshot for plugins, because Cloud Contract generate sour
 </pluginRepositories>
 ----
 
-and now we can add next dependency
+and now, we can add the next dependency:
 
 [source, xml]
 ----
@@ -83,7 +108,8 @@ also we need to add a dependency management for spring cloud 2.1.0 snapshot:
 </dependencyManagement>
 ----
 
-In the plugin section, we need
+In the plugin section, we need to configure the `spring-cloud-contract-maven-plugin`,
+This plugin is responsible for generating a source code of contract tests:
 
 [source, xml]
 ----
@@ -96,8 +122,8 @@ In the plugin section, we need
 
             <extensions>true</extensions>
             <configuration>
-                <baseClassForTests>com.antkorwin.predictionservice.service.api.Junit5MvcTest</baseClassForTests> <1>
-                <testFramework>JUNIT5</testFramework>
+                <baseClassForTests>com.antkorwin...Junit5MvcTest</baseClassForTests> <1>
+                <testFramework>JUNIT5</testFramework> <2>
             </configuration>
         </plugin>
 
@@ -106,15 +132,17 @@ In the plugin section, we need
     </plugins>
 <build>
 ----
-<1> Provide the reference to base class for your auto-generated tests
+<1> The reference to the base class for your auto-generated tests,
+each of the contract tests will be inherited from this class.
+<2> the setting for Junit5 tests generation.
 
 ### BaseClass for contract tests
 
-This class will be used for generating contract verification tests.
+This class will be used for generating contract verification tests, as parent class.
 
 [source, java]
 ----
-@ExtendWith(SpringExtension.class)
+@ExtendWith(SpringExtension.class)  <1>
 @SpringBootTest
 public class Junit5MvcTest {
 
@@ -123,19 +151,25 @@ public class Junit5MvcTest {
 
     @BeforeEach
     void setup() {
-        RestAssuredMockMvc.webAppContextSetup(context);
+        RestAssuredMockMvc.webAppContextSetup(context); <2>
     }
 
 }
 ----
+<1> of course we use JUnit5, and ExtendWith instead of RunWith
+<2> RestAssured initialization with application context.
 
-### Add contract
+
+### Describe your contracts
+
+All what we need to make manually is a contract declaration of our API.
+This is a groovy-based DSL, where you can describe request to your API and expected response for it:
 
 [source, groovy]
 ----
 import org.springframework.cloud.contract.spec.Contract
 Contract.make {
-    description "should return even when number input is even"
+    description "should return an estimate based on the task title"
     request{
         method POST()
         url("/prediction/estimate") {
@@ -145,7 +179,6 @@ Contract.make {
         }
     }
     response {
-        //  body(file("response.json"))
         body(
                 estimate: 44
         )
@@ -157,7 +190,18 @@ Contract.make {
 }
 ----
 
-Now we can build the project:
+You can collect groovy files with contract in packages and put it in resources, as you can see here:
+
+image:./contract_resources.png[contract resource folder]
+
+A little later we will consider generated tests from this contracts.
+
+In my opinion the using of groovy is a more intuitive and maintained way to describing a contract
+than using something like YAML. By the way Spring Cloud Contract supports both of these variants (groovy and yaml).
+
+### Generate the contract tests
+
+So, if you added all needed dependencies and wrote a contract, then we can build the project:
 
 [source]
 ----
@@ -166,10 +210,9 @@ $ mvn clean install
 ...
 
 [INFO] --- maven-install-plugin:2.5.2:install (default-install) @ prediction-service ---
-[INFO] Installing C:\DEV\GIT\DRAFTS\CONF2018\prediction-service\target\prediction-service-0.0.1-SNAPSHOT.jar to C:\Users\User\.m2\repository\com\antkorwin\prediction-service\0.0.1-SNAPSHOT\prediction-service-0.0.1-SNAPSHOT.jar
-[INFO] Installing C:\DEV\GIT\DRAFTS\CONF2018\prediction-service\pom.xml to C:\Users\User\.m2\repository\com\antkorwin\prediction-service\0.0.1-SNAPSHOT\prediction-service-0.0.1-SNAPSHOT.pom
-[INFO] Installing C:\DEV\GIT\DRAFTS\CONF2018\prediction-service\target\prediction-service-0.0.1-SNAPSHOT-stubs.jar to C:\Users\User\.m2\repository\com\antkorwin\prediction-service\0.0.1-SNAPSHOT\prediction-service-0.0.1-SNAPSHO
-T-stubs.jar
+[INFO] Installing prediction-service-0.0.1-SNAPSHOT.jar to ~\.m2\...
+[INFO] Installing pom.xml to ~\.m2\...
+[INFO] Installing prediction-service-0.0.1-SNAPSHOT-stubs.jar to ~\.m2\...
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
@@ -179,36 +222,140 @@ T-stubs.jar
 [INFO] ------------------------------------------------------------------------
 ----
 
-after successful build of your project you will get a generated test for groovy contract in the `/target/generated-test-sources/contracts` folder,
+After successful build of your project,
+you get a generated test for groovy contract in the `/target/generated-test-sources/contracts` folder,
 as you can see on the next image:
 
-image:./testgen.png[generated test source cloud contract]
+image:./generate_test_sources.png[generated test source cloud contract]
 
+Let's look at these tests:
+
+[source, java]
+----
+public class PredictionTest extends Junit5MvcTest {
+
+	@Test
+	public void validate_predict_estimate() throws Exception {
+		// given:
+			MockMvcRequestSpecification request = given();
+
+		// when:
+			ResponseOptions response = given().spec(request)
+					.queryParam("title","build new docker swarm")
+					.post("/prediction/estimate");
+
+		// then:
+			assertThat(response.statusCode()).isEqualTo(200);
+			assertThat(response.header("Content-Type")).matches("application/json.*");
+		// and:
+			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
+			assertThatJson(parsedJson).field("['estimate']").isEqualTo(44);
+	}
+
+}
+----
+
+If you write several contracts in one package then you get a test class with multiple test cases.
+All of these items were named like packages and files in the resource directory:
+
+[source, java]
+----
+public class TasksTest extends Junit5MvcTest {  <1>
+
+	@Test
+	public void validate_subtask_create() throws Exception {  <2>
+		// given:
+			MockMvcRequestSpecification request = given();
+
+		// when:
+			ResponseOptions response = given().spec(request)
+					.queryParam("title","IV")
+					.queryParam("estimate","9")
+					.post("/tasks/fbeadacb-ef03-F653-5Ae0-8C2bF7cCdF3E/subtasks/create");
+
+		// then:
+			assertThat(response.statusCode()).isEqualTo(201);
+			assertThat(response.header("Content-Type")).matches("application/json.*");
+		// and:
+			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
+			assertThatJson(parsedJson).field("['parent']").field("['estimate']").isEqualTo("123");
+			assertThatJson(parsedJson).field("['title']").isEqualTo("IV");
+			assertThatJson(parsedJson).field("['estimate']").isEqualTo("9");
+			assertThatJson(parsedJson).field("['weight']").isEqualTo(0);
+			assertThatJson(parsedJson).field("['id']").matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
+			assertThatJson(parsedJson).field("['parent']").field("['id']").isEqualTo("FBaC9AA6-bda9-aA3D-Af66-cA99B5E4c16E");
+			assertThatJson(parsedJson).field("['parent']").field("['title']").isEqualTo("any difficult task");
+	}
+
+  @Test
+  	public void validate_tasks_create() throws Exception {  <3>
+  		// given:
+  			MockMvcRequestSpecification request = given();
+
+  		// when:
+  			ResponseOptions response = given().spec(request)
+  					.queryParam("title","Iwk")
+  					.queryParam("estimate","397")
+  					.post("/tasks/create");
+
+  		// then:
+  			assertThat(response.statusCode()).isEqualTo(201);
+  			assertThat(response.header("Content-Type")).matches("application/json.*");
+  		// and:
+  			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
+  			assertThatJson(parsedJson).field("['title']").isEqualTo("Iwk");
+  			assertThatJson(parsedJson).field("['estimate']").isEqualTo("397");
+  			assertThatJson(parsedJson).field("['id']").matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
+  	}
+
+  }
+----
+<1> the name of test class is generated from the name of package with contracts `task`
+<2> the test case `validate_subtask_create` is generated from the `subtask_create.groovy` contract
+<3> the test case `validate_tasks_create` is generated from the `task_create.groovy` contract
+
+When you put some breaking changes in the contract, it's helps to find the place which you need to change.
+
+Sometimes the code of these tests looks like boilerplate,
+but it's not important, because these tests are needed only to ensure the correctness of the contract.
+
+And if you run it, you can check your contract.
+
+When you run `mvn clean install` these test will run automatically, after generation stage.
+Besides that, after generates and runs all tests maven will install binary artifacts in the local folder `.m2`.
+Among these artifacts there is one new - an artifact with the stub of contracts (`prediction-service-0.0.1-SNAPSHOT-stubs.jar`).
+
+If you need only generate test sources without run all tests and install artifacts, you can run `mvn generate-test-sources`.
+
+Sometimes for debugging you need to install contracts without running tests, in this case you can do it by `mvn clean install -DskipTests`.
 
 
 ## Consumer configuration
 
-At the first, we need to add a dependency for work with StubRunner:
+### Dependency
+
+The configuration of dependencies looks simpler on the consumer side.
+All what we need is the stub runner dependency:
 
 [source, xml]
 ----
-<!-- StubRunner - Consumer -->
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-contract-stub-runner</artifactId>
     <scope>test</scope>
 </dependency>
-<!-- StubRunner - Consumer -->
 ----
 
-And now we can write a contract test on the consumer side:
+### Test with a stub of contracts
+
+In order to use a stub in tests, we need to use the `@AutoConfigureStubRunner` annotation:
 
 [source, java]
 ----
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@AutoConfigureStubRunner(ids = {"com.antkorwin:prediction-service:+:stubs:8585"},
-                         stubsMode = StubRunnerProperties.StubsMode.LOCAL)
+@AutoConfigureStubRunner(ids = {"com.antkorwin:prediction-service:+:stubs:8585"}, <1>
+                         stubsMode = StubRunnerProperties.StubsMode.LOCAL)  <2>
 class PredictionServiceFeignContractIT {
 
     @Autowired
@@ -225,39 +372,21 @@ class PredictionServiceFeignContractIT {
     }
 }
 ----
+<1> binary artifact with the stub of contracts
+<2> `LOCAL/REMOTE` mode
+
+As you can see the ids: `com.antkorwin:prediction-service:+:stubs:8585` is contain of :
+[`group-id`]:[`artifact-id`]:[`version of jar` (use `+` for latest)]:[`prod/dev classifier`]:[`port`].
+
+If you select a `LOCAL` mode, the stub runner will find binary artifact with contracts in your local maven repository (`~/.m2/`).
+Else if you select a `REMOTE` mode, you will need to setup the `repositoryRoot` where stub runner will find a jar with contracts.
 
 Let's run it:
 
-[source]
-----
-127.0.0.1 - POST /prediction/estimate?title=build+new+docker+swarm
-
-User-Agent: [Java/1.8.0_91]
-Connection: [keep-alive]
-Host: [localhost:8585]
-Accept: [*/*]
+image:./consumer_test_result_.png[consumer test result]
 
 
-
-Matched response definition:
-{
-  "status" : 200,
-  "body" : "{\"estimate\":44}",
-  "headers" : {
-    "Content-Type" : "application/json"
-  },
-  "transformers" : [ "response-template" ]
-}
-
-Response:
-HTTP/1.1 200
-Content-Type: [application/json]
-----
-
-image:./consumer_test_result.png[consumer test result]
-
-
-## How to manual use a Stub Runner
+## How to use the Stub Runner (manual)
 
 You can download stub runner server here:
 link:https://search.maven.org/remotecontent?filepath=org/springframework/cloud/spring-cloud-contract-stub-runner-boot/2.0.1.RELEASE/spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar[spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar]
@@ -274,24 +403,13 @@ then you can send a request to stub server:
 
 [source]
 ----
-$ curl '127.0.0.1:8088/prediction/estimate'
-
-                                        Request was not matched
-                                        =======================
-
------------------------------------------------------------------------------------------------------------------------
-| Closest stub                                             | Request                                                  |
------------------------------------------------------------------------------------------------------------------------
-                                                    |
-GET                                                        | GET
-/prediction/estimate                                       | /prediction/estimate
-                                                    |
-Query: title = build new docker swarm                      |                                                     <<<<< Query is not present
-                                                    |
-                                                    |
------------------------------------------------------------------------------------------------------------------------
+$ curl -X POST '127.0.0.1:8088/tasks/create?title=Foo&estimate=123'
 ----
 
+If you send a wrong request or make some typos,
+stub runner will find more closest variant of API which existed in the stub and shows it for you:
+
+image:./stub_runner_tool.png[stub runner jar tool manual run]
 
 
 
