@@ -122,7 +122,7 @@ This plugin is responsible for generating a source code of contract tests:
 
             <extensions>true</extensions>
             <configuration>
-                <baseClassForTests>com.antkorwin...Junit5MvcTest</baseClassForTests> <1>
+                <baseClassForTests>com.antkorwin...MvcTest</baseClassForTests> <1>
                 <testFramework>JUNIT5</testFramework> <2>
             </configuration>
         </plugin>
@@ -144,7 +144,7 @@ This class will be used for generating contract verification tests, as parent cl
 ----
 @ExtendWith(SpringExtension.class)  <1>
 @SpringBootTest
-public class Junit5MvcTest {
+public class MvcTest {
 
     @Autowired
     private WebApplicationContext context;
@@ -167,32 +167,41 @@ This is a groovy-based DSL, where you can describe request to your API and expec
 
 [source, groovy]
 ----
+package contracts.tasks.write
+
 import org.springframework.cloud.contract.spec.Contract
+import org.springframework.http.HttpStatus
+
+UUID_REGEX = "([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})";
+
 Contract.make {
-    description "should return an estimate based on the task title"
-    request{
+    description "Create new task"
+    request {
         method POST()
-        url("/prediction/estimate") {
+        url("/tasks/create") {
             queryParameters {
-                parameter("title", "build new docker swarm")
+                parameter("title", value(consumer(regex("[a-z A-Z]+"))))
+                parameter("estimate", value(consumer(regex("[0-9]+"))))
             }
         }
     }
     response {
         body(
-                estimate: 44
+                id: value(producer(regex("$UUID_REGEX"))),
+                title: fromRequest().query("title"),
+                estimate: fromRequest().query("estimate")
         )
         headers {
             contentType(applicationJson())
         }
-        status 200
+        status HttpStatus.CREATED.value()
     }
 }
 ----
 
 You can collect groovy files with contract in packages and put it in resources, as you can see here:
 
-image:./contract_resources.png[contract resource folder]
+image:./contracts_resources.png[contract resource folder]
 
 A little later we will consider generated tests from this contracts.
 
@@ -226,7 +235,7 @@ After successful build of your project,
 you get a generated test for groovy contract in the `/target/generated-test-sources/contracts` folder,
 as you can see on the next image:
 
-image:./generate_test_sources.png[generated test source cloud contract]
+image:./generated_test_sources.png[generated test source cloud contract]
 
 Let's look at these tests:
 
@@ -354,21 +363,22 @@ In order to use a stub in tests, we need to use the `@AutoConfigureStubRunner` a
 ----
 @ExtendWith(SpringExtension.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
-@AutoConfigureStubRunner(ids = {"com.antkorwin:prediction-service:+:stubs:8585"}, <1>
-                         stubsMode = StubRunnerProperties.StubsMode.LOCAL)  <2>
-class PredictionServiceFeignContractIT {
+@AutoConfigureStubRunner(ids = {"com.antkorwin:task-service:+:stubs:8585"},  <1>
+                         stubsMode = StubRunnerProperties.StubsMode.LOCAL)   <2>
+class TaskServiceFeignIT {
 
     @Autowired
-    private PredictionServiceCdcFeign feign;
+    private TaskServiceFeign taskServiceFeign;
 
     @Test
-    void predict() {
+    void getAllTasks() {
         // Arrange
         // Act
-        int estimate = feign.predictEstimate("build new docker swarm").getEstimate();
+        List<Task> tasks = taskServiceFeign.getAllTask();
         // Assert
-        assertThat(estimate).isNotNull()
-                            .isGreaterThan(10);
+        assertThat(tasks).isNotNull()
+                         .extracting(Task::getEstimate)
+                         .contains(20, 5, 100);
     }
 }
 ----
@@ -376,7 +386,8 @@ class PredictionServiceFeignContractIT {
 <2> `LOCAL/REMOTE` mode
 
 As you can see the ids: `com.antkorwin:prediction-service:+:stubs:8585` is contain of :
-[`group-id`]:[`artifact-id`]:[`version of jar` (use `+` for latest)]:[`prod/dev classifier`]:[`port`].
+
+image:./stub_ids.png[stub ids]
 
 If you select a `LOCAL` mode, the stub runner will find binary artifact with contracts in your local maven repository (`~/.m2/`).
 Else if you select a `REMOTE` mode, you will need to setup the `repositoryRoot` where stub runner will find a jar with contracts.
