@@ -451,6 +451,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_baseclass_for_contract_tests">2.2. BaseClass for contract tests</a></li>
 <li><a href="#_describe_your_contracts">2.3. Describe your contracts</a></li>
 <li><a href="#_generate_the_contract_tests">2.4. Generate the contract tests</a></li>
+<li><a href="#_different_base_classes_for_different_test_cases">2.5. Different base classes for different test cases</a></li>
 </ul>
 </li>
 <li><a href="#_consumer_configuration">3. Consumer configuration</a>
@@ -492,6 +493,34 @@ In this article, we will consider a tool to maintain the consistency of the cont
 <div class="paragraph">
 <p>In terms of the Consumer Driven Contracts,
 the <code>task-service</code> is a provider of the API, and <code>report-service</code> is a consumer.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./diagram_cdc.png" alt="spring cloud contracts"></span></p>
+</div>
+<div class="paragraph">
+<p>Working flow:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>we write groovy contract files in the <code>task-service</code></p>
+</li>
+<li>
+<p>build <code>task-service</code>, generate and run contract tests (for JUnit5)</p>
+</li>
+<li>
+<p>install JAR file with the stub of contracts (json and request/response schemes of the <code>task-service</code>)</p>
+</li>
+<li>
+<p>deploy this stub to the binary repository(Artifactory)</p>
+</li>
+<li>
+<p>write contract tests on the consumer side(<code>report-service</code>)</p>
+</li>
+<li>
+<p>use the stub from the artifactory on the consumer tests</p>
+</li>
+</ol>
 </div>
 </div>
 </div>
@@ -622,7 +651,7 @@ each of the contract tests will be inherited from this class.</td>
 <div class="sect2">
 <h3 id="_baseclass_for_contract_tests">2.2. BaseClass for contract tests</h3>
 <div class="paragraph">
-<p>This class will be used for generating contract verification tests, as parent class.</p>
+<p>This class will be used for generating contract verification tests, as a parent class.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -645,11 +674,11 @@ public class MvcTest {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>of course we use JUnit5, and ExtendWith instead of RunWith</td>
+<td>of course, we use JUnit5, and ExtendWith instead of RunWith</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>RestAssured initialization with application context.</td>
+<td>RestAssured initialization with the application context.</td>
 </tr>
 </table>
 </div>
@@ -695,7 +724,7 @@ Contract.make {
 </div>
 </div>
 <div class="paragraph">
-<p>You can collect groovy files with contract in packages and put it in resources, as you can see here:</p>
+<p>You can collect groovy files with contracts in packages and put it in the resources, as you can see here:</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./contracts_resources.png" alt="contract resource folder"></span></p>
@@ -704,14 +733,14 @@ Contract.make {
 <p>A little later we will consider generated tests from this contracts.</p>
 </div>
 <div class="paragraph">
-<p>In my opinion the using of groovy is a more intuitive and maintained way to describing a contract
-than using something like YAML. By the way Spring Cloud Contract supports both of these variants (groovy and yaml).</p>
+<p>In my opinion, the using of groovy is a more intuitive and maintained way of describing a contract
+than using something like YAML. By the way, Spring Cloud Contract supports both of these variants (groovy and yaml).</p>
 </div>
 </div>
 <div class="sect2">
 <h3 id="_generate_the_contract_tests">2.4. Generate the contract tests</h3>
 <div class="paragraph">
-<p>So, if you added all needed dependencies and wrote a contract, then we can build the project:</p>
+<p>So, if you added all the needed dependencies and wrote a contract, then we can build the project:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -719,10 +748,10 @@ than using something like YAML. By the way Spring Cloud Contract supports both o
 
 ...
 
-[INFO] --- maven-install-plugin:2.5.2:install (default-install) @ prediction-service ---
-[INFO] Installing prediction-service-0.0.1-SNAPSHOT.jar to ~\.m2\...
+[INFO] --- maven-install-plugin:2.5.2:install (default-install) @ task-service ---
+[INFO] Installing task-service-0.0.1-SNAPSHOT.jar to ~\.m2\...
 [INFO] Installing pom.xml to ~\.m2\...
-[INFO] Installing prediction-service-0.0.1-SNAPSHOT-stubs.jar to ~\.m2\...
+[INFO] Installing task-service-0.0.1-SNAPSHOT-stubs.jar to ~\.m2\...
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
@@ -733,8 +762,8 @@ than using something like YAML. By the way Spring Cloud Contract supports both o
 </div>
 </div>
 <div class="paragraph">
-<p>After successful build of your project,
-you get a generated test for groovy contract in the <code>/target/generated-test-sources/contracts</code> folder,
+<p>After a successful build of your project,
+you get a generated test for the groovy contract in the <code>/target/generated-test-sources/contracts</code> folder,
 as you can see on the next image:</p>
 </div>
 <div class="paragraph">
@@ -745,104 +774,54 @@ as you can see on the next image:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class PredictionTest extends Junit5MvcTest {
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class WriteTest extends MvcTest {  <i class="conum" data-value="1"></i><b>(1)</b>
 
 	@Test
-	public void validate_predict_estimate() throws Exception {
+	public void validate_create_task() throws Exception {  <i class="conum" data-value="2"></i><b>(2)</b>
 		// given:
 			MockMvcRequestSpecification request = given();
 
 		// when:
-			ResponseOptions response = given().spec(request)
-					.queryParam("title","build new docker swarm")
-					.post("/prediction/estimate");
-
-		// then:
-			assertThat(response.statusCode()).isEqualTo(200);
-			assertThat(response.header("Content-Type")).matches("application/json.*");
-		// and:
-			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
-			assertThatJson(parsedJson).field("['estimate']").isEqualTo(44);
-	}
-
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>If you write several contracts in one package then you get a test class with multiple test cases.
-All of these items were named like packages and files in the resource directory:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class TasksTest extends Junit5MvcTest {  <i class="conum" data-value="1"></i><b>(1)</b>
-
-	@Test
-	public void validate_subtask_create() throws Exception {  <i class="conum" data-value="2"></i><b>(2)</b>
-		// given:
-			MockMvcRequestSpecification request = given();
-
-		// when:
-			ResponseOptions response = given().spec(request)
-					.queryParam("title","IV")
-					.queryParam("estimate","9")
-					.post("/tasks/fbeadacb-ef03-F653-5Ae0-8C2bF7cCdF3E/subtasks/create");
+			ResponseOptions response = given().spec(request)  <i class="conum" data-value="3"></i><b>(3)</b>
+					.queryParam("title","G ")
+					.queryParam("estimate","42")
+					.post("/tasks/create");
 
 		// then:
 			assertThat(response.statusCode()).isEqualTo(201);
 			assertThat(response.header("Content-Type")).matches("application/json.*");
 		// and:
-			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
-			assertThatJson(parsedJson).field("['parent']").field("['estimate']").isEqualTo("123");
-			assertThatJson(parsedJson).field("['title']").isEqualTo("IV");
-			assertThatJson(parsedJson).field("['estimate']").isEqualTo("9");
-			assertThatJson(parsedJson).field("['weight']").isEqualTo(0);
+			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());  <i class="conum" data-value="4"></i><b>(4)</b>
+			assertThatJson(parsedJson).field("['title']").isEqualTo("G ");
+			assertThatJson(parsedJson).field("['estimate']").isEqualTo("42");
 			assertThatJson(parsedJson).field("['id']").matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
-			assertThatJson(parsedJson).field("['parent']").field("['id']").isEqualTo("FBaC9AA6-bda9-aA3D-Af66-cA99B5E4c16E");
-			assertThatJson(parsedJson).field("['parent']").field("['title']").isEqualTo("any difficult task");
 	}
 
-  @Test
-  	public void validate_tasks_create() throws Exception {  <i class="conum" data-value="3"></i><b>(3)</b>
-  		// given:
-  			MockMvcRequestSpecification request = given();
-
-  		// when:
-  			ResponseOptions response = given().spec(request)
-  					.queryParam("title","Iwk")
-  					.queryParam("estimate","397")
-  					.post("/tasks/create");
-
-  		// then:
-  			assertThat(response.statusCode()).isEqualTo(201);
-  			assertThat(response.header("Content-Type")).matches("application/json.*");
-  		// and:
-  			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
-  			assertThatJson(parsedJson).field("['title']").isEqualTo("Iwk");
-  			assertThatJson(parsedJson).field("['estimate']").isEqualTo("397");
-  			assertThatJson(parsedJson).field("['id']").matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
-  	}
-
-  }</code></pre>
+}</code></pre>
 </div>
 </div>
 <div class="colist arabic">
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>the name of test class is generated from the name of package with contracts <code>task</code></td>
+<td>the generated test extends from our base test class (<code>MvcTest</code>)</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>the test case <code>validate_subtask_create</code> is generated from the <code>subtask_create.groovy</code> contract</td>
+<td>the name of the test case generated from the name of the file with a contract</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>the test case <code>validate_tasks_create</code> is generated from the <code>task_create.groovy</code> contract</td>
+<td>this request generated from the contract</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>the response will be verified by the contract.</td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>When you put some breaking changes in the contract, it&#8217;s helps to find the place which you need to change.</p>
+<p>When you put some breaking changes in the contract, these tests help to find the place which you need to change.</p>
 </div>
 <div class="paragraph">
 <p>Sometimes the code of these tests looks like boilerplate,
@@ -861,6 +840,103 @@ Among these artifacts there is one new - an artifact with the stub of contracts 
 </div>
 <div class="paragraph">
 <p>Sometimes for debugging you need to install contracts without running tests, in this case you can do it by <code>mvn clean install -DskipTests</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_different_base_classes_for_different_test_cases">2.5. Different base classes for different test cases</h3>
+<div class="paragraph">
+<p>Sometimes you have test cases with a different initialization logic.
+For example, when you test a creating of something, you don&#8217;t need to put in the database the already created records.
+But if you test a reading from a database, then you need to be sure that read data sets exist in the database.</p>
+</div>
+<div class="paragraph">
+<p>You can set a package with the base classes for tests generate, instead of setting a one base class for all tests.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;plugin&gt;
+    &lt;groupId&gt;org.springframework.cloud&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-cloud-contract-maven-plugin&lt;/artifactId&gt;
+    &lt;version&gt;2.1.0.BUILD-SNAPSHOT&lt;/version&gt;
+    &lt;extensions&gt;true&lt;/extensions&gt;
+    &lt;configuration&gt;
+        &lt;packageWithBaseClasses&gt;com.antkorwin.taskservice.api.contract&lt;/packageWithBaseClasses&gt; <i class="conum" data-value="1"></i><b>(1)</b>
+        &lt;testFramework&gt;JUNIT5&lt;/testFramework&gt;
+    &lt;/configuration&gt;
+&lt;/plugin&gt;</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>package with the base classes</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>And now, you need to keep your contracts directory in the next kind:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./contract_res_groups.png" alt="contracts directory"></span></p>
+</div>
+<div class="paragraph">
+<p>The names of your base classes depend on the structure of the contracts package,
+you need to reflect the names of directories in the name of the base class.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./base_classes.png" alt="different base classes"></span></p>
+</div>
+<div class="paragraph">
+<p>And you will get the next generated tests structure:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./generated_test_sources.png" alt="generated test sources"></span></p>
+</div>
+<div class="paragraph">
+<p>Also when you write several contracts in one package, then you get a test class with multiple test cases.
+All of these items were named like packages and files in the resource directory:</p>
+</div>
+<div class="paragraph">
+<p>So, we got a next tests after run <code>generate-test-sources</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class ReadTest extends TasksReadBase {  <i class="conum" data-value="1"></i><b>(1)</b>
+
+	@Test
+	public void validate_task_list() throws Exception {
+    ...
+	}
+
+}
+
+public class WriteTest extends TasksWriteBase {  <i class="conum" data-value="2"></i><b>(2)</b>
+
+	@Test
+	public void validate_create_task() throws Exception {
+		...
+	}
+
+    @Test
+	public void validate_create_subtask() throws Exception {
+      ...
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>extends from the first base class (for tests reading)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>extends from the second base class (for tests writing)</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -1026,7 +1102,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-09-24 23:22:17 +10
+Last updated 2018-09-25 09:42:10 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

@@ -29,6 +29,22 @@ In this article, we will consider a tool to maintain the consistency of the cont
 In terms of the Consumer Driven Contracts,
 the `task-service` is a provider of the API, and `report-service` is a consumer.
 
+image:./diagram_cdc.png[spring cloud contracts]
+
+
+Working flow:
+
+. we write groovy contract files in the `task-service`
+
+. build `task-service`, generate and run contract tests (for JUnit5)
+
+. install JAR file with the stub of contracts (json and request/response schemes of the `task-service`)
+
+. deploy this stub to the binary repository(Artifactory)
+
+. write contract tests on the consumer side(`report-service`)
+
+. use the stub from the artifactory on the consumer tests
 
 ## Provider configuration
 
@@ -138,7 +154,7 @@ each of the contract tests will be inherited from this class.
 
 ### BaseClass for contract tests
 
-This class will be used for generating contract verification tests, as parent class.
+This class will be used for generating contract verification tests, as a parent class.
 
 [source, java]
 ----
@@ -156,8 +172,8 @@ public class MvcTest {
 
 }
 ----
-<1> of course we use JUnit5, and ExtendWith instead of RunWith
-<2> RestAssured initialization with application context.
+<1> of course, we use JUnit5, and ExtendWith instead of RunWith
+<2> RestAssured initialization with the application context.
 
 
 ### Describe your contracts
@@ -199,18 +215,18 @@ Contract.make {
 }
 ----
 
-You can collect groovy files with contract in packages and put it in resources, as you can see here:
+You can collect groovy files with contracts in packages and put it in the resources, as you can see here:
 
 image:./contracts_resources.png[contract resource folder]
 
 A little later we will consider generated tests from this contracts.
 
-In my opinion the using of groovy is a more intuitive and maintained way to describing a contract
-than using something like YAML. By the way Spring Cloud Contract supports both of these variants (groovy and yaml).
+In my opinion, the using of groovy is a more intuitive and maintained way of describing a contract
+than using something like YAML. By the way, Spring Cloud Contract supports both of these variants (groovy and yaml).
 
 ### Generate the contract tests
 
-So, if you added all needed dependencies and wrote a contract, then we can build the project:
+So, if you added all the needed dependencies and wrote a contract, then we can build the project:
 
 [source]
 ----
@@ -218,10 +234,10 @@ $ mvn clean install
 
 ...
 
-[INFO] --- maven-install-plugin:2.5.2:install (default-install) @ prediction-service ---
-[INFO] Installing prediction-service-0.0.1-SNAPSHOT.jar to ~\.m2\...
+[INFO] --- maven-install-plugin:2.5.2:install (default-install) @ task-service ---
+[INFO] Installing task-service-0.0.1-SNAPSHOT.jar to ~\.m2\...
 [INFO] Installing pom.xml to ~\.m2\...
-[INFO] Installing prediction-service-0.0.1-SNAPSHOT-stubs.jar to ~\.m2\...
+[INFO] Installing task-service-0.0.1-SNAPSHOT-stubs.jar to ~\.m2\...
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
@@ -231,8 +247,8 @@ $ mvn clean install
 [INFO] ------------------------------------------------------------------------
 ----
 
-After successful build of your project,
-you get a generated test for groovy contract in the `/target/generated-test-sources/contracts` folder,
+After a successful build of your project,
+you get a generated test for the groovy contract in the `/target/generated-test-sources/contracts` folder,
 as you can see on the next image:
 
 image:./generated_test_sources.png[generated test source cloud contract]
@@ -241,89 +257,38 @@ Let's look at these tests:
 
 [source, java]
 ----
-public class PredictionTest extends Junit5MvcTest {
+public class WriteTest extends MvcTest {  <1>
 
 	@Test
-	public void validate_predict_estimate() throws Exception {
+	public void validate_create_task() throws Exception {  <2>
 		// given:
 			MockMvcRequestSpecification request = given();
 
 		// when:
-			ResponseOptions response = given().spec(request)
-					.queryParam("title","build new docker swarm")
-					.post("/prediction/estimate");
-
-		// then:
-			assertThat(response.statusCode()).isEqualTo(200);
-			assertThat(response.header("Content-Type")).matches("application/json.*");
-		// and:
-			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
-			assertThatJson(parsedJson).field("['estimate']").isEqualTo(44);
-	}
-
-}
-----
-
-If you write several contracts in one package then you get a test class with multiple test cases.
-All of these items were named like packages and files in the resource directory:
-
-[source, java]
-----
-public class TasksTest extends Junit5MvcTest {  <1>
-
-	@Test
-	public void validate_subtask_create() throws Exception {  <2>
-		// given:
-			MockMvcRequestSpecification request = given();
-
-		// when:
-			ResponseOptions response = given().spec(request)
-					.queryParam("title","IV")
-					.queryParam("estimate","9")
-					.post("/tasks/fbeadacb-ef03-F653-5Ae0-8C2bF7cCdF3E/subtasks/create");
+			ResponseOptions response = given().spec(request)  <3>
+					.queryParam("title","G ")
+					.queryParam("estimate","42")
+					.post("/tasks/create");
 
 		// then:
 			assertThat(response.statusCode()).isEqualTo(201);
 			assertThat(response.header("Content-Type")).matches("application/json.*");
 		// and:
-			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
-			assertThatJson(parsedJson).field("['parent']").field("['estimate']").isEqualTo("123");
-			assertThatJson(parsedJson).field("['title']").isEqualTo("IV");
-			assertThatJson(parsedJson).field("['estimate']").isEqualTo("9");
-			assertThatJson(parsedJson).field("['weight']").isEqualTo(0);
+			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());  <4>
+			assertThatJson(parsedJson).field("['title']").isEqualTo("G ");
+			assertThatJson(parsedJson).field("['estimate']").isEqualTo("42");
 			assertThatJson(parsedJson).field("['id']").matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
-			assertThatJson(parsedJson).field("['parent']").field("['id']").isEqualTo("FBaC9AA6-bda9-aA3D-Af66-cA99B5E4c16E");
-			assertThatJson(parsedJson).field("['parent']").field("['title']").isEqualTo("any difficult task");
 	}
 
-  @Test
-  	public void validate_tasks_create() throws Exception {  <3>
-  		// given:
-  			MockMvcRequestSpecification request = given();
-
-  		// when:
-  			ResponseOptions response = given().spec(request)
-  					.queryParam("title","Iwk")
-  					.queryParam("estimate","397")
-  					.post("/tasks/create");
-
-  		// then:
-  			assertThat(response.statusCode()).isEqualTo(201);
-  			assertThat(response.header("Content-Type")).matches("application/json.*");
-  		// and:
-  			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());
-  			assertThatJson(parsedJson).field("['title']").isEqualTo("Iwk");
-  			assertThatJson(parsedJson).field("['estimate']").isEqualTo("397");
-  			assertThatJson(parsedJson).field("['id']").matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
-  	}
-
-  }
+}
 ----
-<1> the name of test class is generated from the name of package with contracts `task`
-<2> the test case `validate_subtask_create` is generated from the `subtask_create.groovy` contract
-<3> the test case `validate_tasks_create` is generated from the `task_create.groovy` contract
+<1> the generated test extends from our base test class (`MvcTest`)
+<2> the name of the test case generated from the name of the file with a contract
+<3> this request generated from the contract
+<4> the response will be verified by the contract.
 
-When you put some breaking changes in the contract, it's helps to find the place which you need to change.
+
+When you put some breaking changes in the contract, these tests help to find the place which you need to change.
 
 Sometimes the code of these tests looks like boilerplate,
 but it's not important, because these tests are needed only to ensure the correctness of the contract.
@@ -338,6 +303,76 @@ If you need only generate test sources without run all tests and install artifac
 
 Sometimes for debugging you need to install contracts without running tests, in this case you can do it by `mvn clean install -DskipTests`.
 
+
+### Different base classes for different test cases
+
+Sometimes you have test cases with a different initialization logic.
+For example, when you test a creating of something, you don't need to put in the database the already created records.
+But if you test a reading from a database, then you need to be sure that read data sets exist in the database.
+
+You can set a package with the base classes for tests generate, instead of setting a one base class for all tests.
+
+[source, xml]
+----
+<plugin>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-contract-maven-plugin</artifactId>
+    <version>2.1.0.BUILD-SNAPSHOT</version>
+    <extensions>true</extensions>
+    <configuration>
+        <packageWithBaseClasses>com.antkorwin.taskservice.api.contract</packageWithBaseClasses> <1>
+        <testFramework>JUNIT5</testFramework>
+    </configuration>
+</plugin>
+----
+<1> package with the base classes
+
+
+And now, you need to keep your contracts directory in the next kind:
+
+image:./contract_res_groups.png[contracts directory]
+
+The names of your base classes depend on the structure of the contracts package,
+you need to reflect the names of directories in the name of the base class.
+
+image:./base_classes.png[different base classes]
+
+And you will get the next generated tests structure:
+
+image:./generated_test_sources.png[generated test sources]
+
+Also when you write several contracts in one package, then you get a test class with multiple test cases.
+All of these items were named like packages and files in the resource directory:
+
+So, we got a next tests after run `generate-test-sources`:
+
+[source, java]
+----
+public class ReadTest extends TasksReadBase {  <1>
+
+	@Test
+	public void validate_task_list() throws Exception {
+    ...
+	}
+
+}
+
+public class WriteTest extends TasksWriteBase {  <2>
+
+	@Test
+	public void validate_create_task() throws Exception {
+		...
+	}
+
+    @Test
+	public void validate_create_subtask() throws Exception {
+      ...
+    }
+
+}
+----
+<1> extends from the first base class (for tests reading)
+<2> extends from the second base class (for tests writing)
 
 ## Consumer configuration
 
