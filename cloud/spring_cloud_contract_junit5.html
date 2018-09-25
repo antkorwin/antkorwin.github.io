@@ -444,29 +444,30 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc2">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_intro">1. Intro</a></li>
-<li><a href="#_provider_configuration">2. Provider configuration</a>
+<li><a href="#_problem">1. Problem</a></li>
+<li><a href="#_workflow_of_using_a_cloud_contract">2. Workflow of using a cloud contract:</a></li>
+<li><a href="#_provider_configuration">3. Provider configuration</a>
 <ul class="sectlevel2">
-<li><a href="#_dependencies">2.1. Dependencies</a></li>
-<li><a href="#_baseclass_for_contract_tests">2.2. BaseClass for contract tests</a></li>
-<li><a href="#_describe_your_contracts">2.3. Describe your contracts</a></li>
-<li><a href="#_generate_the_contract_tests">2.4. Generate the contract tests</a></li>
-<li><a href="#_different_base_classes_for_different_test_cases">2.5. Different base classes for different test cases</a></li>
+<li><a href="#_dependencies">3.1. Dependencies</a></li>
+<li><a href="#_baseclass_for_contract_tests">3.2. BaseClass for contract tests</a></li>
+<li><a href="#_describe_your_contracts">3.3. Describe your contracts</a></li>
+<li><a href="#_generate_the_contract_tests">3.4. Generate the contract tests</a></li>
+<li><a href="#_different_base_classes_for_different_test_cases">3.5. Different base classes for different test cases</a></li>
 </ul>
 </li>
-<li><a href="#_consumer_configuration">3. Consumer configuration</a>
+<li><a href="#_consumer_configuration">4. Consumer configuration</a>
 <ul class="sectlevel2">
-<li><a href="#_dependency">3.1. Dependency</a></li>
-<li><a href="#_test_with_a_stub_of_contracts">3.2. Test with a stub of contracts</a></li>
+<li><a href="#_dependency">4.1. Dependency</a></li>
+<li><a href="#_test_with_a_stub_of_contracts">4.2. Test with a stub of contracts</a></li>
 </ul>
 </li>
-<li><a href="#_how_to_use_the_stub_runner_manual">4. How to use the Stub Runner (manual)</a></li>
+<li><a href="#_how_to_use_the_stub_runner_manual">5. How to use the Stub Runner (manual)</a></li>
 </ul>
 </div>
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_intro">1. Intro</h2>
+<h2 id="_problem">1. Problem</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>In this article, we will consider an example of microservice application.</p>
@@ -483,7 +484,7 @@ The <code>report-service</code> provides to us the statistics of tasks distribut
 For creating these statistics, the <code>report-service</code> is using the API has provided by the <code>task-service</code>.</p>
 </div>
 <div class="paragraph">
-<p><span class="image"><img src="./report_service.png" alt="report service result"></span></p>
+<p><span class="image"><img src="../report_service.png" alt="report service result"></span></p>
 </div>
 <div class="paragraph">
 <p>So, we&#8217;ve a two services that communicate together.
@@ -495,10 +496,27 @@ In this article, we will consider a tool to maintain the consistency of the cont
 the <code>task-service</code> is a provider of the API, and <code>report-service</code> is a consumer.</p>
 </div>
 <div class="paragraph">
+<p>If we change a contract on the producer side, our consumer will not be able to get a data from producer:</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="./contract_change.png" alt="put some breakable changes in contract"></span></p>
+</div>
+<div class="paragraph">
+<p>We need to know that one of the services does not match the contract.
+And we need to know about this as soon as possible.
+In this article, we will consider how to prevent this situation by using the cloud contracts.
+In order to do it, we will write contract tests and will consider how to delivery a contract to each of the services.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_workflow_of_using_a_cloud_contract">2. Workflow of using a cloud contract:</h2>
+<div class="sectionbody">
+<div class="paragraph">
 <p><span class="image"><img src="./diagram_cdc.png" alt="spring cloud contracts"></span></p>
 </div>
 <div class="paragraph">
-<p>Working flow:</p>
+<p> <br></p>
 </div>
 <div class="olist arabic">
 <ol class="arabic">
@@ -518,14 +536,14 @@ the <code>task-service</code> is a provider of the API, and <code>report-service
 <p>write contract tests on the consumer side(<code>report-service</code>)</p>
 </li>
 <li>
-<p>use the stub from the artifactory on the consumer tests</p>
+<p>use the stub from the artifactory in tests of the consumer</p>
 </li>
 </ol>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_provider_configuration">2. Provider configuration</h2>
+<h2 id="_provider_configuration">3. Provider configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Support for JUnit5 is currently unavailable in stable release of Spring Cloud Contract.
@@ -535,7 +553,7 @@ But this feature already completed and we can use it from the snapshots.</p>
 <p>We need to add the next repository of snapshots:</p>
 </div>
 <div class="sect2">
-<h3 id="_dependencies">2.1. Dependencies</h3>
+<h3 id="_dependencies">3.1. Dependencies</h3>
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;repositories&gt;
@@ -649,7 +667,7 @@ each of the contract tests will be inherited from this class.</td>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_baseclass_for_contract_tests">2.2. BaseClass for contract tests</h3>
+<h3 id="_baseclass_for_contract_tests">3.2. BaseClass for contract tests</h3>
 <div class="paragraph">
 <p>This class will be used for generating contract verification tests, as a parent class.</p>
 </div>
@@ -684,7 +702,7 @@ public class MvcTest {
 </div>
 </div>
 <div class="sect2">
-<h3 id="_describe_your_contracts">2.3. Describe your contracts</h3>
+<h3 id="_describe_your_contracts">3.3. Describe your contracts</h3>
 <div class="paragraph">
 <p>All what we need to make manually is a contract declaration of our API.
 This is a groovy-based DSL, where you can describe request to your API and expected response for it:</p>
@@ -738,7 +756,7 @@ than using something like YAML. By the way, Spring Cloud Contract supports both 
 </div>
 </div>
 <div class="sect2">
-<h3 id="_generate_the_contract_tests">2.4. Generate the contract tests</h3>
+<h3 id="_generate_the_contract_tests">3.4. Generate the contract tests</h3>
 <div class="paragraph">
 <p>So, if you added all the needed dependencies and wrote a contract, then we can build the project:</p>
 </div>
@@ -839,11 +857,11 @@ Among these artifacts there is one new - an artifact with the stub of contracts 
 <p>If you need only generate test sources without run all tests and install artifacts, you can run <code>mvn generate-test-sources</code>.</p>
 </div>
 <div class="paragraph">
-<p>Sometimes for debugging you need to install contracts without running tests, in this case you can do it by <code>mvn clean install -DskipTests</code>.</p>
+<p>Sometimes for debugging you need to install contracts without running tests, in this case, you can do it by <code>mvn clean install -DskipTests</code>.</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_different_base_classes_for_different_test_cases">2.5. Different base classes for different test cases</h3>
+<h3 id="_different_base_classes_for_different_test_cases">3.5. Different base classes for different test cases</h3>
 <div class="paragraph">
 <p>Sometimes you have test cases with a different initialization logic.
 For example, when you test a creating of something, you don&#8217;t need to put in the database the already created records.
@@ -942,10 +960,10 @@ public class WriteTest extends TasksWriteBase {  <i class="conum" data-value="2"
 </div>
 </div>
 <div class="sect1">
-<h2 id="_consumer_configuration">3. Consumer configuration</h2>
+<h2 id="_consumer_configuration">4. Consumer configuration</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_dependency">3.1. Dependency</h3>
+<h3 id="_dependency">4.1. Dependency</h3>
 <div class="paragraph">
 <p>The configuration of dependencies looks simpler on the consumer side.
 All what we need is the stub runner dependency:</p>
@@ -961,7 +979,7 @@ All what we need is the stub runner dependency:</p>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_test_with_a_stub_of_contracts">3.2. Test with a stub of contracts</h3>
+<h3 id="_test_with_a_stub_of_contracts">4.2. Test with a stub of contracts</h3>
 <div class="paragraph">
 <p>In order to use a stub in tests, we need to use the <code>@AutoConfigureStubRunner</code> annotation:</p>
 </div>
@@ -1021,7 +1039,7 @@ Else if you select a <code>REMOTE</code> mode, you will need to setup the <code>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_how_to_use_the_stub_runner_manual">4. How to use the Stub Runner (manual)</h2>
+<h2 id="_how_to_use_the_stub_runner_manual">5. How to use the Stub Runner (manual)</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>You can download stub runner server here:
@@ -1102,7 +1120,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-09-25 09:42:10 +10
+Last updated 2018-09-26 00:19:56 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

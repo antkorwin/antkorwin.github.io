@@ -8,7 +8,7 @@
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
-## Intro
+## Problem
 
 In this article, we will consider an example of microservice application.
 
@@ -20,7 +20,7 @@ In the `task-service` we can create and get tasks.
 The `report-service` provides to us the statistics of tasks distribution.
 For creating these statistics, the `report-service` is using the API has provided by the `task-service`.
 
-image:./report_service.png[report service result]
+image:../report_service.png[report service result]
 
 So, we've a two services that communicate together.
 The **"contract"** is the API which is using between a pair of microservices.
@@ -29,10 +29,21 @@ In this article, we will consider a tool to maintain the consistency of the cont
 In terms of the Consumer Driven Contracts,
 the `task-service` is a provider of the API, and `report-service` is a consumer.
 
+If we change a contract on the producer side, our consumer will not be able to get a data from producer:
+
+image:./contract_change.png[put some breakable changes in contract]
+
+We need to know that one of the services does not match the contract.
+And we need to know about this as soon as possible.
+In this article, we will consider how to prevent this situation by using the cloud contracts.
+In order to do it, we will write contract tests and will consider how to delivery a contract to each of the services.
+
+
+## Workflow of using a cloud contract:
+
 image:./diagram_cdc.png[spring cloud contracts]
 
-
-Working flow:
+{sp} +
 
 . we write groovy contract files in the `task-service`
 
@@ -44,7 +55,7 @@ Working flow:
 
 . write contract tests on the consumer side(`report-service`)
 
-. use the stub from the artifactory on the consumer tests
+. use the stub from the artifactory in tests of the consumer
 
 ## Provider configuration
 
@@ -301,7 +312,7 @@ Among these artifacts there is one new - an artifact with the stub of contracts 
 
 If you need only generate test sources without run all tests and install artifacts, you can run `mvn generate-test-sources`.
 
-Sometimes for debugging you need to install contracts without running tests, in this case you can do it by `mvn clean install -DskipTests`.
+Sometimes for debugging you need to install contracts without running tests, in this case, you can do it by `mvn clean install -DskipTests`.
 
 
 ### Different base classes for different test cases
