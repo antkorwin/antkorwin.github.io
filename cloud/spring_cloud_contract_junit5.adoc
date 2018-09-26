@@ -8,7 +8,7 @@
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
-## Problem
+## Services integration problem
 
 In this article, we will consider an example of microservice application.
 
