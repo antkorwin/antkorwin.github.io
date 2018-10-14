@@ -20,7 +20,7 @@ In the `task-service` we can create and get tasks.
 The `report-service` provides to us the statistics of tasks distribution.
 For creating these statistics, the `report-service` is using the API has provided by the `task-service`.
 
-image:../report_service.png[report service result]
+image:./cdc_frontend_demo.gif[frontend demo]
 
 So, we've a two services that communicate together.
 The **"contract"** is the API which is using between a pair of microservices.
@@ -235,7 +235,7 @@ A little later we will consider generated tests from this contracts.
 In my opinion, the using of groovy is a more intuitive and maintained way of describing a contract
 than using something like YAML. By the way, Spring Cloud Contract supports both of these variants (groovy and yaml).
 
-### Generate the contract tests
+### Generate the contract tests and install stubs
 
 So, if you added all the needed dependencies and wrote a contract, then we can build the project:
 
@@ -418,10 +418,7 @@ class TaskServiceFeignIT {
 
     @Test
     void getAllTasks() {
-        // Arrange
-        // Act
         List<Task> tasks = taskServiceFeign.getAllTask();
-        // Assert
         assertThat(tasks).isNotNull()
                          .extracting(Task::getEstimate)
                          .contains(20, 5, 100);
@@ -453,21 +450,136 @@ let's run the next command under directory with jars of contract stubs:
 
 [source]
 ----
- java -jar ../spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar --stubrunner.stubs-mode="local" --stubrunner.ids=com.a ntkorwin:prediction-service:+:stubs:8088
+$ java -jar ../spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar --stubrunner.stubs-mode="local" --stubrunner.ids=com.a ntkorwin:prediction-service:+:stubs:7000
 ----
 
 then you can send a request to stub server:
 
 [source]
 ----
-$ curl -X POST '127.0.0.1:8088/tasks/create?title=Foo&estimate=123'
+$ curl -X POST '127.0.0.1:7000/tasks/create?title=Foo&estimate=123'
 ----
 
 If you send a wrong request or make some typos,
 stub runner will find more closest variant of API which existed in the stub and shows it for you:
 
-image:./stub_runner_tool.png[stub runner jar tool manual run]
+image:./stub_runner.png[stub runner jar tool manual run]
 
+
+## How to use the Cloud Contracts with the remote repository and configure CI system.
+
+Now, we can make a contract and we can build and install it locally,
+the next step is a deploy this contract in the remote repository
+and sharing stubs between the different team of developers.
+We will use a JFrog Artifactory as a binary repository and TeamCity as a CI server.
+
+image:./teamcity_artifactory_docker.png[teacity and artifactory in docker]
+
+### Run TeamCity and Artifactory with docker-compose
+
+All what we need is to run the next docker compose file:
+
+[source]
+----
+version: '3'
+services:
+  teamcity-server-instance:
+    image: jetbrains/teamcity-server
+    ports:
+     - "127.0.0.1:8111:8111"
+    restart: always
+    volumes:
+      - ./test/teamcity/data:/data/teamcity_server/datadir
+      - ./test/teamcity/logs:/opt/teamcity/logs
+    networks:
+      - teamcity-network
+
+  teamcity-agent-instance:
+    image: jetbrains/teamcity-agent
+    restart: always
+    volumes:
+      - ./test/teamcity/agent-conf:/data/teamcity_agent/conf
+    environment:
+      - SERVER_URL=teamcity-server-instance:8111
+    networks:
+      - teamcity-network
+
+  artifactory-instance:
+    image: docker.bintray.io/jfrog/artifactory-oss:latest
+    ports:
+      - "127.0.0.1:8081:8081"
+    restart: always
+    networks:
+      - teamcity-network
+
+networks:
+  teamcity-network:
+----
+
+Here we start a TeamCity Server and TeamCity Agent on the same network, after this, we will start Artifactory.
+
+[source]
+----
+$ docker-compose up
+
+Starting tc_artifactory-instance_1     ... done
+Starting tc_teamcity-agent-instance_1  ... done
+Starting tc_teamcity-server-instance_1 ... done
+
+...
+----
+
+### TeamCity & Artifactory configuration
+
+When the all services successfully started, you need to configure TeamCity and create maven repository in the Artifactory.
+
+As you can see on the next video, you need:
+
+- install artifactory teamcity plugin
+- setup connection from TeamCity to Artifactory
+- install Maven repository in the Artifactory
+- configure build step of the project in TeamCity, to deploy artifacts in the configured Artifactory instance
+
+
+image:./cdc_tc.gif[teamcity configuration with artifactory]
+
+### Use the remote repository in the consumer tests
+
+Now we need to set up a remote repository URL for stub runner:
+
+[source, java]
+----
+@EnableIntegrationTests
+@AutoConfigureStubRunner(ids = {"com.antkorwin:task-service:+:stubs"},
+                         stubsMode = StubRunnerProperties.StubsMode.REMOTE,
+                         snapshotCheckSkip = true,
+                         repositoryRoot = "http://192.168.0.8:8081/artifactory/libs-snapshot-local") <1>
+class TaskServiceFeignIT {
+
+    @Autowired
+    private TaskServiceFeign taskServiceFeign;
+
+    @Test
+    void getAllTasks() {
+        List<Task> tasks = taskServiceFeign.getAllTask();
+        assertThat(tasks).isNotNull()
+                         .extracting(Task::getEstimate)
+                         .contains(20, 17, 100);
+    }
+}
+----
+<1> Use an address of artifactory instance
+
+When you commit something in the git repository, TeamCity fetch it,
+build and deploy artifacts in the Artifactory, you can see all this sequence
+on the next demo:
+
+image:./commit.gif[deploy after commit on github]
+
+
+## Source code of this project on the github
+
+image:../icons/git.png[github,64,64] link:https://github.com/antkorwin/cdc-spring[github.com/antkorwin/cdc-spring]
 
 
 // END OF CONTENT
@@ -482,7 +594,7 @@ include::../metrica.adoc[]
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'TITLE'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'spring_cloud_contract'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
