@@ -16,28 +16,28 @@ This application consists of `task-service` and `report-service`.
 
 image:./microservices_diagram.png[diagram of microservices]
 
-In the `task-service` we can create and get tasks.
-The `report-service` provides to us the statistics of tasks distribution.
+In the `task-service`, we can create and get tasks.
+The `report-service` provides us the statistics of tasks distribution.
 For creating these statistics, the `report-service` is using the API has provided by the `task-service`.
 
 image:./cdc_frontend_demo.gif[frontend demo]
 
-So, we've a two services that communicate together.
+So, we have two services that communicate together.
 The **"contract"** is the API which is using between a pair of microservices.
 In this article, we will consider a tool to maintain the consistency of the contract between microservices.
 
 In terms of the Consumer Driven Contracts,
 the `task-service` is a provider of the API, and `report-service` is a consumer.
 
-If we change a contract on the producer side, our consumer will not be able to get a data from producer:
+If we change a contract on the producer side,
+our consumer will not be able to get data from the producer:
 
 image:./contract_change.png[put some breakable changes in contract]
 
 We need to know that one of the services does not match the contract.
 And we need to know about this as soon as possible.
-In this article, we will consider how to prevent this situation by using the cloud contracts.
-In order to do it, we will write contract tests and will consider how to delivery a contract to each of the services.
-
+In this article, we will consider how to prevent this situation by using cloud contracts.
+In order to do it, we will write contract tests and will consider how to deliver a contract to each of the services.
 
 ## Workflow of using a cloud contract:
 
@@ -45,22 +45,28 @@ image:./diagram_cdc.png[spring cloud contracts]
 
 {sp} +
 
-. we write groovy contract files in the `task-service`
+. we write groovy contract files on the producer side (in the `task-service`)
 
 . build `task-service`, generate and run contract tests (for JUnit5)
 
-. install JAR file with the stub of contracts (json and request/response schemes of the `task-service`)
+. install JAR file with the stub of contracts (json request/response schemes of the `task-service`)
 
-. deploy this stub to the binary repository(Artifactory)
+. deploy this stub to the binary repository (Artifactory)
 
-. write contract tests on the consumer side(`report-service`)
+. write contract tests on the consumer side (in the `report-service`)
 
-. use the stub from the artifactory in tests of the consumer
+. use the stub from the Artifactory in tests of the consumer
 
 ## Provider configuration
 
-Support for JUnit5 is currently unavailable in stable release of Spring Cloud Contract.
-But this feature already completed and we can use it from the snapshots.
+Support for **JUnit5** is currently unavailable in the stable release of Spring Cloud Contract(2.0.1).
+But this feature already completed in the master branch and we can use it from the snapshots.
+
+I think it's possible to use an unstable version for work with JUnit5,
+because we will use this just in tests, and the spring cloud contract
+is a project with a good ecosystem and support.
+In my opinion, an ability to use **JUnit5** in tests provides us a lot of benefits
+and we can close our eyes to work with the version from snapshots.
 
 We need to add the next repository of snapshots:
 
@@ -80,7 +86,7 @@ We need to add the next repository of snapshots:
 </repositories>
 ----
 
-Also we need to use a snapshot for plugins,
+Also, we need to use a snapshot for plugins,
 because Spring Cloud Contract generates source code with the help of maven plugin:
 
 [source, xml]
@@ -97,7 +103,7 @@ because Spring Cloud Contract generates source code with the help of maven plugi
 </pluginRepositories>
 ----
 
-and now, we can add the next dependency:
+And now, we can add the next dependency:
 
 [source, xml]
 ----
@@ -108,7 +114,7 @@ and now, we can add the next dependency:
 </dependency>
 ----
 
-also we need to add a dependency management for spring cloud 2.1.0 snapshot:
+Also, we need to add a dependency management for spring cloud 2.1.0 snapshot:
 
 [source, xml]
 ----
@@ -135,7 +141,7 @@ also we need to add a dependency management for spring cloud 2.1.0 snapshot:
 </dependencyManagement>
 ----
 
-In the plugin section, we need to configure the `spring-cloud-contract-maven-plugin`,
+In the plugin section, we need to configure the `spring-cloud-contract-maven-plugin`.
 This plugin is responsible for generating a source code of contract tests:
 
 [source, xml]
@@ -161,7 +167,7 @@ This plugin is responsible for generating a source code of contract tests:
 ----
 <1> The reference to the base class for your auto-generated tests,
 each of the contract tests will be inherited from this class.
-<2> the setting for Junit5 tests generation.
+<2> The setting for Junit5 tests generation.
 
 ### BaseClass for contract tests
 
@@ -189,8 +195,8 @@ public class MvcTest {
 
 ### Describe your contracts
 
-All what we need to make manually is a contract declaration of our API.
-This is a groovy-based DSL, where you can describe request to your API and expected response for it:
+All that we need to make manually is a contract declaration of our API.
+This is a groovy based DSL, where you can describe a request to your API and expected response for it:
 
 [source, groovy]
 ----
@@ -233,7 +239,7 @@ image:./contracts_resources.png[contract resource folder]
 A little later we will consider generated tests from this contracts.
 
 In my opinion, the using of groovy is a more intuitive and maintained way of describing a contract
-than using something like YAML. By the way, Spring Cloud Contract supports both of these variants (groovy and yaml).
+than using something like YAML. By the way, Spring Cloud Contract supports both of these variants (groovy and YAML).
 
 ### Generate the contract tests and install stubs
 
@@ -270,26 +276,25 @@ Let's look at these tests:
 ----
 public class WriteTest extends MvcTest {  <1>
 
-	@Test
-	public void validate_create_task() throws Exception {  <2>
-		// given:
-			MockMvcRequestSpecification request = given();
-
-		// when:
-			ResponseOptions response = given().spec(request)  <3>
-					.queryParam("title","G ")
-					.queryParam("estimate","42")
-					.post("/tasks/create");
-
+  @Test
+  public void validate_create_task() throws Exception {  <2>
+    // given:
+    MockMvcRequestSpecification request = given();
+    // when:
+    ResponseOptions response = given().spec(request)  <3>
+                                      .queryParam("title","G ")
+                                      .queryParam("estimate","42")
+                                      .post("/tasks/create");
 		// then:
-			assertThat(response.statusCode()).isEqualTo(201);
-			assertThat(response.header("Content-Type")).matches("application/json.*");
-		// and:
-			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());  <4>
-			assertThatJson(parsedJson).field("['title']").isEqualTo("G ");
-			assertThatJson(parsedJson).field("['estimate']").isEqualTo("42");
-			assertThatJson(parsedJson).field("['id']").matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
-	}
+    assertThat(response.statusCode()).isEqualTo(201);
+    assertThat(response.header("Content-Type")).matches("application/json.*");
+    // and:
+    DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());  <4>
+    assertThatJson(parsedJson).field("['title']").isEqualTo("G ");
+    assertThatJson(parsedJson).field("['estimate']").isEqualTo("42");
+    assertThatJson(parsedJson).field("['id']")
+      .matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
+  }
 
 }
 ----
@@ -306,7 +311,8 @@ but it's not important, because these tests are needed only to ensure the correc
 
 And if you run it, you can check your contract.
 
-When you run `mvn clean install` these test will run automatically, after generation stage.
+When you run `mvn clean install` these tests will run automatically,
+after generation stage.
 Besides that, after generates and runs all tests maven will install binary artifacts in the local folder `.m2`.
 Among these artifacts there is one new - an artifact with the stub of contracts (`prediction-service-0.0.1-SNAPSHOT-stubs.jar`).
 
@@ -361,25 +367,23 @@ So, we got a next tests after run `generate-test-sources`:
 ----
 public class ReadTest extends TasksReadBase {  <1>
 
-	@Test
-	public void validate_task_list() throws Exception {
+  @Test
+  public void validate_task_list() throws Exception {
     ...
-	}
-
+  }
 }
 
 public class WriteTest extends TasksWriteBase {  <2>
 
-	@Test
-	public void validate_create_task() throws Exception {
-		...
-	}
+  @Test
+  public void validate_create_task() throws Exception {
+    ...
+  }
 
-    @Test
-	public void validate_create_subtask() throws Exception {
-      ...
-    }
-
+  @Test
+  public void validate_create_subtask() throws Exception {
+    ...
+  }
 }
 ----
 <1> extends from the first base class (for tests reading)
@@ -433,9 +437,10 @@ As you can see the ids: `com.antkorwin:prediction-service:+:stubs:8585` is conta
 image:./stub_ids.png[stub ids]
 
 If you select a `LOCAL` mode, the stub runner will find binary artifact with contracts in your local maven repository (`~/.m2/`).
-Else if you select a `REMOTE` mode, you will need to setup the `repositoryRoot` where stub runner will find a jar with contracts.
+Else if you select a `REMOTE` mode, you will need to setup the `repositoryRoot` where the stub runner will find a jar with contracts
+(we will consider the `REMOTE` configuration in more details a little later).
 
-Let's run it:
+Let's run this test:
 
 image:./consumer_test_result_.png[consumer test result]
 
@@ -443,10 +448,10 @@ image:./consumer_test_result_.png[consumer test result]
 ## How to use the Stub Runner (manual)
 
 You can download stub runner server here:
-link:https://search.maven.org/remotecontent?filepath=org/springframework/cloud/spring-cloud-contract-stub-runner-boot/2.0.1.RELEASE/spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar[spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar]
+link:https://search.maven.org/remotecontent?filepath=org/springframework/cloud/spring-cloud-contract-stub-runner-boot/2.0.1.RELEASE/spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar[spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar].
+This is a simple Spring Boot application(made by Spring Cloud team) that starts a web server with API which described in the stub of contracts.
 
-
-let's run the next command under directory with jars of contract stubs:
+let's run the next command under a directory with jars of contract stubs:
 
 [source]
 ----
@@ -460,8 +465,8 @@ then you can send a request to stub server:
 $ curl -X POST '127.0.0.1:7000/tasks/create?title=Foo&estimate=123'
 ----
 
-If you send a wrong request or make some typos,
-stub runner will find more closest variant of API which existed in the stub and shows it for you:
+If you send a wrong request or make some typos in the URL or request parameters,
+the stub runner will find a more closest variant of API which existed in the stub and shows it for you:
 
 image:./stub_runner.png[stub runner jar tool manual run]
 

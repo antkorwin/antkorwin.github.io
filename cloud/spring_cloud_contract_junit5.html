@@ -487,15 +487,15 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <p><span class="image"><img src="./microservices_diagram.png" alt="diagram of microservices"></span></p>
 </div>
 <div class="paragraph">
-<p>In the <code>task-service</code> we can create and get tasks.
-The <code>report-service</code> provides to us the statistics of tasks distribution.
+<p>In the <code>task-service</code>, we can create and get tasks.
+The <code>report-service</code> provides us the statistics of tasks distribution.
 For creating these statistics, the <code>report-service</code> is using the API has provided by the <code>task-service</code>.</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./cdc_frontend_demo.gif" alt="frontend demo"></span></p>
 </div>
 <div class="paragraph">
-<p>So, we&#8217;ve a two services that communicate together.
+<p>So, we have two services that communicate together.
 The <strong>"contract"</strong> is the API which is using between a pair of microservices.
 In this article, we will consider a tool to maintain the consistency of the contract between microservices.</p>
 </div>
@@ -504,7 +504,8 @@ In this article, we will consider a tool to maintain the consistency of the cont
 the <code>task-service</code> is a provider of the API, and <code>report-service</code> is a consumer.</p>
 </div>
 <div class="paragraph">
-<p>If we change a contract on the producer side, our consumer will not be able to get a data from producer:</p>
+<p>If we change a contract on the producer side,
+our consumer will not be able to get data from the producer:</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./contract_change.png" alt="put some breakable changes in contract"></span></p>
@@ -512,8 +513,8 @@ the <code>task-service</code> is a provider of the API, and <code>report-service
 <div class="paragraph">
 <p>We need to know that one of the services does not match the contract.
 And we need to know about this as soon as possible.
-In this article, we will consider how to prevent this situation by using the cloud contracts.
-In order to do it, we will write contract tests and will consider how to delivery a contract to each of the services.</p>
+In this article, we will consider how to prevent this situation by using cloud contracts.
+In order to do it, we will write contract tests and will consider how to deliver a contract to each of the services.</p>
 </div>
 </div>
 </div>
@@ -529,22 +530,22 @@ In order to do it, we will write contract tests and will consider how to deliver
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>we write groovy contract files in the <code>task-service</code></p>
+<p>we write groovy contract files on the producer side (in the <code>task-service</code>)</p>
 </li>
 <li>
 <p>build <code>task-service</code>, generate and run contract tests (for JUnit5)</p>
 </li>
 <li>
-<p>install JAR file with the stub of contracts (json and request/response schemes of the <code>task-service</code>)</p>
+<p>install JAR file with the stub of contracts (json request/response schemes of the <code>task-service</code>)</p>
 </li>
 <li>
-<p>deploy this stub to the binary repository(Artifactory)</p>
+<p>deploy this stub to the binary repository (Artifactory)</p>
 </li>
 <li>
-<p>write contract tests on the consumer side(<code>report-service</code>)</p>
+<p>write contract tests on the consumer side (in the <code>report-service</code>)</p>
 </li>
 <li>
-<p>use the stub from the artifactory in tests of the consumer</p>
+<p>use the stub from the Artifactory in tests of the consumer</p>
 </li>
 </ol>
 </div>
@@ -554,8 +555,15 @@ In order to do it, we will write contract tests and will consider how to deliver
 <h2 id="_provider_configuration">3. Provider configuration</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Support for JUnit5 is currently unavailable in stable release of Spring Cloud Contract.
-But this feature already completed and we can use it from the snapshots.</p>
+<p>Support for <strong>JUnit5</strong> is currently unavailable in the stable release of Spring Cloud Contract(2.0.1).
+But this feature already completed in the master branch and we can use it from the snapshots.</p>
+</div>
+<div class="paragraph">
+<p>I think it&#8217;s possible to use an unstable version for work with JUnit5,
+because we will use this just in tests, and the spring cloud contract
+is a project with a good ecosystem and support.
+In my opinion, an ability to use <strong>JUnit5</strong> in tests provides us a lot of benefits
+and we can close our eyes to work with the version from snapshots.</p>
 </div>
 <div class="paragraph">
 <p>We need to add the next repository of snapshots:</p>
@@ -577,7 +585,7 @@ But this feature already completed and we can use it from the snapshots.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Also we need to use a snapshot for plugins,
+<p>Also, we need to use a snapshot for plugins,
 because Spring Cloud Contract generates source code with the help of maven plugin:</p>
 </div>
 <div class="listingblock">
@@ -595,7 +603,7 @@ because Spring Cloud Contract generates source code with the help of maven plugi
 </div>
 </div>
 <div class="paragraph">
-<p>and now, we can add the next dependency:</p>
+<p>And now, we can add the next dependency:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -607,7 +615,7 @@ because Spring Cloud Contract generates source code with the help of maven plugi
 </div>
 </div>
 <div class="paragraph">
-<p>also we need to add a dependency management for spring cloud 2.1.0 snapshot:</p>
+<p>Also, we need to add a dependency management for spring cloud 2.1.0 snapshot:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -635,7 +643,7 @@ because Spring Cloud Contract generates source code with the help of maven plugi
 </div>
 </div>
 <div class="paragraph">
-<p>In the plugin section, we need to configure the <code>spring-cloud-contract-maven-plugin</code>,
+<p>In the plugin section, we need to configure the <code>spring-cloud-contract-maven-plugin</code>.
 This plugin is responsible for generating a source code of contract tests:</p>
 </div>
 <div class="listingblock">
@@ -669,7 +677,7 @@ each of the contract tests will be inherited from this class.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>the setting for Junit5 tests generation.</td>
+<td>The setting for Junit5 tests generation.</td>
 </tr>
 </table>
 </div>
@@ -712,8 +720,8 @@ public class MvcTest {
 <div class="sect2">
 <h3 id="_describe_your_contracts">3.3. Describe your contracts</h3>
 <div class="paragraph">
-<p>All what we need to make manually is a contract declaration of our API.
-This is a groovy-based DSL, where you can describe request to your API and expected response for it:</p>
+<p>All that we need to make manually is a contract declaration of our API.
+This is a groovy based DSL, where you can describe a request to your API and expected response for it:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -760,7 +768,7 @@ Contract.make {
 </div>
 <div class="paragraph">
 <p>In my opinion, the using of groovy is a more intuitive and maintained way of describing a contract
-than using something like YAML. By the way, Spring Cloud Contract supports both of these variants (groovy and yaml).</p>
+than using something like YAML. By the way, Spring Cloud Contract supports both of these variants (groovy and YAML).</p>
 </div>
 </div>
 <div class="sect2">
@@ -802,26 +810,25 @@ as you can see on the next image:</p>
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class WriteTest extends MvcTest {  <i class="conum" data-value="1"></i><b>(1)</b>
 
-	@Test
-	public void validate_create_task() throws Exception {  <i class="conum" data-value="2"></i><b>(2)</b>
-		// given:
-			MockMvcRequestSpecification request = given();
-
-		// when:
-			ResponseOptions response = given().spec(request)  <i class="conum" data-value="3"></i><b>(3)</b>
-					.queryParam("title","G ")
-					.queryParam("estimate","42")
-					.post("/tasks/create");
-
+  @Test
+  public void validate_create_task() throws Exception {  <i class="conum" data-value="2"></i><b>(2)</b>
+    // given:
+    MockMvcRequestSpecification request = given();
+    // when:
+    ResponseOptions response = given().spec(request)  <i class="conum" data-value="3"></i><b>(3)</b>
+                                      .queryParam("title","G ")
+                                      .queryParam("estimate","42")
+                                      .post("/tasks/create");
 		// then:
-			assertThat(response.statusCode()).isEqualTo(201);
-			assertThat(response.header("Content-Type")).matches("application/json.*");
-		// and:
-			DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());  <i class="conum" data-value="4"></i><b>(4)</b>
-			assertThatJson(parsedJson).field("['title']").isEqualTo("G ");
-			assertThatJson(parsedJson).field("['estimate']").isEqualTo("42");
-			assertThatJson(parsedJson).field("['id']").matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
-	}
+    assertThat(response.statusCode()).isEqualTo(201);
+    assertThat(response.header("Content-Type")).matches("application/json.*");
+    // and:
+    DocumentContext parsedJson = JsonPath.parse(response.getBody().asString());  <i class="conum" data-value="4"></i><b>(4)</b>
+    assertThatJson(parsedJson).field("['title']").isEqualTo("G ");
+    assertThatJson(parsedJson).field("['estimate']").isEqualTo("42");
+    assertThatJson(parsedJson).field("['id']")
+      .matches("([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})");
+  }
 
 }</code></pre>
 </div>
@@ -857,7 +864,8 @@ but it&#8217;s not important, because these tests are needed only to ensure the 
 <p>And if you run it, you can check your contract.</p>
 </div>
 <div class="paragraph">
-<p>When you run <code>mvn clean install</code> these test will run automatically, after generation stage.
+<p>When you run <code>mvn clean install</code> these tests will run automatically,
+after generation stage.
 Besides that, after generates and runs all tests maven will install binary artifacts in the local folder <code>.m2</code>.
 Among these artifacts there is one new - an artifact with the stub of contracts (<code>prediction-service-0.0.1-SNAPSHOT-stubs.jar</code>).</p>
 </div>
@@ -930,25 +938,23 @@ All of these items were named like packages and files in the resource directory:
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class ReadTest extends TasksReadBase {  <i class="conum" data-value="1"></i><b>(1)</b>
 
-	@Test
-	public void validate_task_list() throws Exception {
+  @Test
+  public void validate_task_list() throws Exception {
     ...
-	}
-
+  }
 }
 
 public class WriteTest extends TasksWriteBase {  <i class="conum" data-value="2"></i><b>(2)</b>
 
-	@Test
-	public void validate_create_task() throws Exception {
-		...
-	}
+  @Test
+  public void validate_create_task() throws Exception {
+    ...
+  }
 
-    @Test
-	public void validate_create_subtask() throws Exception {
-      ...
-    }
-
+  @Test
+  public void validate_create_subtask() throws Exception {
+    ...
+  }
 }</code></pre>
 </div>
 </div>
@@ -1032,10 +1038,11 @@ class TaskServiceFeignIT {
 </div>
 <div class="paragraph">
 <p>If you select a <code>LOCAL</code> mode, the stub runner will find binary artifact with contracts in your local maven repository (<code>~/.m2/</code>).
-Else if you select a <code>REMOTE</code> mode, you will need to setup the <code>repositoryRoot</code> where stub runner will find a jar with contracts.</p>
+Else if you select a <code>REMOTE</code> mode, you will need to setup the <code>repositoryRoot</code> where the stub runner will find a jar with contracts
+(we will consider the <code>REMOTE</code> configuration in more details a little later).</p>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s run it:</p>
+<p>Let&#8217;s run this test:</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./consumer_test_result_.png" alt="consumer test result"></span></p>
@@ -1048,10 +1055,11 @@ Else if you select a <code>REMOTE</code> mode, you will need to setup the <code>
 <div class="sectionbody">
 <div class="paragraph">
 <p>You can download stub runner server here:
-<a href="https://search.maven.org/remotecontent?filepath=org/springframework/cloud/spring-cloud-contract-stub-runner-boot/2.0.1.RELEASE/spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar">spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar</a></p>
+<a href="https://search.maven.org/remotecontent?filepath=org/springframework/cloud/spring-cloud-contract-stub-runner-boot/2.0.1.RELEASE/spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar">spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar</a>.
+This is a simple Spring Boot application(made by Spring Cloud team) that starts a web server with API which described in the stub of contracts.</p>
 </div>
 <div class="paragraph">
-<p>let&#8217;s run the next command under directory with jars of contract stubs:</p>
+<p>let&#8217;s run the next command under a directory with jars of contract stubs:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1067,8 +1075,8 @@ Else if you select a <code>REMOTE</code> mode, you will need to setup the <code>
 </div>
 </div>
 <div class="paragraph">
-<p>If you send a wrong request or make some typos,
-stub runner will find more closest variant of API which existed in the stub and shows it for you:</p>
+<p>If you send a wrong request or make some typos in the URL or request parameters,
+the stub runner will find a more closest variant of API which existed in the stub and shows it for you:</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./stub_runner.png" alt="stub runner jar tool manual run"></span></p>
@@ -1276,7 +1284,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-10-14 23:56:15 +10
+Last updated 2018-10-18 23:25:28 MSK
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
