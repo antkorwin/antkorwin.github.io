@@ -42,6 +42,12 @@ How to work with errors that occur in a different parts of the state machine log
 link:./cloud/micros.html[Spring cloud stack] (English) image:./statemachine/eng.png[english,25]::
 Example of using an infrastructure for a microservices application, based on spring cloud stack.
 
+link:./cloud/spring_cloud_contract_junit5.html[How to use JUnit5 and Spring Cloud Contract] (English) image:./statemachine/eng.png[english,25]::
+Example of using a Spring Cloud Contract for testing of the contract between pair of microservices.
+We consider how to make a full circle of using a Spring Cloud Contract with JUnit5,
+we will talk about a using TeamCity to build a project and Artifactory for deploy binary of contracts.
+
+
 ### Spring Configuration:
 
 link:./spring_configuration/autoconfig.html[Spring auto-configuration & conditional] (English) image:./statemachine/eng.png[english,25]::

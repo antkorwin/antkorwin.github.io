@@ -462,7 +462,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </ul>
 </li>
 <li><a href="#_how_to_use_the_stub_runner_manual">5. How to use the Stub Runner (manual)</a></li>
-<li><a href="#_how_to_use_the_cloud_contracts_with_the_remote_repository_and_configure_ci_system">6. How to use the Cloud Contracts with the remote repository and configure CI system.</a>
+<li><a href="#_how_to_use_spring_cloud_contracts_with_a_remote_repository_and_configure_ci_system">6. How to use Spring Cloud Contracts with a remote repository and configure CI system.</a>
 <ul class="sectlevel2">
 <li><a href="#_run_teamcity_and_artifactory_with_docker_compose">6.1. Run TeamCity and Artifactory with docker-compose</a></li>
 <li><a href="#_teamcity_artifactory_configuration">6.2. TeamCity &amp; Artifactory configuration</a></li>
@@ -866,11 +866,13 @@ but it&#8217;s not important, because these tests are needed only to ensure the 
 <div class="paragraph">
 <p>When you run <code>mvn clean install</code> these tests will run automatically,
 after generation stage.
-Besides that, after generates and runs all tests maven will install binary artifacts in the local folder <code>.m2</code>.
-Among these artifacts there is one new - an artifact with the stub of contracts (<code>prediction-service-0.0.1-SNAPSHOT-stubs.jar</code>).</p>
+Besides that, after generates and runs all tests maven will install binary artifacts in the local folder <code>.m2</code></p>
 </div>
 <div class="paragraph">
-<p>If you need only generate test sources without run all tests and install artifacts, you can run <code>mvn generate-test-sources</code>.</p>
+<p>Among these artifacts there is one new - an artifact with the stub of contracts: <code>prediction-service-0.0.1-SNAPSHOT-stubs.jar</code>.</p>
+</div>
+<div class="paragraph">
+<p>If you need the only generation of test sources without run all tests and install artifacts, you can run <code>mvn generate-test-sources</code>.</p>
 </div>
 <div class="paragraph">
 <p>Sometimes for debugging you need to install contracts without running tests, in this case, you can do it by <code>mvn clean install -DskipTests</code>.</p>
@@ -879,9 +881,9 @@ Among these artifacts there is one new - an artifact with the stub of contracts 
 <div class="sect2">
 <h3 id="_different_base_classes_for_different_test_cases">3.5. Different base classes for different test cases</h3>
 <div class="paragraph">
-<p>Sometimes you have test cases with a different initialization logic.
-For example, when you test a creating of something, you don&#8217;t need to put in the database the already created records.
-But if you test a reading from a database, then you need to be sure that read data sets exist in the database.</p>
+<p>Often we have test cases with a different initialization logic.
+For example, when you test a creating of something, you don&#8217;t need to prepare in the database the already created records.
+But if you test a reading of something from a database, then you need to be sure that read data sets exist in the database.</p>
 </div>
 <div class="paragraph">
 <p>You can set a package with the base classes for tests generate, instead of setting a one base class for all tests.</p>
@@ -962,11 +964,11 @@ public class WriteTest extends TasksWriteBase {  <i class="conum" data-value="2"
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>extends from the first base class (for tests reading)</td>
+<td>extends from the first base class (for tests of reading)</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>extends from the second base class (for tests writing)</td>
+<td>extends from the second base class (for tests of writing)</td>
 </tr>
 </table>
 </div>
@@ -976,10 +978,14 @@ public class WriteTest extends TasksWriteBase {  <i class="conum" data-value="2"
 <div class="sect1">
 <h2 id="_consumer_configuration">4. Consumer configuration</h2>
 <div class="sectionbody">
+<div class="paragraph">
+<p>To be sure of the contract on the consumer side, we need to write tests on the communication layer between services (which used RestTemplate or Feign).
+In this tests, we will use a mock of the server which is started from the downloaded stub of contracts.</p>
+</div>
 <div class="sect2">
 <h3 id="_dependency">4.1. Dependency</h3>
 <div class="paragraph">
-<p>The configuration of dependencies looks simpler on the consumer side.
+<p>The configuration of dependencies looks simpler on the consumer side than of the provider.
 All what we need is the stub runner dependency:</p>
 </div>
 <div class="listingblock">
@@ -1038,11 +1044,11 @@ class TaskServiceFeignIT {
 </div>
 <div class="paragraph">
 <p>If you select a <code>LOCAL</code> mode, the stub runner will find binary artifact with contracts in your local maven repository (<code>~/.m2/</code>).
-Else if you select a <code>REMOTE</code> mode, you will need to setup the <code>repositoryRoot</code> where the stub runner will find a jar with contracts
+Else if you select a <code>REMOTE</code> mode, you will need to set up the <code>repositoryRoot</code> where the stub runner will find a jar with contracts
 (we will consider the <code>REMOTE</code> configuration in more details a little later).</p>
 </div>
 <div class="paragraph">
-<p>Let&#8217;s run this test:</p>
+<p>Let&#8217;s run this test with a local configuration:</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./consumer_test_result_.png" alt="consumer test result"></span></p>
@@ -1059,11 +1065,11 @@ Else if you select a <code>REMOTE</code> mode, you will need to setup the <code>
 This is a simple Spring Boot application(made by Spring Cloud team) that starts a web server with API which described in the stub of contracts.</p>
 </div>
 <div class="paragraph">
-<p>let&#8217;s run the next command under a directory with jars of contract stubs:</p>
+<p>let&#8217;s run the next command to start the stub runner with contracts of the <code>task-service</code> on the 7000&#8217;s port:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code>$ java -jar ../spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar --stubrunner.stubs-mode="local" --stubrunner.ids=com.a ntkorwin:prediction-service:+:stubs:7000</code></pre>
+<pre class="prettyprint highlight"><code>$ java -jar ../spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar --stubrunner.stubs-mode="local" --stubrunner.ids=com.a ntkorwin:task-service:+:stubs:7000</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1076,7 +1082,7 @@ This is a simple Spring Boot application(made by Spring Cloud team) that starts 
 </div>
 <div class="paragraph">
 <p>If you send a wrong request or make some typos in the URL or request parameters,
-the stub runner will find a more closest variant of API which existed in the stub and shows it for you:</p>
+the stub runner will find a more closest variant of API which existed in the loaded stub and will show it for you:</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./stub_runner.png" alt="stub runner jar tool manual run"></span></p>
@@ -1084,7 +1090,7 @@ the stub runner will find a more closest variant of API which existed in the stu
 </div>
 </div>
 <div class="sect1">
-<h2 id="_how_to_use_the_cloud_contracts_with_the_remote_repository_and_configure_ci_system">6. How to use the Cloud Contracts with the remote repository and configure CI system.</h2>
+<h2 id="_how_to_use_spring_cloud_contracts_with_a_remote_repository_and_configure_ci_system">6. How to use Spring Cloud Contracts with a remote repository and configure CI system.</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Now, we can make a contract and we can build and install it locally,
@@ -1098,7 +1104,7 @@ We will use a JFrog Artifactory as a binary repository and TeamCity as a CI serv
 <div class="sect2">
 <h3 id="_run_teamcity_and_artifactory_with_docker_compose">6.1. Run TeamCity and Artifactory with docker-compose</h3>
 <div class="paragraph">
-<p>All what we need is to run the next docker compose file:</p>
+<p>All that we need is to run the next docker compose file:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -1284,7 +1290,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-10-18 23:25:28 MSK
+Last updated 2018-10-25 13:13:52 +07
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

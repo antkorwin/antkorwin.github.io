@@ -313,19 +313,20 @@ And if you run it, you can check your contract.
 
 When you run `mvn clean install` these tests will run automatically,
 after generation stage.
-Besides that, after generates and runs all tests maven will install binary artifacts in the local folder `.m2`.
-Among these artifacts there is one new - an artifact with the stub of contracts (`prediction-service-0.0.1-SNAPSHOT-stubs.jar`).
+Besides that, after generates and runs all tests maven will install binary artifacts in the local folder `.m2`
 
-If you need only generate test sources without run all tests and install artifacts, you can run `mvn generate-test-sources`.
+Among these artifacts there is one new - an artifact with the stub of contracts: `prediction-service-0.0.1-SNAPSHOT-stubs.jar`.
+
+If you need the only generation of test sources without run all tests and install artifacts, you can run `mvn generate-test-sources`.
 
 Sometimes for debugging you need to install contracts without running tests, in this case, you can do it by `mvn clean install -DskipTests`.
 
 
 ### Different base classes for different test cases
 
-Sometimes you have test cases with a different initialization logic.
-For example, when you test a creating of something, you don't need to put in the database the already created records.
-But if you test a reading from a database, then you need to be sure that read data sets exist in the database.
+Often we have test cases with a different initialization logic.
+For example, when you test a creating of something, you don't need to prepare in the database the already created records.
+But if you test a reading of something from a database, then you need to be sure that read data sets exist in the database.
 
 You can set a package with the base classes for tests generate, instead of setting a one base class for all tests.
 
@@ -386,14 +387,17 @@ public class WriteTest extends TasksWriteBase {  <2>
   }
 }
 ----
-<1> extends from the first base class (for tests reading)
-<2> extends from the second base class (for tests writing)
+<1> extends from the first base class (for tests of reading)
+<2> extends from the second base class (for tests of writing)
 
 ## Consumer configuration
 
+To be sure of the contract on the consumer side, we need to write tests on the communication layer between services (which used RestTemplate or Feign).
+In this tests, we will use a mock of the server which is started from the downloaded stub of contracts.
+
 ### Dependency
 
-The configuration of dependencies looks simpler on the consumer side.
+The configuration of dependencies looks simpler on the consumer side than of the provider.
 All what we need is the stub runner dependency:
 
 [source, xml]
@@ -437,10 +441,10 @@ As you can see the ids: `com.antkorwin:prediction-service:+:stubs:8585` is conta
 image:./stub_ids.png[stub ids]
 
 If you select a `LOCAL` mode, the stub runner will find binary artifact with contracts in your local maven repository (`~/.m2/`).
-Else if you select a `REMOTE` mode, you will need to setup the `repositoryRoot` where the stub runner will find a jar with contracts
+Else if you select a `REMOTE` mode, you will need to set up the `repositoryRoot` where the stub runner will find a jar with contracts
 (we will consider the `REMOTE` configuration in more details a little later).
 
-Let's run this test:
+Let's run this test with a local configuration:
 
 image:./consumer_test_result_.png[consumer test result]
 
@@ -451,11 +455,11 @@ You can download stub runner server here:
 link:https://search.maven.org/remotecontent?filepath=org/springframework/cloud/spring-cloud-contract-stub-runner-boot/2.0.1.RELEASE/spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar[spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar].
 This is a simple Spring Boot application(made by Spring Cloud team) that starts a web server with API which described in the stub of contracts.
 
-let's run the next command under a directory with jars of contract stubs:
+let's run the next command to start the stub runner with contracts of the `task-service` on the 7000's port:
 
 [source]
 ----
-$ java -jar ../spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar --stubrunner.stubs-mode="local" --stubrunner.ids=com.a ntkorwin:prediction-service:+:stubs:7000
+$ java -jar ../spring-cloud-contract-stub-runner-boot-2.0.1.RELEASE.jar --stubrunner.stubs-mode="local" --stubrunner.ids=com.a ntkorwin:task-service:+:stubs:7000
 ----
 
 then you can send a request to stub server:
@@ -466,12 +470,12 @@ $ curl -X POST '127.0.0.1:7000/tasks/create?title=Foo&estimate=123'
 ----
 
 If you send a wrong request or make some typos in the URL or request parameters,
-the stub runner will find a more closest variant of API which existed in the stub and shows it for you:
+the stub runner will find a more closest variant of API which existed in the loaded stub and will show it for you:
 
 image:./stub_runner.png[stub runner jar tool manual run]
 
 
-## How to use the Cloud Contracts with the remote repository and configure CI system.
+## How to use Spring Cloud Contracts with a remote repository and configure CI system.
 
 Now, we can make a contract and we can build and install it locally,
 the next step is a deploy this contract in the remote repository
@@ -482,7 +486,7 @@ image:./teamcity_artifactory_docker.png[teacity and artifactory in docker]
 
 ### Run TeamCity and Artifactory with docker-compose
 
-All what we need is to run the next docker compose file:
+All that we need is to run the next docker compose file:
 
 [source]
 ----
