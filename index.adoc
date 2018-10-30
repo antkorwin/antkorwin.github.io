@@ -89,7 +89,13 @@ link:./annotation_processor/lombok_mapstruct.html[Как подружить lomb
 
 ## Public Talks:
 
-### State machine workshop live video - 18.05.2018
+### Spring Cloud Contract -  API контракты микросервисов - 12.10.2018 image:./statemachine/rus.png[english,28]
+
+video::365nPFiQtuI[youtube, width=520, height=390]
+
+{nbsp} +
+
+### State machine workshop live video - 18.05.2018 image:./statemachine/rus.png[english,28]
 
 video::J56_t5lny9c[youtube, width=520, height=390]
 
