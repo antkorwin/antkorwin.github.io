@@ -9,82 +9,92 @@
 
 <url>
   <loc>http://antkorwin.com/</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>1.00</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/junit5/junit5_in_spring4.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/junit5/junit5_parallel_execution.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://antkorwin.com/async/async_test_spring.html</loc>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/statemachine/statemachine.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/statemachine/statemachine_rus.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/statemachine/statemachine_persisting.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/statemachine/statemachine_exception_handling.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/cloud/micros.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>http://antkorwin.com/cloud/spring_cloud_contract_junit5.html</loc>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/spring_configuration/autoconfig.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/hibernate/entity_init.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/hibernate/unproxy.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/reflection/make_new_instance.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/concurrency/weakreference.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/concurrency/synchronization_by_value.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/codestyle.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>http://antkorwin.com/annotation_processor/lombok_mapstruct.html</loc>
-  <lastmod>2018-08-28T14:15:13+00:00</lastmod>
+  <lastmod>2018-10-30T04:52:28+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 
