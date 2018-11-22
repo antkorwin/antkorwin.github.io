@@ -447,7 +447,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_intro">1. Intro</a></li>
 <li><a href="#_wrong_ways_to_solve_this_issue">2. Wrong ways to solve this issue</a>
 <ul class="sectlevel2">
-<li><a href="#_synchronization_on_methods">2.1. Synchronization on methods</a></li>
+<li><a href="#_synchronized_methods">2.1. Synchronized methods</a></li>
 <li><a href="#_string_intern">2.2. String intern</a></li>
 </ul>
 </li>
@@ -479,7 +479,7 @@ which makes the following operations on the each transfer of money by the client
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p>evaluates the amount of the cash-back by the transaction in an external web service (CashBackService)</p>
+<p>evaluates the amount of the cash-back by this transfer from external web service (CashBackService)</p>
 </li>
 <li>
 <p>performs transaction of a money transfer in the database (AccountService)</p>
@@ -490,7 +490,7 @@ which makes the following operations on the each transfer of money by the client
 </ol>
 </div>
 <div class="paragraph">
-<p>The base components of the application are shown on the next diagram:</p>
+<p>The base components of the application are shown in the next diagram:</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./scheme.png" alt="component diagram of the application"></span></p>
@@ -505,18 +505,20 @@ The transfer of money in the payment service depends on the other two services:<
 <div class="ulist">
 <ul>
 <li>
-<p>The first one is a CashBackService that interacts with another web application under the REST protocol.
+<p>The first one is a CashBackService that interacts with another (external) web application under the REST protocol.
 And in order to calculate the actual cash-back, we need to synchronize transactions with this application.
 Because the next amount of the cash-back may depend on the total amount of user payments.</p>
 </li>
 <li>
-<p>The second is a AccountService that communicates with an internal DataBase and store a data relate to accounts of users.
-In this service we can use a JPA transactions for making some actions as atomic operations in a DataBase.</p>
+<p>The second is an AccountService that communicates with an internal DataBase
+and store a data relate to accounts of users.
+In this service, we can use a JPA transaction to making some actions as atomic
+operations in the DataBase.</p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>In a real life, i’d strongly recommend making refactoring in such systems to avoid this situation as it possible.
+<p>In a real life, I’d strongly recommend to make a refactoring in such systems to avoid this situation as it possible.
 But in our example, imagine that we have no choice.</p>
 </div>
 <div class="paragraph">
@@ -559,7 +561,7 @@ public class ExternalCashBackService {
 
     private Result sendRestRequest(String action, UUID userId, int value) {
 
-        URI externalCashBackSystemUrl = URI.create("http:/daleko.ko.ko.ko/" + action);
+        URI externalCashBackSystemUrl = URI.create("http://cash-back-system.org/api/" + action); <i class="conum" data-value="5"></i><b>(5)</b>
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
@@ -570,7 +572,7 @@ public class ExternalCashBackService {
                                                         HttpMethod.GET,
                                                         request,
                                                         ResponseDto.class)
-                                              .getBody();
+                                              .getBody();  <i class="conum" data-value="6"></i><b>(6)</b>
 
         return new Result(responseDto.getStatus(), responseDto.getValue());
     }
@@ -582,7 +584,7 @@ public class AccountService {
     @Autowired
     private AccountRepository accountRepository;
 
-    @Transactional(isolation = REPEATABLE_READ)
+    @Transactional(isolation = REPEATABLE_READ)  <i class="conum" data-value="7"></i><b>(7)</b>
     public void transfer(UUID userId, int amountOfMoney) {
         Account account = accountRepository.getOne(userId);
         account.setBalance(account.getBalance() - amountOfMoney);
@@ -609,6 +611,18 @@ public class AccountService {
 <td><i class="conum" data-value="4"></i><b>4</b></td>
 <td>synchronization on the instance of UUID</td>
 </tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>URL of the external cash-back system</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>sends a request to the external system by REST API.</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="7"></i><b>7</b></td>
+<td>AccountService persists a data about the money transfer in the DataBase transaction.</td>
+</tr>
 </table>
 </div>
 <div class="paragraph">
@@ -616,12 +630,13 @@ public class AccountService {
 but the synchronization works on the instance of the object and not on its value.</p>
 </div>
 <div class="paragraph">
-<p>The code below does not work well, because it&#8217;s incorrectly synchronized,
-the static factory method <code>UUID.fromString(..)</code> make a new instance of UUID class on the each call,
+<p>The code below does not work well, because it’s incorrectly synchronized,
+the static factory method <code>UUID.fromString(..)</code> make a new instance of UUID class on each call,
 even if you pass there an equal string argument.</p>
 </div>
 <div class="paragraph">
-<p>So, we get different instances of the UUID for the equal keys.</p>
+<p>So, we get different instances of the <code>UUID</code> for equal keys.
+If we run this code from multiple threads then we have a good chance to get a problem with synchronization:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -636,7 +651,7 @@ public void threadB() {
 </div>
 </div>
 <div class="paragraph">
-<p>In this case you need to obtain a same reference for equals objects to synchronize on it.</p>
+<p>In this case, you need to obtain the same reference for equals objects to synchronize on it.</p>
 </div>
 </div>
 </div>
@@ -644,9 +659,9 @@ public void threadB() {
 <h2 id="_wrong_ways_to_solve_this_issue">2. Wrong ways to solve this issue</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_synchronization_on_methods">2.1. Synchronization on methods</h3>
+<h3 id="_synchronized_methods">2.1. Synchronized methods</h3>
 <div class="paragraph">
-<p>You can move synchronized on method:</p>
+<p>You can move the <code>synchronized</code> on a method:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -656,9 +671,9 @@ public void threadB() {
 </div>
 </div>
 <div class="paragraph">
-<p>This solution has bad performance.
+<p>This solution has a bad performance.
 You will block transfers of money for absolutely all users.
-And if you need to synchronize a different operations in the different classes this solution not helps you at all.</p>
+And if you need to synchronize different operations in the different classes by the same key this solution not helps you at all.</p>
 </div>
 </div>
 <div class="sect2">
@@ -666,11 +681,11 @@ And if you need to synchronize a different operations in the different classes t
 <div class="paragraph">
 <p>In order to ensure that the instance of the class (which contain a user ID)
 will be the same in all synchronized blocks,
-we can serialize it into a String and use the String.intern() for obtain a same link for equals strings.</p>
+we can serialize it into a String and use the <code>String.intern()</code> to obtain the same link for equals strings.</p>
 </div>
 <div class="paragraph">
 <p><code>String.intern</code> uses a global pool to store strings which are interned.
-And when you request intern on the string, you get a reference from this pool if such string exist there
+And when you request intern on the string, you get a reference from this pool if such string exists there
 or else this string puts in the pool.</p>
 </div>
 <div class="paragraph">
@@ -688,11 +703,11 @@ or in the Oracle Java documentation about the <a href="https://docs.oracle.com/j
 </div>
 </div>
 <div class="paragraph">
-<p>Using intern is not good practice, because the pool of Strings is difficult to clean with the GC.
-And your application can consume too many resources while active use of the <code>String.intern</code>.</p>
+<p>Using the intern is not good practice, because the pool of Strings is difficult to clean with the GC.
+And your application can consume too many resources while the active use of the String.intern.</p>
 </div>
 <div class="paragraph">
-<p>Also, there is a chance that a foreign code was synchronize on
+<p>Also, there is a chance that a foreign code synchronized on
 the same instance of the string as your application.
 This can lead to deadlocks.</p>
 </div>
@@ -727,11 +742,11 @@ there are good articles by <a href="https://shipilev.net">Aleksey Shipilev</a> a
 </div>
 <div class="paragraph">
 <p>At the first we need to make a new synchronization primitive - the custom mutex.
-Which will work by the value of the variable, and not by the reference to the object.</p>
+That will work by the value of the variable, and not by the reference to the object.</p>
 </div>
 <div class="paragraph">
 <p>It will be something like a <strong>"named mutex"</strong>, but a little wider,
-with the ability to use the value of any object for identification,
+with the ability to use the value of any objects for identification,
 not just the value of a String.
 You can find examples of synchronization primitives to locking by the name,
 in other languages (C++, C#). Now, we will solve this issue in Java.</p>
@@ -749,8 +764,8 @@ in other languages (C++, C#). Now, we will solve this issue in Java.</p>
 </div>
 </div>
 <div class="paragraph">
-<p>In order to ensure that the same mutexes are obtained
-for equals values of variables, we will make the mutex factory.</p>
+<p>In order to ensure that the same mutexes are obtained for equal values of variables,
+we will make the mutex factory.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -768,16 +783,16 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 </div>
 </div>
 <div class="paragraph">
-<p>In order to return a same instance of mutex on the each of requests with equal keys,
+<p>In order to return the same instance of mutex on the each of requests with equal keys,
 we will need to store the created mutexes.
 If we will store these mutexes in the simple <code>HashMap</code>,
-than a size of the map will increase as new keys appears.
-And we don&#8217;t have a tool to evaluate a time when a mutex not used anywhere.</p>
+then the size of the map will increase as new keys appear.
+And we don’t have a tool to evaluate a time when a mutex not used anywhere.</p>
 </div>
 <div class="paragraph">
-<p>In this case, we can use a <code>WeakReference</code> to save a reference to the mutex in the map, just when it uses.
-In order to implement this behavior, we used the <code>WeakHashMap</code> data structure.
-I wrote an article about this type of references a week ago, you can consider it in more details here:
+<p>In this case, we can use the <code>WeakReference</code> to save a reference to the mutex in the map, just when it uses.
+In order to implement this behavior, we can use the <code>WeakHashMap</code> data structure.
+I wrote an article about this type of references a month ago, you can consider it in more details here:
 <a href="./weakreference.html">Soft, Weak, Phantom references in Java</a></p>
 </div>
 <div class="paragraph">
@@ -785,7 +800,7 @@ I wrote an article about this type of references a week ago, you can consider it
 The mutex factory creates a new mutex just
 if the mutex for this value(key) is not found in the HashMap.
 Then created mutex is added to the HashMap.
-Using of the <code>WeakHashMap</code> allows us to store a mutex in the HashMap while exist any references to it.
+Using of the <code>WeakHashMap</code> allows us to store a mutex in the HashMap while existing any references to it.
 And the mutex will be removed from a HashMap automatically when all references to it are released.</p>
 </div>
 <div class="paragraph">
@@ -800,7 +815,8 @@ using the Collections.synchronizedMap method.</pre>
 </div>
 <div class="paragraph">
 <p>It&#8217;s very sad and a little later we&#8217;ll take a closer look at the reason.
-But for now, let&#8217;s consider an example of implementation, which is proposed by the official documentation.</p>
+But for now, let&#8217;s consider an example of implementation, which is proposed
+by the official documentation (I mean the use of Collections.synchronizedMap).</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -886,7 +902,7 @@ public V remove(Object key) {
 </td>
 <td class="content">
 This solution does not have the best performance.
-All of these synchronizations are lead us to permanent locks on each operations with a factory of mutexes.
+All of these synchronizations are lead us to permanent locks on each operation with a factory of mutexes.
 </td>
 </tr>
 </table>
@@ -899,7 +915,7 @@ All of these synchronizations are lead us to permanent locks on each operations 
 It has a better performance than Collections.synchronizedMap.</p>
 </div>
 <div class="paragraph">
-<p>But we have a one problem - the <code>ConcurrentHashMap</code> doesn&#8217;t allow a using of weak-references.</p>
+<p>But we have one problem - the <code>ConcurrentHashMap</code> doesn’t allow the use of weak-references.</p>
 </div>
 <div class="paragraph">
 <p>This means that the garbage collector can not delete unused mutexes.
@@ -949,7 +965,7 @@ We will consider them below.</p>
 </div>
 <div class="paragraph">
 <p>That&#8217;s cool!<br>
-Less code, but more performance than before. Let&#8217;s try to check performance of this solution.</p>
+Less code, but more performance than before. Let&#8217;s try to check the performance of this solution.</p>
 </div>
 </div>
 <div class="sect2">
@@ -1206,7 +1222,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-07-11 13:54:42 +10
+Last updated 2018-11-23 09:06:02 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

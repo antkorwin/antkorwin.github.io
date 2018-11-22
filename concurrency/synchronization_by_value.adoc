@@ -15,14 +15,14 @@ Sometimes we need to synchronize some blocks of a code by the value of variable.
 In order to understand this problem, we will consider a simple banking application
 which makes the following operations on the each transfer of money by the client:
 
-. evaluates the amount of the cash-back by the transaction in an external web service (CashBackService)
+. evaluates the amount of the cash-back by this transfer from external web service (CashBackService)
 
 . performs transaction of a money transfer in the database (AccountService)
 
 . updates the data in the cash-back evaluation system  (CashBackService)
 
 
-The base components of the application are shown on the next diagram:
+The base components of the application are shown in the next diagram:
 
 image:./scheme.png[component diagram of the application]
 
@@ -31,14 +31,16 @@ image:./scheme.png[component diagram of the application]
 I tried to make an example as clear as possible.
 The transfer of money in the payment service depends on the other two services:
 
-- The first one is a CashBackService that interacts with another web application under the REST protocol.
+- The first one is a CashBackService that interacts with another (external) web application under the REST protocol.
 And in order to calculate the actual cash-back, we need to synchronize transactions with this application.
 Because the next amount of the cash-back may depend on the total amount of user payments.
 
-- The second is a AccountService that communicates with an internal DataBase and store a data relate to accounts of users.
-In this service we can use a JPA transactions for making some actions as atomic operations in a DataBase.
+- The second is an AccountService that communicates with an internal DataBase
+and store a data relate to accounts of users.
+In this service, we can use a JPA transaction to making some actions as atomic
+operations in the DataBase.
 
-In a real life, i’d strongly recommend making refactoring in such systems to avoid this situation as it possible.
+In a real life, I’d strongly recommend to make a refactoring in such systems to avoid this situation as it possible.
 But in our example, imagine that we have no choice.
 
 
@@ -82,7 +84,7 @@ public class ExternalCashBackService {
 
     private Result sendRestRequest(String action, UUID userId, int value) {
 
-        URI externalCashBackSystemUrl = URI.create("http:/daleko.ko.ko.ko/" + action);
+        URI externalCashBackSystemUrl = URI.create("http://cash-back-system.org/api/" + action); <5>
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
@@ -93,7 +95,7 @@ public class ExternalCashBackService {
                                                         HttpMethod.GET,
                                                         request,
                                                         ResponseDto.class)
-                                              .getBody();
+                                              .getBody();  <6>
 
         return new Result(responseDto.getStatus(), responseDto.getValue());
     }
@@ -105,7 +107,7 @@ public class AccountService {
     @Autowired
     private AccountRepository accountRepository;
 
-    @Transactional(isolation = REPEATABLE_READ)
+    @Transactional(isolation = REPEATABLE_READ)  <7>
     public void transfer(UUID userId, int amountOfMoney) {
         Account account = accountRepository.getOne(userId);
         account.setBalance(account.getBalance() - amountOfMoney);
@@ -117,17 +119,21 @@ public class AccountService {
 <2> performs transaction of a money transfer in the database
 <3> updates the data in the cash-back evaluation system
 <4> synchronization on the instance of UUID
+<5> URL of the external cash-back system
+<6> sends a request to the external system by REST API.
+<7> AccountService persists a data about the money transfer in the DataBase transaction.
 
 
 
 However, you can have several objects with the same value (userId - in the example),
 but the synchronization works on the instance of the object and not on its value.
 
-The code below does not work well, because it's incorrectly synchronized,
-the static factory method `UUID.fromString(..)` make a new instance of UUID class on the each call,
+The code below does not work well, because it’s incorrectly synchronized,
+the static factory method `UUID.fromString(..)` make a new instance of UUID class on each call,
 even if you pass there an equal string argument.
 
-So, we get different instances of the UUID for the equal keys.
+So, we get different instances of the `UUID` for equal keys.
+If we run this code from multiple threads then we have a good chance to get a problem with synchronization:
 
 [source, java]
 ----
@@ -141,14 +147,14 @@ public void threadB() {
 }
 ----
 
-In this case you need to obtain a same reference for equals objects to synchronize on it.
+In this case, you need to obtain the same reference for equals objects to synchronize on it.
 
 
 ## Wrong ways to solve this issue
 
-### Synchronization on methods
+### Synchronized methods
 
-You can move synchronized on method:
+You can move the `synchronized` on a method:
 
 [source, java]
 ----
@@ -157,19 +163,18 @@ public synchronized void withdrawMoney(UUID userId, int amountOfMoney) {
 }
 ----
 
-This solution has bad performance.
+This solution has a bad performance.
 You will block transfers of money for absolutely all users.
-And if you need to synchronize a different operations in the different classes this solution not helps you at all.
-
+And if you need to synchronize different operations in the different classes by the same key this solution not helps you at all.
 
 ### String intern
 
 In order to ensure that the instance of the class (which contain a user ID)
 will be the same in all synchronized blocks,
-we can serialize it into a String and use the String.intern() for obtain a same link for equals strings.
+we can serialize it into a String and use the `String.intern()` to obtain the same link for equals strings.
 
 `String.intern` uses a global pool to store strings which are interned.
-And when you request intern on the string, you get a reference from this pool if such string exist there
+And when you request intern on the string, you get a reference from this pool if such string exists there
 or else this string puts in the pool.
 
 You can find more details about `String.intern` in
@@ -185,10 +190,10 @@ public void withdrawMoney(UUID userId, int amountOfMoney) {
 }
 ----
 
-Using intern is not good practice, because the pool of Strings is difficult to clean with the GC.
-And your application can consume too many resources while active use of the `String.intern`.
+Using the intern is not good practice, because the pool of Strings is difficult to clean with the GC.
+And your application can consume too many resources while the active use of the String.intern.
 
-Also, there is a chance that a foreign code was synchronize on
+Also, there is a chance that a foreign code synchronized on
 the same instance of the string as your application.
 This can lead to deadlocks.
 
@@ -232,10 +237,10 @@ deactivate XSync
 ....
 
 At the first we need to make a new synchronization primitive - the custom mutex.
-Which will work by the value of the variable, and not by the reference to the object.
+That will work by the value of the variable, and not by the reference to the object.
 
 It will be something like a **"named mutex"**, but a little wider,
-with the ability to use the value of any object for identification,
+with the ability to use the value of any objects for identification,
 not just the value of a String.
 You can find examples of synchronization primitives to locking by the name,
 in other languages (C++, C#). Now, we will solve this issue in Java.
@@ -251,8 +256,8 @@ public void withdrawMoney(UUID userId, int amountOfMoney) {
 }
 ----
 
-In order to ensure that the same mutexes are obtained
-for equals values of variables, we will make the mutex factory.
+In order to ensure that the same mutexes are obtained for equal values of variables,
+we will make the mutex factory.
 
 [source, java]
 ----
@@ -269,22 +274,22 @@ public void purchase(UUID userId, int amountOfMoney, VendorDescription vendor) {
 }
 ----
 
-In order to return a same instance of mutex on the each of requests with equal keys,
+In order to return the same instance of mutex on the each of requests with equal keys,
 we will need to store the created mutexes.
 If we will store these mutexes in the simple `HashMap`,
-than a size of the map will increase as new keys appears.
-And we don't have a tool to evaluate a time when a mutex not used anywhere.
+then the size of the map will increase as new keys appear.
+And we don’t have a tool to evaluate a time when a mutex not used anywhere.
 
-In this case, we can use a `WeakReference` to save a reference to the mutex in the map, just when it uses.
-In order to implement this behavior, we used the `WeakHashMap` data structure.
-I wrote an article about this type of references a week ago, you can consider it in more details here:
+In this case, we can use the `WeakReference` to save a reference to the mutex in the map, just when it uses.
+In order to implement this behavior, we can use the `WeakHashMap` data structure.
+I wrote an article about this type of references a month ago, you can consider it in more details here:
 link:./weakreference.html[Soft, Weak, Phantom references in Java]
 
 Our mutex factory will be based on the `WeakHashMap`.
 The mutex factory creates a new mutex just
 if the mutex for this value(key) is not found in the HashMap.
 Then created mutex is added to the HashMap.
-Using of the `WeakHashMap` allows us to store a mutex in the HashMap while exist any references to it.
+Using of the `WeakHashMap` allows us to store a mutex in the HashMap while existing any references to it.
 And the mutex will be removed from a HashMap automatically when all references to it are released.
 
 We need to use a synchronized version of `WeakHashMap`,
@@ -296,7 +301,8 @@ using the Collections.synchronizedMap method.
 ----
 
 It's very sad and a little later we'll take a closer look at the reason.
-But for now, let's consider an example of implementation, which is proposed by the official documentation.
+But for now, let's consider an example of implementation, which is proposed
+by the official documentation (I mean the use of Collections.synchronizedMap).
 
 
 [source, java]
@@ -368,7 +374,7 @@ public V remove(Object key) {
 ----
 
 NOTE: This solution does not have the best performance.
-All of these synchronizations are lead us to permanent locks on each operations with a factory of mutexes.
+All of these synchronizations are lead us to permanent locks on each operation with a factory of mutexes.
 
 
 ### ConcurrentHashMap with a WeakReference as a key
@@ -376,7 +382,7 @@ All of these synchronizations are lead us to permanent locks on each operations 
 We need to look at the using of the `ConcurrentHashMap`.
 It has a better performance than Collections.synchronizedMap.
 
-But we have a one problem - the `ConcurrentHashMap` doesn't allow a using of weak-references.
+But we have one problem - the `ConcurrentHashMap` doesn’t allow the use of weak-references.
 
 This means that the garbage collector can not delete unused mutexes.
 I found two ways to solve this problem:
@@ -416,7 +422,7 @@ public class XMutexFactory<KeyT> {
 ----
 
 That's cool! +
-Less code, but more performance than before. Let's try to check performance of this solution.
+Less code, but more performance than before. Let's try to check the performance of this solution.
 
 
 ### Create a simple benchmark
