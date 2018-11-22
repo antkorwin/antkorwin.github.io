@@ -84,7 +84,8 @@ public class ExternalCashBackService {
 
     private Result sendRestRequest(String action, UUID userId, int value) {
 
-        URI externalCashBackSystemUrl = URI.create("http://cash-back-system.org/api/" + action); <5>
+        URI externalCashBackSystemUrl =
+                URI.create("http://cash-back-system.org/api/" + action); <5>
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Accept", MediaType.APPLICATION_JSON_VALUE);
