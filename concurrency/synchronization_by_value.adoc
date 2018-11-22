@@ -430,7 +430,7 @@ Less code, but more performance than before. Let's try to check the performance 
 
 I made a small benchmark in order to select an implementation.
 
-There are three implementation of the Map involved in test:
+There is three implementation of the Map involved in the test
 
 * Collections.synchronizedMap based on the WeakHashMap
 * ConcurrentHashMap
@@ -438,7 +438,7 @@ There are three implementation of the Map involved in test:
 
 I use the ConcurrentHashMap in benchmark just for comparing in measurements,
 this implementation is not suitable for use in the factory of mutexes,
-because it not support a using of weak or soft references.
+because it does not support the use of weak or soft references.
 
 All benchmarks are written with using the JMH library.
 
@@ -461,7 +461,7 @@ ConcurrentMap.ConcurrentReferenceHashMap      ss       5   922844,750 ?  468380,
 ConcurrentMap.SynchronizedMap                 ss       5  1199159,700 ? 4339391,394   ns/op
 ----
 
-In this micro-benchmark, I create a situation when several threads computes value in the map.
+In this micro-benchmark, I create a situation when several threads compute values in the map.
 You can consider the source code of this benchmark in more details here
 https://github.com/antkorwin/concurrent-map-benchmark/blob/master/src/test/java/com/antkorwin/concurrenttests/ConcurrentMapMicroBenchmark.java[Concurrent Map benchmark]
 
