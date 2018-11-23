@@ -8,7 +8,7 @@
 Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
-## Intro
+## Intro (the problem overview)
 
 Sometimes we need to synchronize some blocks of a code by the value of variable.
 
@@ -476,27 +476,20 @@ So, the ConcurrentReferenceHashMap justifies its use in this case.
 ## Getting started with XSync library
 
 I packed this code into the https://github.com/antkorwin/xsync[XSync] library,
-and you can use it as a ready solution for the synchronization on value of variable.
+and you can use it as a ready solution for the synchronization on the value of variables.
 
-In order to do it, you need to add next dependencies:
+In order to do it, you need to add the next dependency:
 
-[source , xml]
+[source, xml]
 ----
-<repositories>
-	<repository>
-		<id>jitpack.io</id>
-		<url>https://jitpack.io</url>
-	</repository>
-</repositories>
-
 <dependency>
-	<groupId>com.github.antkorwin</groupId>
-	<artifactId>xsync</artifactId>
-	<version>0.5</version>
+  <groupId>com.antkorwin</groupId>
+  <artifactId>xsync</artifactId>
+  <version>1.0</version>
 </dependency>
 ----
 
-Then you be able to create instances of the XSync class for a synchronization on types that you need.
+Then you are able to create instances of the XSync class for a synchronization on types that you need.
 For the Spring Framework you can make them as beans:
 
 [source, java]
@@ -566,10 +559,10 @@ private class NonAtomicInt {  <3>
     }
 }
 ----
-<1> Create a XSync instance for a synchronization by UUID value.
+<1> Create XSync instance for a synchronization by UUID value.
 <2> There is a magic here, we created a parallel stream
-and try to increment the same nonatomic integer variable in the each stream.
-<3> Implementation of the not thread safe integer variable.
+and try to increment the same nonatomic integer variable in each stream.
+<3> Implementation of the does not thread safe integer variable.
 
 Let's see at the result of the test:
 
@@ -580,7 +573,7 @@ image:./concurrent_test.png[concurrent test result]
 
 image:../icons/git.png[github,64,64] https://github.com/antkorwin/xsync[github.com/antkorwin/xsync]
 
-issue requests and pull-requests are welcome.
+Issue requests and pull-requests are welcome.
 
 
 

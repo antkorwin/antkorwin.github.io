@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 1.5.7">
+<meta name="generator" content="Asciidoctor 1.5.7.1">
 <meta name="author" content="Korovin Anatoliy, Home">
 <title>Synchronized by the value of the object</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
@@ -198,7 +198,7 @@ body.toc2.toc-right{padding-left:0;padding-right:20em}}
 .admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
 table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
 .paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
-table.tableblock #preamble>.sectionbody>.paragraph:first-of-type p{font-size:inherit}
+table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
 .admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
 .admonitionblock>table td.icon{text-align:center;width:80px}
 .admonitionblock>table td.icon img{max-width:none}
@@ -444,7 +444,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toc" class="toc">
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
-<li><a href="#_intro">1. Intro</a></li>
+<li><a href="#_intro_the_problem_overview">1. Intro (the problem overview)</a></li>
 <li><a href="#_wrong_ways_to_solve_this_issue">2. Wrong ways to solve this issue</a>
 <ul class="sectlevel2">
 <li><a href="#_synchronized_methods">2.1. Synchronized methods</a></li>
@@ -467,7 +467,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div id="content">
 <div class="sect1">
-<h2 id="_intro">1. Intro</h2>
+<h2 id="_intro_the_problem_overview">1. Intro (the problem overview)</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Sometimes we need to synchronize some blocks of a code by the value of variable.</p>
@@ -1039,29 +1039,22 @@ You can consider the source code of this benchmark in more details here
 <div class="sectionbody">
 <div class="paragraph">
 <p>I packed this code into the <a href="https://github.com/antkorwin/xsync">XSync</a> library,
-and you can use it as a ready solution for the synchronization on value of variable.</p>
+and you can use it as a ready solution for the synchronization on the value of variables.</p>
 </div>
 <div class="paragraph">
-<p>In order to do it, you need to add next dependencies:</p>
+<p>In order to do it, you need to add the next dependency:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;repositories&gt;
-	&lt;repository&gt;
-		&lt;id&gt;jitpack.io&lt;/id&gt;
-		&lt;url&gt;https://jitpack.io&lt;/url&gt;
-	&lt;/repository&gt;
-&lt;/repositories&gt;
-
-&lt;dependency&gt;
-	&lt;groupId&gt;com.github.antkorwin&lt;/groupId&gt;
-	&lt;artifactId&gt;xsync&lt;/artifactId&gt;
-	&lt;version&gt;0.5&lt;/version&gt;
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;dependency&gt;
+  &lt;groupId&gt;com.antkorwin&lt;/groupId&gt;
+  &lt;artifactId&gt;xsync&lt;/artifactId&gt;
+  &lt;version&gt;1.0&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Then you be able to create instances of the XSync class for a synchronization on types that you need.
+<p>Then you are able to create instances of the XSync class for a synchronization on types that you need.
 For the Spring Framework you can make them as beans:</p>
 </div>
 <div class="listingblock">
@@ -1141,16 +1134,16 @@ private class NonAtomicInt {  <i class="conum" data-value="3"></i><b>(3)</b>
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Create a XSync instance for a synchronization by UUID value.</td>
+<td>Create XSync instance for a synchronization by UUID value.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
 <td>There is a magic here, we created a parallel stream
-and try to increment the same nonatomic integer variable in the each stream.</td>
+and try to increment the same nonatomic integer variable in each stream.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>Implementation of the not thread safe integer variable.</td>
+<td>Implementation of the does not thread safe integer variable.</td>
 </tr>
 </table>
 </div>
@@ -1169,7 +1162,7 @@ and try to increment the same nonatomic integer variable in the each stream.</td
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/antkorwin/xsync">github.com/antkorwin/xsync</a></p>
 </div>
 <div class="paragraph">
-<p>issue requests and pull-requests are welcome.</p>
+<p>Issue requests and pull-requests are welcome.</p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -1223,7 +1216,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-11-23 09:39:18 +10
+Last updated 2018-11-23 11:56:26 RTZ 9 (чшьр)
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
