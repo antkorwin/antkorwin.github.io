@@ -21,6 +21,18 @@ which makes the following operations on the each transfer of money by the client
 
 . updates the data in the cash-back evaluation system  (CashBackService)
 
+Money transfer operation looks like this:
+
+[source, java]
+----
+public void withdrawMoney(UUID userId, int amountOfMoney) {
+    synchronized (userId) {
+        Result result = externalCashBackService.evaluateCashBack(userId, amountOfMoney);
+        accountService.transfer(userId, amountOfMoney + result.getCashBackAmount());
+        externalCashBackService.cashBackComplete(userId, result.getCashBackAmount());
+    }
+}
+----
 
 The base components of the application are shown in the next diagram:
 
@@ -202,7 +214,7 @@ WARNING: In general, the use of intern is better left to the internal libraries 
 there are good articles by link:https://shipilev.net[Aleksey Shipilev] about this point.
 
 
-## How can we solve this problem correctly?
+## How can we solve this problem correctly
 
 ### Create your own synchronization primitive
 
@@ -309,7 +321,8 @@ by the official documentation (I mean the use of Collections.synchronizedMap).
 [source, java]
 ----
 public final Map<XMutex<KeyT>, WeakReference<XMutex<KeyT>>> weakHashMap =
-            Collections.synchronizedMap(new WeakHashMap<XMutex<KeyT>, WeakReference<XMutex<KeyT>>>());
+    Collections.synchronizedMap(new WeakHashMap<XMutex<KeyT>,
+                                                WeakReference<XMutex<KeyT>>>());
 
 public XMutex<KeyT> getMutex(KeyT key) {
     validateKey(key);
@@ -432,11 +445,11 @@ I made a small benchmark in order to select an implementation.
 
 There is three implementation of the Map involved in the test
 
-* Collections.synchronizedMap based on the WeakHashMap
-* ConcurrentHashMap
-* ConcurrentReferenceHashMap
+* `Collections.synchronizedMap` based on the `WeakHashMap`
+* `ConcurrentHashMap`
+* `ConcurrentReferenceHashMap`
 
-I use the ConcurrentHashMap in benchmark just for comparing in measurements,
+I use the `ConcurrentHashMap` in benchmark just for comparing in measurements,
 this implementation is not suitable for use in the factory of mutexes,
 because it does not support the use of weak or soft references.
 
@@ -471,7 +484,7 @@ Put it on the graph:
 image:./bench_result.png[benchmark result]
 
 
-So, the ConcurrentReferenceHashMap justifies its use in this case.
+So, the `ConcurrentReferenceHashMap` justifies its use in this case.
 
 ## Getting started with XSync library
 
@@ -485,7 +498,7 @@ In order to do it, you need to add the next dependency:
 <dependency>
   <groupId>com.antkorwin</groupId>
   <artifactId>xsync</artifactId>
-  <version>1.0</version>
+  <version>1.1</version>
 </dependency>
 ----
 

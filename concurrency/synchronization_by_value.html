@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="generator" content="Asciidoctor 1.5.7.1">
+<meta name="generator" content="Asciidoctor 1.5.7">
 <meta name="author" content="Korovin Anatoliy, Home">
 <title>Synchronized by the value of the object</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
@@ -198,7 +198,7 @@ body.toc2.toc-right{padding-left:0;padding-right:20em}}
 .admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
 table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
 .paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
-table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
+table.tableblock #preamble>.sectionbody>.paragraph:first-of-type p{font-size:inherit}
 .admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
 .admonitionblock>table td.icon{text-align:center;width:80px}
 .admonitionblock>table td.icon img{max-width:none}
@@ -451,7 +451,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_string_intern">2.2. String intern</a></li>
 </ul>
 </li>
-<li><a href="#_how_can_we_solve_this_problem_correctly">3. How can we solve this problem correctly?</a>
+<li><a href="#_how_can_we_solve_this_problem_correctly">3. How can we solve this problem correctly</a>
 <ul class="sectlevel2">
 <li><a href="#_create_your_own_synchronization_primitive">3.1. Create your own synchronization primitive</a></li>
 <li><a href="#_what_about_performance">3.2. What about performance?</a></li>
@@ -488,6 +488,20 @@ which makes the following operations on the each transfer of money by the client
 <p>updates the data in the cash-back evaluation system  (CashBackService)</p>
 </li>
 </ol>
+</div>
+<div class="paragraph">
+<p>Money transfer operation looks like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public void withdrawMoney(UUID userId, int amountOfMoney) {
+    synchronized (userId) {
+        Result result = externalCashBackService.evaluateCashBack(userId, amountOfMoney);
+        accountService.transfer(userId, amountOfMoney + result.getCashBackAmount());
+        externalCashBackService.cashBackComplete(userId, result.getCashBackAmount());
+    }
+}</code></pre>
+</div>
 </div>
 <div class="paragraph">
 <p>The base components of the application are shown in the next diagram:</p>
@@ -729,7 +743,7 @@ there are good articles by <a href="https://shipilev.net">Aleksey Shipilev</a> a
 </div>
 </div>
 <div class="sect1">
-<h2 id="_how_can_we_solve_this_problem_correctly">3. How can we solve this problem correctly?</h2>
+<h2 id="_how_can_we_solve_this_problem_correctly">3. How can we solve this problem correctly</h2>
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_create_your_own_synchronization_primitive">3.1. Create your own synchronization primitive</h3>
@@ -822,7 +836,8 @@ by the official documentation (I mean the use of Collections.synchronizedMap).</
 <div class="listingblock">
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">public final Map&lt;XMutex&lt;KeyT&gt;, WeakReference&lt;XMutex&lt;KeyT&gt;&gt;&gt; weakHashMap =
-            Collections.synchronizedMap(new WeakHashMap&lt;XMutex&lt;KeyT&gt;, WeakReference&lt;XMutex&lt;KeyT&gt;&gt;&gt;());
+    Collections.synchronizedMap(new WeakHashMap&lt;XMutex&lt;KeyT&gt;,
+                                                WeakReference&lt;XMutex&lt;KeyT&gt;&gt;&gt;());
 
 public XMutex&lt;KeyT&gt; getMutex(KeyT key) {
     validateKey(key);
@@ -980,18 +995,18 @@ Less code, but more performance than before. Let&#8217;s try to check the perfor
 <div class="ulist">
 <ul>
 <li>
-<p>Collections.synchronizedMap based on the WeakHashMap</p>
+<p><code>Collections.synchronizedMap</code> based on the <code>WeakHashMap</code></p>
 </li>
 <li>
-<p>ConcurrentHashMap</p>
+<p><code>ConcurrentHashMap</code></p>
 </li>
 <li>
-<p>ConcurrentReferenceHashMap</p>
+<p><code>ConcurrentReferenceHashMap</code></p>
 </li>
 </ul>
 </div>
 <div class="paragraph">
-<p>I use the ConcurrentHashMap in benchmark just for comparing in measurements,
+<p>I use the <code>ConcurrentHashMap</code> in benchmark just for comparing in measurements,
 this implementation is not suitable for use in the factory of mutexes,
 because it does not support the use of weak or soft references.</p>
 </div>
@@ -1029,7 +1044,7 @@ You can consider the source code of this benchmark in more details here
 <p><span class="image"><img src="./bench_result.png" alt="benchmark result"></span></p>
 </div>
 <div class="paragraph">
-<p>So, the ConcurrentReferenceHashMap justifies its use in this case.</p>
+<p>So, the <code>ConcurrentReferenceHashMap</code> justifies its use in this case.</p>
 </div>
 </div>
 </div>
@@ -1049,7 +1064,7 @@ and you can use it as a ready solution for the synchronization on the value of v
 <pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;dependency&gt;
   &lt;groupId&gt;com.antkorwin&lt;/groupId&gt;
   &lt;artifactId&gt;xsync&lt;/artifactId&gt;
-  &lt;version&gt;1.0&lt;/version&gt;
+  &lt;version&gt;1.1&lt;/version&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -1216,7 +1231,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2018-11-23 11:56:26 RTZ 9 (чшьр)
+Last updated 2018-11-24 10:23:40 +10
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
