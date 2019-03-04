@@ -1,0 +1,94 @@
+= How to write integration tests for MongoDb with Spring
+:source-highlighter: prettify
+:icons: font
+:toc: left
+:experimental:
+:numbered:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+## Populate data in the MongoDb before tests execution
+
+Let's consider a simple application with the MongoDb:
+
+[source, java]
+----
+class Foo {
+  String id;
+  Date time;
+  int counter;
+}
+
+interface FooRepository
+interface FooService
+----
+
+## Import data set before tests execution
+
+let's make a pair of entities in JSON dataset:
+
+[source, java]
+----
+{
+  "com.antkorwin.springtestmongo.Foo": [  (1)
+    {
+      "id": "77f3ed00b1375a0000000001",
+      "time":1516527720001,
+      "counter":1
+    },{
+      "id": "77f3ed00b1375a0000000002",
+      "time":1516527720002,
+      "counter":2
+    }
+  ]
+}
+----
+<1> reference to the class that you want to populate
+
+Now we can populate database before test execution:
+
+[source, java]
+----
+@Test
+@MongoDataSet(value = "/dataset/foo-init.json")  (1)
+void testImportByMongoDataSetAnnotation() {
+    // Act
+    Foo fooDoc = mongoTemplate.findById("77f3ed00b1375a0000000001", Foo.class);
+    // Assert
+    Assertions.assertThat(fooDoc)
+              .isNotNull()
+              .extracting(Foo::getCounter, Foo::getTime)
+              .containsOnly(1, new Date(1516527720001L));
+}
+----
+<1> path to the data set
+
+
+## Validate data in MongoDb after test execution
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'mongodb_integration_tests'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
