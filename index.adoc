@@ -89,6 +89,11 @@ link:./annotation_processor/lombok_mapstruct.html[Как подружить lomb
 
 ## Public Talks:
 
+### Intro to the Spring Cloud (Live Workshop) - 16.11.2018 image:./statemachine/rus.png[russian,28]
+video::dK1CsTt9tAc[youtube, width=520, height=390]
+
+{nbsp} +
+
 ### Spring Cloud Contract -  API контракты микросервисов - 12.10.2018 image:./statemachine/rus.png[english,28]
 
 video::365nPFiQtuI[youtube, width=520, height=390]
