@@ -1,4 +1,4 @@
-= Java Architect's Blog
+= Anatoliy Korovin
 :source-highlighter: prettify
 :icons: font
 :experimental:
@@ -8,7 +8,7 @@ My thoughts about Java application development, Spring Framework, TDD and other.
 
 ## My Articles and Blog Posts:
 
-### TDD
+### Testing:
 
 link:./junit5/junit5_in_spring4.html[How to use the JUnit5 in the Spring Framework 4] (English) image:./statemachine/eng.png[english,25] ::
 The workaround for using a modern version of Junit (the JUnit5 Jupiter) with a Spring Framework version older than 5, or SpringBoot version earlier than 2.0.
@@ -53,7 +53,7 @@ we will talk about a using TeamCity to build a project and Artifactory for deplo
 link:./spring_configuration/autoconfig.html[Spring auto-configuration & conditional] (English) image:./statemachine/eng.png[english,25]::
 Write you own auto-configuration classes with a ConditionalOnBean dependency
 
-### Hibernate
+### Hibernate:
 
 link:./hibernate/entity_init.html[Choosing the right way to initialize a fields of the entity] (Russian) image:./statemachine/rus.png[english,25]::
 Варианты инициализации полей сущности, значениями поумолчанию, а так же типичные ошибки при работе с ними. Эта статья послужила материалом для
@@ -62,12 +62,12 @@ link:./hibernate/entity_init.html[Choosing the right way to initialize a fields 
 link:./hibernate/unproxy.html[разворачиваем прокси (hibernate покажи личико)] (Russian) image:./statemachine/rus.png[english,25]::
 Как получить из hibernate proxy сам объект.
 
-### Reflection
+### Reflection:
 
 link:./reflection/make_new_instance.html[создаем новый объект через reflection] (Russian) image:./statemachine/rus.png[english,25]::
 Тонкости implicit параметров при создании нового экземпляра объекта.
 
-### Concurrency & Garbage Collector
+### Concurrency & Garbage Collector:
 
 link:./concurrency/weakreference.html[Soft, Weak & Phantom References in Java] (English) image:./statemachine/eng.png[english,25]::
 Consider the differences between the types of references in Java.
@@ -81,7 +81,7 @@ An example of the use of WeakReference for the synchronization by value of objec
 http://antkorwin.com/codestyle.html[Code style conventions] (English) image:./statemachine/eng.png[english,25]::
 Code style conventions
 
-### Annotation processing
+### Annotation processing:
 
 link:./annotation_processor/lombok_mapstruct.html[Как подружить lombok и mapstruct] (Russian) image:./statemachine/rus.png[english,25]::
 Как использовать сразу два кодо-генератора, да так чтобы задать определенную последовательность их запуска.
