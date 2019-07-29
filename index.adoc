@@ -94,6 +94,9 @@ link:./annotation_processor/lombok_mapstruct.html[Как подружить lomb
 
 ## Public Talks:
 
+### Heisenbug 2019 - Microservice wars (slides) - 18.05.2019 image:./statemachine/rus.png[russian,28]
+image:./images/HeisenBUG_2019_slides.jpg[heisenbug,520, link=https://speakerdeck.com/antkorwin/microservice-wars-junit-episode-v-testcontainers-strikes-back]
+
 ### Intro to the Spring Cloud (Live Workshop) - 16.11.2018 image:./statemachine/rus.png[russian,28]
 video::dK1CsTt9tAc[youtube, width=520, height=390]
 
