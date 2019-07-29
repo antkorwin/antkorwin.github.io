@@ -6,6 +6,11 @@ Korovin Anatoliy <antkorwin@gmail.com>
 
 My thoughts about Java application development, Spring Framework, TDD and other...
 
+## My social networks:
+
+- twitter: link:https://twitter.com/antkorwin[@antkorwin]
+- github: link:https://github.com/antkorwin[@antkorwin]
+
 ## My Articles and Blog Posts:
 
 ### Testing:

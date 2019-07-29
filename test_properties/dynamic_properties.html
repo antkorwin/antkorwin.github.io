@@ -5,8 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
-<meta name="author" content="Korovin Anatoliy">
-<title>Anatoliy Korovin</title>
+<meta name="author" content="Korovin Anatoliy, Home &lt;http://antkorwin.com&gt;">
+<title>How to set dynamic value of properties in spring boot tests</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -440,206 +440,189 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article">
 <div id="header">
-<h1>Anatoliy Korovin</h1>
+<h1>How to set dynamic value of properties in spring boot tests</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
+<span id="author2" class="author">Home &lt;http://antkorwin.com&gt;</span><br>
+</div>
+<div id="toc" class="toc">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#_application_properties">application.properties</a></li>
+<li><a href="#_testpropertysource">TestPropertySource</a></li>
+<li><a href="#_Проблема">Проблема</a></li>
+<li><a href="#_github_репозиторий">GitHub репозиторий</a></li>
+</ul>
 </div>
 </div>
 <div id="content">
 <div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>My thoughts about Java application development, Spring Framework, TDD and other&#8230;&#8203;</p>
+<p>Как правило, когда вы используете в Spring Framework тестах какие-то специфичные properties,
+у вас есть несколько вариантов чтобы задать их значения:</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_my_social_networks">My social networks:</h2>
+<h2 id="_application_properties">application.properties</h2>
 <div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>twitter: <a href="https://twitter.com/antkorwin">@antkorwin</a></p>
-</li>
-<li>
-<p>github: <a href="https://github.com/antkorwin">@antkorwin</a></p>
-</li>
-</ul>
+<div class="paragraph">
+<p>вы можете использовать файл <code>application.properties</code> в тестовых ресурсах, тогда эти настройки
+будут применены ко всем тестовым сценариям, которые вы пишите:</p>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_my_articles_and_blog_posts">My Articles and Blog Posts:</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_testing">Testing:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./junit5/junit5_in_spring4.html">How to use the JUnit5 in the Spring Framework 4</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>The workaround for using a modern version of Junit (the JUnit5 Jupiter) with a Spring Framework version older than 5, or SpringBoot version earlier than 2.0.</p>
-</dd>
-<dt class="hdlist1"><a href="./junit5/junit5_parallel_execution.html">How to use the Parallel Execution of tests in the JUnit5</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>Example of usage the <code>JUnit5 5.3.0-RC1</code> to run tests in parallel execution mode.</p>
-</dd>
-<dt class="hdlist1"><a href="./async/async_test_spring.html">Asynchronous tests, the Awaitility and uncaught exceptions from other threads</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>The story of my research of fragile asynchronous tests in the Spring Framework and uncaught exceptions handling by the Awaitility.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_spring_state_machine">Spring State Machine:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./statemachine/statemachine.html">Spring State machine workshop</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>Example of using a spring state machine for an automatization of a different kinds of business process.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_rus.html">Spring State machine workshop</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span> </dt>
-<dd>
-<p>Использование spring state machine для автоматизации бизнес-процессов</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_persisting.html">Persisting a spring state machine</a> (English)  <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to store a current state of a state machine in the MongoDb and how to test it with the Docker by the testcontainers framework.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_exception_handling.html">Error handling</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to work with errors that occur in a different parts of the state machine logics.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_spring_cloud">Spring Cloud:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./cloud/micros.html">Spring cloud stack</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Example of using an infrastructure for a microservices application, based on spring cloud stack.</p>
-</dd>
-<dt class="hdlist1"><a href="./cloud/spring_cloud_contract_junit5.html">How to use JUnit5 and Spring Cloud Contract</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Example of using a Spring Cloud Contract for testing of the contract between pair of microservices.
-We consider how to make a full circle of using a Spring Cloud Contract with JUnit5,
-we will talk about a using TeamCity to build a project and Artifactory for deploy binary of contracts.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_spring_configuration">Spring Configuration:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./spring_configuration/autoconfig.html">Spring auto-configuration &amp; conditional</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Write you own auto-configuration classes with a ConditionalOnBean dependency</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hibernate">Hibernate:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./hibernate/entity_init.html">Choosing the right way to initialize a fields of the entity</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Варианты инициализации полей сущности, значениями поумолчанию, а так же типичные ошибки при работе с ними. Эта статья послужила материалом для
-Детективной истории от Баруха Садогурского и Евгения Борисова на конференции jpoint 2018.</p>
-</dd>
-<dt class="hdlist1"><a href="./hibernate/unproxy.html">разворачиваем прокси (hibernate покажи личико)</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как получить из hibernate proxy сам объект.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_reflection">Reflection:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./reflection/make_new_instance.html">создаем новый объект через reflection</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Тонкости implicit параметров при создании нового экземпляра объекта.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_concurrency_garbage_collector">Concurrency &amp; Garbage Collector:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./concurrency/weakreference.html">Soft, Weak &amp; Phantom References in Java</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Consider the differences between the types of references in Java.
-And look at examples of using a WeakReference, SoftReference &amp; PhantomReference.</p>
-</dd>
-<dt class="hdlist1"><a href="./concurrency/synchronization_by_value.html">Synchronized by the value of the object</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>An example of the use of WeakReference for the synchronization by value of object. Also a comparing of benchmark for different ConcurrentMap implementations.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_code_conventions">Code conventions:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="http://antkorwin.com/codestyle.html">Code style conventions</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Code style conventions</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_annotation_processing">Annotation processing:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./annotation_processor/lombok_mapstruct.html">Как подружить lombok и mapstruct</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как использовать сразу два кодо-генератора, да так чтобы задать определенную последовательность их запуска.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_public_talks">Public Talks:</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_intro_to_the_spring_cloud_live_workshop_16_11_2018">Intro to the Spring Cloud (Live Workshop) - 16.11.2018 <span class="image"><img src="./statemachine/rus.png" alt="russian" width="28"></span></h3>
-<div class="videoblock">
+<div class="listingblock">
 <div class="content">
-<iframe width="520" height="390" src="https://www.youtube.com/embed/dK1CsTt9tAc?rel=0" frameborder="0" allowfullscreen></iframe>
+<pre class="prettyprint highlight"><code data-lang="yaml">sprint.redis.host = 127.0.0.1
+spring.redis.port = 15092</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_testpropertysource">TestPropertySource</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>можно указать значение свойств прямо в тест-кейсе при помощи аннотации <code>@TestPropertiesSource</code>,
+которая делает inline значения указаного в ней:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">@SpringBootTest
+@ExtendWith(SpringExtension.class)
+@TestPropertySource(properties = "spring.redis.host=127.0.0.1")
+class SomeRedisTest {
+
+    ...
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_Проблема">Проблема</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>А что делать, если значение, которое вам нужно задать - не константа?
+В нашем примере выше хост и порт, на котором стартует redis, могут быть нам не известны,
+до того как мы запустим тест. В такой ситуации легко оказаться, если вы например исопльзуете TestContainers для запуска redis в тестах.
+До того как будет запущен контейнер, вы не сможете указать порт для теста.
+Таким образом вариант использования <code>application.properties</code> отпадает автоматически,
+как и аннотация <code>@TestPropertySource</code>, потому что в java-аннотации можно указать только константное значение.</p>
+</div>
+<div class="paragraph">
+<p>Из-за таких особенностей приходится изворачиваться и в тестах писать свои ApplicationContextInitializer-ы или инициализировать эти свойства в static инициализаторах:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">@Testcontainers
+@ContextConfiguration(initializers = RedisIntegrationTest.CustomInitializer.class)
+@DataRedisTest
+public class RedisIntegrationTest {
+
+    @Container
+    public static RedisContainer redis = new RedisContainer();
+
+    static class CustomInitializer
+        implements ApplicationContextInitializer&lt;ConfigurableApplicationContext&gt; {
+
+        @Override
+        public void initialize(
+                ConfigurableApplicationContext configurableApplicationContext) {
+            TestPropertyValues.of("spring.redis.port=" + redis.getMappedPort())
+                    .applyTo(configurableApplicationContext.getEnvironment());
+        }
+
+    }
+}</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>&#160;<br></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_spring_cloud_contract_api_контракты_микросервисов_12_10_2018">Spring Cloud Contract -  API контракты микросервисов - 12.10.2018 <span class="image"><img src="./statemachine/rus.png" alt="english" width="28"></span></h3>
-<div class="videoblock">
-<div class="content">
-<iframe width="520" height="390" src="https://www.youtube.com/embed/365nPFiQtuI?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
+<p>Для пятого junit-а в библиотеке testcontainers, есть аннотация <code>Testcontainers</code>, помогающая работать с контейнерами в тесте,
+она ищет их в коде по наличию анотации <code>Container</code> и запускает перед выполнением теста.</p>
 </div>
 <div class="paragraph">
-<p>&#160;<br></p>
+<p>Конечно, можно было сделать решение, заточенное специально для этой задачи
+и добавить какое-нибудь расширение, проставляющее host/port на котором запустился redis-контейнер, перед запуском теста.
+Честно говоря, я так и сделал, когда первый раз столкнулся с этой задачей, пару месяцев назад (что из этого получилось можно посмотреть тут: <a href="https://github.com/jupiter-tools/spring-test-redis">github.com/jupiter-tools/spring-test-redis</a>),
+но ведь можно сделать что-то более универсальное:</p>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_state_machine_workshop_live_video_18_05_2018">State machine workshop live video - 18.05.2018 <span class="image"><img src="./statemachine/rus.png" alt="english" width="28"></span></h3>
-<div class="videoblock">
+<div class="listingblock">
 <div class="content">
-<iframe width="520" height="390" src="https://www.youtube.com/embed/J56_t5lny9c?rel=0" frameborder="0" allowfullscreen></iframe>
+<pre class="prettyprint highlight"><code data-lang="java">@SpringBootTest
+@Testcontainers
+@ExtendWith(SpringExtension.class)
+class RedisTestcontainersTest {
+
+    private static final Integer REDIS_PORT = 6379;
+
+    @Container  <i class="conum" data-value="1"></i><b>(1)</b>
+    private static GenericContainer redis = new GenericContainer("redis:latest")
+            .withExposedPorts(REDIS_PORT);
+
+    @DynamicTestProperty   <i class="conum" data-value="2"></i><b>(2)</b>
+    private static TestPropertyValues props() {
+        return TestPropertyValues.of("spring.redis.host=" + redis.getContainerIpAddress(),
+                                     "spring.redis.port=" + redis.getMappedPort(REDIS_PORT));
+    }
+
+    @Autowired
+    private RedisTemplate redisTemplate;  <i class="conum" data-value="3"></i><b>(3)</b>
+
+    @Test
+    void readWriteValueByRedisTemplate() {
+        String key = "test";
+        String value = "sabracadabra";
+        // Act
+        redisTemplate.opsForValue().set(key, value);
+        // Assert
+        assertThat(redisTemplate.opsForValue().get(key)).isEqualTo(value);
+    }
+}</code></pre>
 </div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>объявляем контейнер для redis</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>прописываем хост/порт на котором стартовал контейнер в стандартные спринговые проперти</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>используем в тесте redis, запущенный в тест-контейнере</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>И чтобы все это работало в ваших spring-boot проектах, нужна всего лишь одна зависимость:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code data-lang="java">&lt;dependency&gt;
+    &lt;groupId&gt;com.jupiter-tools&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-dynamic-property&lt;/artifactId&gt;
+    &lt;version&gt;0.1&lt;/version&gt;
+&lt;/dependency&gt;</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_github_репозиторий">GitHub репозиторий</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Больше подробностей вы можете прочитать на странице проекта.</p>
+</div>
+<div class="paragraph">
+<p>Не стесняйтесь ставить звездочки на гитхабе =) и писать feature-request-ы.</p>
+</div>
+<div class="paragraph">
+<p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/jupiter-tools/spring-dynamic-property">github.com/jupiter-tools/spring-dynamic-property</a></p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -669,7 +652,25 @@ And look at examples of using a WeakReference, SoftReference &amp; PhantomRefere
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/47919536" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
-</div>
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'dynamic_test_properties'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
 </div>
 </div>
