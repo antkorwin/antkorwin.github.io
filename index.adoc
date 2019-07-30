@@ -20,8 +20,10 @@ link:./test_properties/dynamic_properties.html[How to set dynamic value of prope
 Как задать динамические значения spring properties для теста.
 
 link:./test_properties/test_property_source_repeatable.html[Support @TestPropertySource as a repeatable annotation] (Russian) image:./statemachine/rus.png[russian,25] ::
-История моего очередного коммита в Spring Framework, в этот раз исправляем поведение аннотации @TestPropertySource
-так чтобы можно было ее использовать одновременно, и в своих мета-анотациях, и локально над тестовым классом.
+История моего очередного коммита в Spring Framework,
+в этот раз исправляем поведение аннотации `TestPropertySource` так,
+чтобы можно было ее использовать одновременно
+в своих мета-аннотациях и локально над тестовыми классами.
 
 link:./junit5/junit5_in_spring4.html[How to use the JUnit5 in the Spring Framework 4] (English) image:./statemachine/eng.png[english,25] ::
 The workaround for using a modern version of Junit (the JUnit5 Jupiter) with a Spring Framework version older than 5, or SpringBoot version earlier than 2.0.
