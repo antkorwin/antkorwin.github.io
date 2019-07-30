@@ -452,7 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_Пример">Пример</a></li>
 <li><a href="#_Идея">Идея</a></li>
 <li><a href="#_Проблема">Проблема</a></li>
-<li><a href="#_Как_решить">Как решить</a></li>
+<li><a href="#_Как_решить_проблему">Как решить проблему</a></li>
 </ul>
 </div>
 </div>
@@ -463,7 +463,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>Если вы когда-нибудь работали с Hibernate, то почти наверняка знаете что
 для того чтобы посмотреть запросы, которые уходят в базу, нужно
-включения логирование. И это далеко не одна настройка, их нужно прописать порядка десяти штук:</p>
+включить логирование в настройках. И это далеко не одна настройка, их нужно прописать порядка десяти штук.
+В итоге наш application.properties для тестов выглядит примерно так:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -534,7 +535,7 @@ public @interface TraceSql {
 </div>
 </div>
 <div class="paragraph">
-<p>все это даже будет работать, мы увидим в логах запрсоы и много полезной информации от hibernate:</p>
+<p>все это даже будет работать, мы увидим в логах запросы и много полезной информации от hibernate:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -575,7 +576,7 @@ public class DataJpaTest {
 при построении контекста приложения. Там была учтена возможность использовать эту анотацию
 в родительском классе, а так же внутри своей композитной мета-аннотации, но вся эта схема не
 была рассчитана на то, что мы будем использовать несколько аннотаций одновременно (одну локально
-над тестовым классом, а одну внутри своей мета-аннотации).</p>
+над тестовым классом, а вторую внутри своей мета-аннотации).</p>
 </div>
 <div class="paragraph">
 <p>Возможность указывать несколько различных значений, путем повторения одной и той же аннотации принято называть
@@ -584,18 +585,20 @@ public class DataJpaTest {
 </div>
 </div>
 <div class="sect1">
-<h2 id="_Как_решить">Как решить</h2>
+<h2 id="_Как_решить_проблему">Как решить проблему</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Сначала я подумал что можно сдедать что-то свое или даже применить DynamicTestProperty (описаные в предыдущей статье <a href="./dynamic_properties.html">How to set dynamic value of properties in Spring</a>)
-Но потом пришло правильно решение - надо исправить проблему в самом фреймворке!
-Тем более, немного погуглив я понял,
-что не только мне нужно это решение.</p>
+<p>Сначала я подумал что можно сдедать что-то свое или даже применить DynamicTestProperty (описаные в предыдущей статье <a href="./dynamic_properties.html">How to set dynamic value of properties in Spring</a>).
+Но потом пришло правильно решение - Надо исправить проблему в самом фреймворке!
+Тем более, немного погуглив я понял, что не только мне нужно это решение.</p>
 </div>
 <div class="paragraph">
 <p>В общем, на выходных я нашел немного времени чтобы исправить эту проблему и собрать пул-реквест.
 На прошлой неделе его благополучно слили в мастер-ветку(<a href="https://github.com/spring-projects/spring-framework/commit/690694df33151f5d003462b14026ef3fda57e010">gh-23320</a>) и теперь в Spring Framework 5.2 такой проблемы
-уже не будет. Надо сказать большое спасибо комьюнити Spring Framework за такую оперативность и помощь.</p>
+уже не будет.</p>
+</div>
+<div class="paragraph">
+<p>Надо сказать большое спасибо комьюнити Spring Framework за такую оперативность и помощь.</p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -649,7 +652,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-07-31 00:46:28 +1000
+Last updated 2019-07-31 00:55:04 +1000
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
