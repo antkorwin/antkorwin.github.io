@@ -10,10 +10,14 @@ My thoughts about Java application development, Spring Framework, TDD and other.
 
 - twitter: link:https://twitter.com/antkorwin[@antkorwin]
 - github: link:https://github.com/antkorwin[@antkorwin]
+- telegram канал о тестировании: link:https://t.me/test_tools[@test_tools]
 
 ## My Articles and Blog Posts:
 
 ### Testing:
+
+link:./test_properties/dynamic_properties.html[How to set dynamic value of properties in spring boot tests] (Russian) image:./statemachine/rus.png[russian,25] ::
+Как задать динамические значения spring properties для теста.
 
 link:./junit5/junit5_in_spring4.html[How to use the JUnit5 in the Spring Framework 4] (English) image:./statemachine/eng.png[english,25] ::
 The workaround for using a modern version of Junit (the JUnit5 Jupiter) with a Spring Framework version older than 5, or SpringBoot version earlier than 2.0.

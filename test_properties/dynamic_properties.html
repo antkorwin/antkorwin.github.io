@@ -452,6 +452,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_application_properties">application.properties</a></li>
 <li><a href="#_testpropertysource">TestPropertySource</a></li>
 <li><a href="#_Проблема">Проблема</a></li>
+<li><a href="#_Решение">Решение</a></li>
 <li><a href="#_github_репозиторий">GitHub репозиторий</a></li>
 </ul>
 </div>
@@ -503,12 +504,16 @@ class SomeRedisTest {
 <div class="sect1">
 <h2 id="_Проблема">Проблема</h2>
 <div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre>А что делать, если значение, которое вам нужно задать - не константа?</pre>
+</div>
+</div>
 <div class="paragraph">
-<p>А что делать, если значение, которое вам нужно задать - не константа?
-В нашем примере выше хост и порт, на котором стартует redis, могут быть нам не известны,
-до того как мы запустим тест. В такой ситуации легко оказаться, если вы исопльзуете TestContainers для запуска redis в тестах.
+<p>В нашем примере выше хост и порт, на котором стартует redis, могут быть нам не известны
+до того как мы запустим тест. В такой ситуации легко оказаться, если вы используете TestContainers для запуска redis в тестах.
 До того как будет запущен контейнер, вы не сможете указать порт для теста.
-Таким образом вариант использования <code>application.properties</code> отпадает автоматически,
+Таким образом, вариант использования <code>application.properties</code> отпадает автоматически,
 как и аннотация <code>@TestPropertySource</code>, потому что в java-аннотации можно указать только константное значение.</p>
 </div>
 <div class="paragraph">
@@ -539,14 +544,26 @@ public class RedisIntegrationTest {
 </div>
 </div>
 <div class="paragraph">
-<p>Аннотация <code>Testcontainers</code>, при помощи расширения для junit5, помогающая работать с контейнерами в тесте,
-она ищет их в коде по наличию анотации <code>Container</code> и запускает перед выполнением теста.</p>
+<p>Аннотация <code>@Testcontainers</code> работает при помощи расширения для junit5,
+которое ищет контейнеры (помеченные аннотацией <code>@Container</code>) в коде теста
+и запускает их.</p>
 </div>
 <div class="paragraph">
-<p>Конечно, можно было сделать решение, заточенное специально для этой задачи
-и добавить какое-нибудь расширение, стартующее redis-контейнер и проставляющее host/port на котором он запустился, перед запуском теста.
+<p>Конечно, можно было сделать решение, заточенное специально для этой задачи,
+и добавить какое-нибудь расширение, стартующее redis-контейнер и проставляющее host/port,
+на котором он запустился, перед запуском теста.
 Честно говоря, я так и сделал, когда первый раз столкнулся с этой задачей, пару месяцев назад (что из этого получилось можно посмотреть тут: <a href="https://github.com/jupiter-tools/spring-test-redis">github.com/jupiter-tools/spring-test-redis</a>),
-но ведь можно сделать что-то более универсальное:</p>
+но ведь можно сделать что-то более универсальное.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_Решение">Решение</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>В результате у меня получилось сделать механизм,
+позволяющий пометить аннотацией <code>@DynamicTestProperty</code> метод,
+добавляющий новые значения переменных окружения для теста:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -590,7 +607,7 @@ class RedisTestcontainersTest {
 </tr>
 <tr>
 <td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>прописываем хост/порт на котором стартовал контейнер в стандартные спринговые настройки</td>
+<td>прописываем хост/порт, на котором стартовал контейнер в стандартные спринговые настройки</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
@@ -619,7 +636,7 @@ class RedisTestcontainersTest {
 <p>Больше подробностей вы можете прочитать на странице проекта.</p>
 </div>
 <div class="paragraph">
-<p>Не стесняйтесь ставить звездочки на гитхабе =) и писать feature-request-ы.</p>
+<p>Не стесняйтесь ставить звездочки на гитхабе =)</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="../icons/git.png" alt="github" width="64" height="64"></span> <a href="https://github.com/jupiter-tools/spring-dynamic-property">github.com/jupiter-tools/spring-dynamic-property</a></p>
@@ -676,7 +693,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-07-30 09:20:28 +1000
+Last updated 2019-07-30 22:17:05 +1000
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
