@@ -463,8 +463,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>Если вы когда-нибудь работали с Hibernate, то почти наверняка знаете что
 для того чтобы посмотреть запросы, которые уходят в базу, нужно
-включить логирование в настройках. И это далеко не одна настройка, их нужно прописать порядка десяти штук.
-В итоге наш application.properties для тестов выглядит примерно так:</p>
+включить логирование в настройках. И это далеко не одна настройка, их нужно прописать порядка десяти штук.</p>
+</div>
+<div class="paragraph">
+<p>В итоге наш application.properties для тестов выглядит примерно так:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -480,8 +482,9 @@ logging.level.org.hibernate.stat=TRACE</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>Каждый раз, когда приходится вспоминать эти настройки, я прохожу 5 стадий принятия неизбежного
-и ищу из какого проекта их скопировать побыстрее.</p>
+<p>Каждый раз, когда приходится вспоминать эти настройки,
+я прохожу 5 стадий принятия неизбежного
+и ищу, из какого проекта их скопировать побыстрее.</p>
 </div>
 <div class="paragraph">
 <p><span class="image"><img src="./5-stadi-prinatia.jpg" alt="5 stadi prinatia"></span></p>
@@ -493,7 +496,7 @@ logging.level.org.hibernate.stat=TRACE</code></pre>
 <div class="sectionbody">
 <div class="paragraph">
 <p>В очередной раз, делая это, я подумал что было бы неплохо
-завернуть все эти настройки в одну анотацию, например так:</p>
+завернуть все эти настройки в одну аннотацию, например так:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -508,13 +511,13 @@ public class DataJpaTest {
 <table>
 <tr>
 <td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>TraceSql включает логирование SQL запросов выполняемых в тесте</td>
+<td>TraceSql включает логирование SQL запросов, выполняемых в тесте</td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>На первый взгляд сделать это довольно не сложно,
-можно воспользоваться анотацией <code>TestPropertySource</code> и продекларировать
+<p>На первый взгляд, сделать это довольно не сложно,
+можно воспользоваться <code>@TestPropertySource</code> и продекларировать
 все что нам нужно:</p>
 </div>
 <div class="listingblock">
@@ -559,7 +562,7 @@ public @interface TraceSql {
 <div class="sectionbody">
 <div class="paragraph">
 <p>Этот подход работает до того момента, когда нам захочется определить
-в тесте еще и локальные настройки переменных окружения, через TestPropertySource:</p>
+в тесте еще и локальные настройки переменных окружения, через <code>TestPropertySource</code>:</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -572,15 +575,16 @@ public class DataJpaTest {
 </div>
 </div>
 <div class="paragraph">
-<p>И проблема тут в том, как Spring Framework сканирует аннотации TestPropertySource,
-при построении контекста приложения. Там была учтена возможность использовать эту анотацию
+<p>И проблема тут в том, как Spring Framework сканирует аннотации <code>TestPropertySource</code>
+во время построения контекста приложения.
+Там была учтена возможность использовать эту аннотацию
 в родительском классе, а так же внутри своей композитной мета-аннотации, но вся эта схема не
 была рассчитана на то, что мы будем использовать несколько аннотаций одновременно (одну локально
 над тестовым классом, а вторую внутри своей мета-аннотации).</p>
 </div>
 <div class="paragraph">
 <p>Возможность указывать несколько различных значений, путем повторения одной и той же аннотации принято называть
-свойством repeatable для мета-аннотаций.</p>
+свойством repeatable для мета-аннотаций. Собственно, проблема в том, что <code>TestPropertySource</code> не repeatable.</p>
 </div>
 </div>
 </div>
@@ -588,12 +592,12 @@ public class DataJpaTest {
 <h2 id="_Как_решить_проблему">Как решить проблему</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Сначала я подумал что можно сдедать что-то свое или даже применить DynamicTestProperty (описаные в предыдущей статье <a href="./dynamic_properties.html">How to set dynamic value of properties in Spring</a>).
-Но потом пришло правильно решение - Надо исправить проблему в самом фреймворке!
-Тем более, немного погуглив я понял, что не только мне нужно это решение.</p>
+<p>Сначала я подумал, что можно сделать что-то свое или даже применить <code>DynamicTestProperty</code> (описаные в предыдущей статье <a href="./dynamic_properties.html">How to set dynamic value of properties in Spring</a>).
+Но потом в голову пришло единственное правильное решение - <strong>Надо исправить проблему в самом фреймворке!</strong>
+Тем более, немного погуглив, я понял, что не только мне нужно это решение.</p>
 </div>
 <div class="paragraph">
-<p>В общем, на выходных я нашел немного времени чтобы исправить эту проблему и собрать пул-реквест.
+<p>В общем, на выходных я нашел немного времени, чтобы исправить эту проблему и собрать пул-реквест.
 На прошлой неделе его благополучно слили в мастер-ветку(<a href="https://github.com/spring-projects/spring-framework/commit/690694df33151f5d003462b14026ef3fda57e010">gh-23320</a>) и теперь в Spring Framework 5.2 такой проблемы
 уже не будет.</p>
 </div>
@@ -652,7 +656,7 @@ s.setAttribute('data-timestamp', +new Date());
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2019-07-31 00:55:04 +1000
+Last updated 2019-07-31 09:15:15 +1000
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">
