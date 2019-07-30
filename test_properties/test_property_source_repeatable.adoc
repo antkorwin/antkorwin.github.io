@@ -1,0 +1,150 @@
+= Support @TestPropertySource as a repeatable annotation
+:source-highlighter: prettify
+:icons: font
+:toc:
+:experimental:
+:homepage: http://antkorwin.com
+Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
+// START OF CONTENT
+
+## Пример
+
+Если вы когда-нибудь работали с Hibernate, то почти наверняка знаете что
+для того чтобы посмотреть запросы, которые уходят в базу, нужно
+включения логирование. И это далеко не одна настройка, их нужно прописать порядка десяти штук:
+
+[source]
+----
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+spring.jpa.properties.hibernate.use_sql_comments=true
+spring.jpa.properties.hibernate.generate_statistics=true
+spring.jpa.properties.hibernate.type=TRACE
+logging.level.org.hibernate.type.descriptor.sql=TRACE
+logging.level.org.springframework.jdbc.datasource.init.ScriptUtils=TRACE
+logging.level.org.hibernate.event.internal=TRACE
+logging.level.org.hibernate.stat=TRACE
+----
+
+Каждый раз, когда приходится вспоминать эти настройки, я прохожу 5 стадий принятия неизбежного
+и ищу из какого проекта их скопировать побыстрее.
+
+image:./5-stadi-prinatia.jpg[]
+
+## Идея
+
+В очередной раз, делая это, я подумал что было бы неплохо
+завернуть все эти настройки в одну анотацию, например так:
+
+[source, java]
+----
+@TraceSql <1>
+@DataJpaTest
+public class DataJpaTest {
+    ...
+}
+----
+<1> TraceSql включает логирование SQL запросов выполняемых в тесте
+
+На первый взгляд сделать это довольно не сложно,
+можно воспользоваться анотацией `TestPropertySource` и продекларировать
+все что нам нужно:
+
+[source, java]
+----
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@TestPropertySource(properties = {
+       "spring.jpa.show-sql=true",
+       "spring.jpa.properties.hibernate.format_sql=true",
+       "spring.jpa.properties.hibernate.use_sql_comments=true",
+       "logging.level.org.hibernate.type.descriptor.sql=TRACE",
+       "logging.level.org.springframework.jdbc.datasource.init.ScriptUtils=TRACE",
+       "logging.level.org.hibernate.event.internal=TRACE"
+})
+public @interface TraceSql {
+
+}
+----
+
+
+все это даже будет работать, мы увидим в логах запрсоы и много полезной информации от hibernate:
+
+[source]
+----
+Hibernate:
+    select
+        box0_.id as id1_0_0_,
+        box0_.color as color2_0_0_
+    from
+        box box0_
+    where
+        box0_.id=?
+2019-06-02 11:45:22.810  binding parameter [1] as [VARCHAR] - [bf71b8d4-c22c-4223-82c7-28900ae64abd]
+...
+...
+----
+
+## Проблема
+
+Этот подход работает до того момента, когда нам захочется определить
+в тесте еще и локальные настройки переменных окружения, через TestPropertySource:
+
+[source, java]
+----
+@TraceSql
+@DataJpaTest
+@TestPropertySource(properties = "my.local.property=123")
+public class DataJpaTest {
+    ...
+}
+----
+
+И проблема тут в том, как Spring Framework сканирует аннотации TestPropertySource,
+при построении контекста приложения. Там была учтена возможность использовать эту анотацию
+в родительском классе, а так же внутри своей композитной мета-аннотации, но вся эта схема не
+была рассчитана на то, что мы будем использовать несколько аннотаций одновременно (одну локально
+над тестовым классом, а одну внутри своей мета-аннотации).
+
+Возможность указывать несколько различных значений, путем повторения одной и той же аннотации принято называть
+свойством repeatable для мета-аннотаций.
+
+
+## Как решить
+
+Сначала я подумал что можно сдедать что-то свое или даже применить DynamicTestProperty (описаные в предыдущей статье link:./dynamic_properties.html[How to set dynamic value of properties in Spring])
+Но потом пришло правильно решение - надо исправить проблему в самом фреймворке!
+Тем более, немного погуглив я понял,
+что не только мне нужно это решение.
+
+В общем, на выходных я нашел немного времени чтобы исправить эту проблему и собрать пул-реквест.
+На прошлой неделе его благополучно слили в мастер-ветку(link:https://github.com/spring-projects/spring-framework/commit/690694df33151f5d003462b14026ef3fda57e010[gh-23320]) и теперь в Spring Framework 5.2 такой проблемы
+уже не будет. Надо сказать большое спасибо комьюнити Spring Framework за такую оперативность и помощь.
+
+
+
+
+// END OF CONTENT
+include::../metrica.adoc[]
+
+++++
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'test_property_source_repeatable'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+++++
