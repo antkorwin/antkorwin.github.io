@@ -10,6 +10,7 @@ My thoughts about Java application development, Spring Framework, TDD and other.
 
 - twitter: link:https://twitter.com/antkorwin[@antkorwin]
 - github: link:https://github.com/antkorwin[@antkorwin]
+- linkedin: link:https://www.linkedin.com/in/antkorwin/[@antkorwin]
 - telegram канал о тестировании: link:https://t.me/test_tools[@test_tools]
 
 ## My Articles and Blog Posts:
