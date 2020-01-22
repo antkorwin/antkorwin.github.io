@@ -450,6 +450,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div id="toctitle">Table of Contents</div>
 <ul class="sectlevel1">
 <li><a href="#_intro_to_the_problem">1. Intro to the problem</a></li>
+<li><a href="#_references">2. References</a></li>
 </ul>
 </div>
 </div>
@@ -462,15 +463,46 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="diag-bb27f7f12868b758d0f18efbd29e27f8.png" alt="diag bb27f7f12868b758d0f18efbd29e27f8" width="772" height="661">
+<img src="diag-118daa2043d873ada0f5aa2ec36f9799.png" alt="diag 118daa2043d873ada0f5aa2ec36f9799" width="778" height="661">
 </div>
+</div>
+<div class="paragraph">
+<p>Bob withdrawing from an ATM 100$, and simultaneously with this process,
+a background regular(every month) job is transferring money from Bob&#8217;s account to Alice&#8217;s account.
+Thread2 is processing Bob&#8217;s request from the ATM.
+This thread is reading a current balance of the account and decreasing it on the requested value.
+Thread2 is reading the account balance too, then decrease this value on an amount of the auto-payment.
+Both of these threads are reading similar values of the balance. And after the last update,
+we will be in the situation when the balance of Bob&#8217;s account decreased only once time.</p>
+</div>
+<div class="paragraph">
+<p>As you can see without an elaborate synchronization this workflow may bring a bank to the loss of money.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s consider the right flow with the correct synchronization:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="diag-3b3cb6dd7afb30beeb7ad98d1757f897.png" alt="diag 3b3cb6dd7afb30beeb7ad98d1757f897" width="898" height="907">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_references">2. References</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://www.javaworld.com/article/2075692/avoid-synchronization-deadlocks.html">Avoid synchronization deadlocks - Brian Goetz</a></p>
+</div>
+<div class="paragraph">
+<p><a href="https://web.mit.edu/6.005/www/fa14/classes/20-queues-locks/synchronization/">Synchronization - MIT Software construction course</a></p>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-01-04 23:56:20 +1000
+Last updated 2020-01-23 09:51:16 +1000
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

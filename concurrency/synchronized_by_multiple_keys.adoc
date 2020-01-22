@@ -18,24 +18,30 @@ control AutoPayment
 Bob -> Thread_1 : get 100$
 activate Thread_1 #orange
 Thread_1 -> Account_Bob : get balance
+activate Account_Bob #lime
 Account_Bob --> Thread_1 : balance = 1000$
+deactivate Account_Bob
 AutoPayment -> Thread_2 : move from Bob to Alice 100$, every month
 activate Thread_2 #DarkKhaki
 Thread_2 -> Account_Bob : get balance
-Account_Bob --> Thread_2 : balance = 1000$
+activate Account_Bob #lime
+Account_Bob --> Thread_2 :. balance = 1000$
+deactivate Account_Bob
 Thread_1 -> Account_Bob : withdraw 100$
 activate Account_Bob #red
 Account_Bob --> Thread_1 : balance = 900$
-Thread_1 --> Bob : give out 100$
 deactivate Account_Bob
+Thread_1 --> Bob : give out 100$
 deactivate Thread_1
 Thread_2 -> Account_Alice : get balance
+activate Account_Alice #lime
 Account_Alice --> Thread_2 : balance = 200$
+deactivate Account_Alice
 Thread_2 -> Account_Bob : move 100$ to Alice
 activate Account_Bob #red
-Account_Bob --> Thread_2 :  balance = 900$
+Account_Bob --> Thread_2 :. balance = 900$
 deactivate Account_Bob
-Thread_2 -> Account_Alice : got 100$ from Bob
+Thread_2 -> Account_Alice : received 100$ from Bob
 activate Account_Alice #red
 Account_Alice --> Thread_2 : balance = 300$
 deactivate Account_Alice
@@ -44,6 +50,14 @@ deactivate Account_Alice
 deactivate Thread_2
 control AutoPayment
 ....
+
+Bob withdrawing from an ATM 100$, and simultaneously with this process,
+a background regular(every month) job is transferring money from Bob's account to Alice's account.
+Thread2 is processing Bob's request from the ATM.
+This thread is reading a current balance of the account and decreasing it on the requested value.
+Thread2 is reading the account balance too, then decrease this value on an amount of the auto-payment.
+Both of these threads are reading similar values of the balance. And after the last update,
+we will be in the situation when the balance of Bob's account decreased only once time.
 
 As you can see without an elaborate synchronization this workflow may bring a bank to the loss of money.
 
