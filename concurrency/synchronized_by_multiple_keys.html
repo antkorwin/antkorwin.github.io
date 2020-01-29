@@ -467,16 +467,21 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </div>
 </div>
 <div class="paragraph">
-<p>Bob withdrawing from an ATM 100$, and simultaneously with this process,
-a background regular(every month) job is transferring money from Bob&#8217;s account to Alice&#8217;s account.
-Thread2 is processing Bob&#8217;s request from the ATM.
-This thread is reading a current balance of the account and decreasing it on the requested value.
-Thread2 is reading the account balance too, then decrease this value on an amount of the auto-payment.
-Both of these threads are reading similar values of the balance. And after the last update,
-we will be in the situation when the balance of Bob&#8217;s account decreased only once time.</p>
+<p>Bob withdrawing from an ATM 100$, and a background regular job(every month)
+is transferring money from Bob&#8217;s account to Alice&#8217;s account simultaneously.</p>
 </div>
 <div class="paragraph">
-<p>As you can see without an elaborate synchronization this workflow may bring a bank to the loss of money.</p>
+<p><code>Thread1</code> is processing Bob&#8217;s request from the ATM.
+This thread is reading a current balance of the account and decreasing it on the requested value.</p>
+</div>
+<div class="paragraph">
+<p><code>Thread2</code> is reading the account balance too, then decrease this value on an amount of the auto-payment.
+Both of these threads are reading similar values of the balance.</p>
+</div>
+<div class="paragraph">
+<p>And after the last update,
+we will be in the situation when the balance of Bob&#8217;s account decreased only once time.
+As you can see without an elaborate synchronization this workflow may bring a bank to the loss of money.</p>
 </div>
 <div class="paragraph">
 <p>Let&#8217;s consider the right flow with the correct synchronization:</p>
@@ -485,6 +490,28 @@ we will be in the situation when the balance of Bob&#8217;s account decreased on
 <div class="content">
 <img src="diag-3b3cb6dd7afb30beeb7ad98d1757f897.png" alt="diag 3b3cb6dd7afb30beeb7ad98d1757f897" width="898" height="907">
 </div>
+</div>
+<div class="paragraph">
+<p>The first thread acquires the mutex before working with Bob&#8217;s account.
+And release this mutex after change the balance.
+In this time the second thread tried acquiring the same mutex to work with Bob&#8217;s account.
+So, the second thread is waiting for the end of processing when the first thread will release the mutex.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+It looks like more thread-safe flow,
+but this is not a full picture,
+because while we working with Alice&#8217;s account we need to lock another mutex
+(which is bound to Alice&#8217;s account) to prevent the concurrent modification
+balance of Alice&#8217;s account in other threads.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
@@ -502,7 +529,7 @@ we will be in the situation when the balance of Bob&#8217;s account decreased on
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-01-23 09:51:16 +1000
+Last updated 2020-01-29 23:57:38 +1000
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

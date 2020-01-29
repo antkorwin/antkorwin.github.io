@@ -51,14 +51,17 @@ deactivate Thread_2
 control AutoPayment
 ....
 
-Bob withdrawing from an ATM 100$, and simultaneously with this process,
-a background regular(every month) job is transferring money from Bob's account to Alice's account.
-Thread2 is processing Bob's request from the ATM.
-This thread is reading a current balance of the account and decreasing it on the requested value.
-Thread2 is reading the account balance too, then decrease this value on an amount of the auto-payment.
-Both of these threads are reading similar values of the balance. And after the last update,
-we will be in the situation when the balance of Bob's account decreased only once time.
+Bob withdrawing from an ATM 100$, and a background regular job(every month)
+is transferring money from Bob's account to Alice's account simultaneously.
 
+`Thread1` is processing Bob's request from the ATM.
+This thread is reading a current balance of the account and decreasing it on the requested value.
+
+`Thread2` is reading the account balance too, then decrease this value on an amount of the auto-payment.
+Both of these threads are reading similar values of the balance.
+
+And after the last update,
+we will be in the situation when the balance of Bob's account decreased only once time.
 As you can see without an elaborate synchronization this workflow may bring a bank to the loss of money.
 
 Let's consider the right flow with the correct synchronization:
@@ -125,6 +128,19 @@ deactivate Account_Alice
 deactivate Thread_2
 control AutoPayment
 ....
+
+The first thread acquires the mutex before working with Bob's account.
+And release this mutex after change the balance.
+In this time the second thread tried acquiring the same mutex to work with Bob's account.
+So, the second thread is waiting for the end of processing when the first thread will release the mutex.
+
+WARNING: It looks like more thread-safe flow, 
+but this is not a full picture,
+because while we working with Alice's account we need to lock another mutex
+(which is bound to Alice's account) to prevent the concurrent modification
+balance of Alice's account in other threads.
+
+
 
 
 ## References
