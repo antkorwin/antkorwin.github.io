@@ -4,14 +4,21 @@
 :experimental:
 Korovin Anatoliy <antkorwin@gmail.com>
 
-My thoughts about Java application development, Spring Framework, TDD and other...
+My thoughts about Java, Spring Framework, TDD and other...
 
-## My social networks:
+## My current activity:
 
 - twitter: link:https://twitter.com/antkorwin[@antkorwin]
 - github: link:https://github.com/antkorwin[@antkorwin]
 - linkedin: link:https://www.linkedin.com/in/antkorwin/[@antkorwin]
-- telegram канал о тестировании: link:https://t.me/test_tools[@test_tools]
+- telegram: link:https://t.me/test_tools[@test_tools]
+- host at link:https://bitcask.live/[Bitcask Podcast]
+
+## My Projects:
+
+- Java synchronization library: link:https://github.com/antkorwin/xsync[XSync]
+- String interpolation javac plugin: link:https://github.com/antkorwin/better-strings[BetterStrings]
+- Testing tools: link:https://github.com/jupiter-tools[JupiterTools]
 
 ## My Articles and Blog Posts:
 
@@ -54,9 +61,6 @@ How to work with errors that occur in a different parts of the state machine log
 // How to provide consistency between the state machine and other systems
 
 ### Spring Cloud:
-
-link:./cloud/micros.html[Spring cloud stack] (English) image:./statemachine/eng.png[english,25]::
-Example of using an infrastructure for a microservices application, based on spring cloud stack.
 
 link:./cloud/spring_cloud_contract_junit5.html[How to use JUnit5 and Spring Cloud Contract] (English) image:./statemachine/eng.png[english,25]::
 Example of using a Spring Cloud Contract for testing of the contract between pair of microservices.
@@ -105,23 +109,35 @@ link:./annotation_processor/lombok_mapstruct.html[Как подружить lomb
 
 ## Public Talks:
 
-### Heisenbug 2019 - Microservice wars (slides) - 18.05.2019 image:./statemachine/rus.png[russian,28]
-image:./images/HeisenBUG_2019_slides.jpg[heisenbug,520, link=https://speakerdeck.com/antkorwin/microservice-wars-junit-episode-v-testcontainers-strikes-back]
+### Heisenbug Moscow 2019 - IoT, Where is my Garbage collector - 5.12.2019  image:./statemachine/rus.png[russian,28]
+video::_KZ9vfAkK-E[youtube, width=640, height=304]
+
+{nbsp} +
+
+### Heisenbug Piter 2019 - Microservice wars (slides) - 18.05.2019 image:./statemachine/rus.png[russian,28]
+video::UeQfaulJJDo[youtube, width=640, height=380]
+
+{nbsp} +
+
+### Highload++ 2019 (slides) - 9.04.2019 image:./statemachine/rus.png[russian,28]
+image:./images/HeisenBUG_2019_slides.jpg[heisenbug,640, link=https://speakerdeck.com/antkorwin/microservice-wars-junit-episode-v-testcontainers-strikes-back]
+
+{nbsp} +
 
 ### Intro to the Spring Cloud (Live Workshop) - 16.11.2018 image:./statemachine/rus.png[russian,28]
-video::dK1CsTt9tAc[youtube, width=520, height=390]
+video::dK1CsTt9tAc[youtube, width=640, height=390]
 
 {nbsp} +
 
 ### Spring Cloud Contract -  API контракты микросервисов - 12.10.2018 image:./statemachine/rus.png[english,28]
 
-video::365nPFiQtuI[youtube, width=520, height=390]
+video::365nPFiQtuI[youtube, width=640, height=390]
 
 {nbsp} +
 
 ### State machine workshop live video - 18.05.2018 image:./statemachine/rus.png[english,28]
 
-video::J56_t5lny9c[youtube, width=520, height=390]
+video::J56_t5lny9c[youtube, width=640, height=390]
 
 
 
