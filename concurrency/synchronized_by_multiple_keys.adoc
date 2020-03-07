@@ -10,6 +10,14 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 ## Intro to the problem
 
+
+Let's consider a typical banking problem:
+Bob wants to withdraw money from his bank account in ATM.
+Also, Bob set an auto payment option to transfer 100$ every month to Alice.
+Our bank as a company that works with money transactions
+should provide a strong guaranty of data correctness and consistency.
+But we can see in the picture below what may happen if somebody forgets about synchronization.
+
 Here you can see the wrong sequence:
 [plantuml]
 ....
@@ -134,7 +142,7 @@ And release this mutex after change the balance.
 In this time the second thread tried acquiring the same mutex to work with Bob's account.
 So, the second thread is waiting for the end of processing when the first thread will release the mutex.
 
-WARNING: It looks like more thread-safe flow, 
+WARNING: It looks like more thread-safe flow,
 but this is not a full picture,
 because while we working with Alice's account we need to lock another mutex
 (which is bound to Alice's account) to prevent the concurrent modification
