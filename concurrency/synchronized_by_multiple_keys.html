@@ -496,7 +496,7 @@ As you can see without an elaborate synchronization this workflow may bring a ba
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="diag-3b3cb6dd7afb30beeb7ad98d1757f897.png" alt="diag 3b3cb6dd7afb30beeb7ad98d1757f897" width="898" height="907">
+<img src="diag-16ed5df2f5faa5db41aa1a6792e497e4.png" alt="diag 16ed5df2f5faa5db41aa1a6792e497e4" width="898" height="849">
 </div>
 </div>
 <div class="paragraph">
@@ -521,6 +521,14 @@ balance of Alice&#8217;s account in other threads.
 </tr>
 </table>
 </div>
+<div class="paragraph">
+<p>To make this in a thread safe manner, we should lock both mutexes Bob&#8217;s and Alice&#8217;s:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="diag-4045d66681c7db3708a6311f7797364b.png" alt="diag 4045d66681c7db3708a6311f7797364b" width="898" height="907">
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -537,7 +545,7 @@ balance of Alice&#8217;s account in other threads.
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-03-07 23:01:03 +1000
+Last updated 2020-03-10 23:56:04 +1000
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prettify/r298/prettify.min.css">

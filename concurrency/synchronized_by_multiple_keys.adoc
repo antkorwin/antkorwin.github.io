@@ -100,10 +100,9 @@ deactivate Account_Bob
 Thread_1 [#red]-> Mutex : release [Bob]     .
 deactivate Mutex
 Thread_2 [#red]-> Mutex : lock [Bob]
-activate Mutex #lightgreen
-Thread_2 [#red]-> Mutex : lock [Alice]
 deactivate Thread_2
-activate Mutex #yellow
+activate Mutex #lightgreen
+
 Thread_1 --> Bob : give out 100$
 deactivate Thread_1
 
@@ -127,10 +126,9 @@ activate Account_Alice #red
 Account_Alice --> Thread_2 : balance = 300$
 deactivate Account_Alice
 
-Thread_2 [#red]-> Mutex : release [Alice]
-deactivate Mutex
 Thread_2 [#red]-> Mutex : release [Bob]
 deactivate Mutex
+
 Thread_2 --> AutoPayment :'   successful
 deactivate Account_Alice
 deactivate Thread_2
@@ -147,6 +145,82 @@ but this is not a full picture,
 because while we working with Alice's account we need to lock another mutex
 (which is bound to Alice's account) to prevent the concurrent modification
 balance of Alice's account in other threads.
+
+To make this in a thread safe manner, we should lock both mutexes Bob's and Alice's:
+
+[plantuml]
+....
+actor Bob
+control AutoPayment
+
+Bob -> Thread_1 : get 100$ from ATM
+
+activate Thread_1 #orange
+Thread_1 [#red]-> Mutex : lock [Bob]
+activate Mutex #lightgreen
+Thread_1 -> Account_Bob : get balance
+activate Account_Bob #lime
+Account_Bob --> Thread_1 : balance = 1000$
+deactivate Account_Bob
+
+AutoPayment -> Thread_2 : move from Bob to Alice 100$, every month
+
+activate Thread_2 #DarkKhaki
+Thread_2 [#blue]-> Mutex : try to lock [Bob] & waiting
+
+note right: wait for \n\
+release of \nthe mutex
+
+activate Thread_2 #dodgerblue
+
+
+Thread_1 -> Account_Bob : withdraw 100$
+activate Account_Bob #red
+Account_Bob --> Thread_1 : balance = 900$
+deactivate Account_Bob
+Thread_1 [#red]-> Mutex : release [Bob]     .
+deactivate Mutex
+
+Thread_2 [#red]-> Mutex : lock [Bob]
+deactivate Thread_2
+activate Mutex #lightgreen
+Thread_2 [#red]-> Mutex : lock [Alice]
+activate Mutex #yellow
+Thread_1 --> Bob : give out 100$
+deactivate Thread_1
+
+Thread_2 -> Account_Bob : get balance
+activate Account_Bob #lime
+Account_Bob --> Thread_2 :'  balance = 1000$
+deactivate Account_Bob
+
+
+Thread_2 -> Account_Alice : get balance
+activate Account_Alice #lime
+Account_Alice --> Thread_2 : balance = 200$
+deactivate Account_Alice
+
+Thread_2 -> Account_Bob : move 100$ to Alice
+activate Account_Bob #red
+Account_Bob --> Thread_2 :  balance = 900$
+deactivate Account_Bob
+
+Thread_2 -> Account_Alice : got 100$ from Bob
+activate Account_Alice #red
+Account_Alice --> Thread_2 : balance = 300$
+deactivate Account_Alice
+
+Thread_2 [#red]-> Mutex : release [Alice]
+deactivate Mutex
+Thread_2 [#red]-> Mutex : release [Bob]
+deactivate Mutex
+
+Thread_2 --> AutoPayment :'   successful
+deactivate Account_Alice
+
+deactivate Thread_2
+control AutoPayment
+....
 
 
 
