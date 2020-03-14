@@ -1,4 +1,4 @@
-= How to open file in IDEA from a browser
+= How to open files in IDEA from a browser
 :source-highlighter: prettify
 :icons: font
 :toc:
