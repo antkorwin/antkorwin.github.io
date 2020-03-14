@@ -63,6 +63,7 @@ and this is a very useful feature to fast navigate from Web-UI to the source cod
 - link:https://github.com/JetBrains/intellij-community/blob/a77365debaadcf00b888a977d89512f3f0f3cf9e/platform/built-in-server/src/org/jetbrains/ide/OpenFileHttpService.kt#L52[Source code from JetBrains github]
 
 
+
 // END OF CONTENT
 include::../metrica.adoc[]
 
@@ -75,7 +76,7 @@ include::../metrica.adoc[]
 /*
 var disqus_config = function () {
 this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
-this.page.identifier = 'autoconfig'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+this.page.identifier = 'idea_open_file'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
 };
 */
 (function() { // DON'T EDIT BELOW THIS LINE
