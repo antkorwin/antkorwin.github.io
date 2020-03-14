@@ -96,6 +96,11 @@ And look at examples of using a WeakReference, SoftReference & PhantomReference.
 link:./concurrency/synchronization_by_value.html[Synchronized by the value of the object] (English) image:./statemachine/eng.png[english,25]::
 An example of the use of WeakReference for the synchronization by value of object. Also a comparing of benchmark for different ConcurrentMap implementations.
 
+### Different
+
+http://antkorwin.com/idea/openfile.html[Intellij IDEA Little tricks] (English) image:./statemachine/eng.png[english,25]::
+How to open file in IDEA from a browser link.
+
 ### Code conventions:
 
 http://antkorwin.com/codestyle.html[Code style conventions] (English) image:./statemachine/eng.png[english,25]::
