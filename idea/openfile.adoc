@@ -55,8 +55,8 @@ and this is a very useful feature to fast navigate from Web-UI to the source cod
 - You should have already opened IDEA with the target project before you click on the link in a web browser.
 - You need to allow access for the web browser to handle these requests in IDEA. It's not a problem, just one popup message.
 - You should maintain a map with all project modules and package names in the Web-UI application to parse a package name in a stack trace and match this path to the correct module.
-- Currently, this API doesnʼt support inner class references in requests and construction like this: `FirstLeveClassName$InnerClassName:31`
-- this feature doesn't work in Safari (maybe just for me)
+- Currently, this API doesnʼt support inner class references in requests and constructions like this: `FirstLeveClassName$InnerClassName:31`
+- This feature doesn't work in Safari (maybe just for me)
 
 ## References
 - link:https://stackoverflow.com/questions/56061831/create-a-web-browser-link-that-opens-a-file-in-intellij-possible/56066943#56066943[StackOverflow discussion about this feature]
