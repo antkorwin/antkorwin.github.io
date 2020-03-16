@@ -45,6 +45,7 @@ We already use this in one locally internal admin interface, this UI shows synch
 one with a relational database and the second with Elasticsearch.
 This UI shows errors happened in the process of synchronization and these errors can contain exceptions with stack traces.
 
+The short video to show how it works:
 image:./idea-tricks.gif[IDEA hidden tricks]
 
 When something happens, developers use these logs to find a reason of the problem,
