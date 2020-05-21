@@ -546,8 +546,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <div class="paragraph">
 <p>Такой сервер должен был быть многопоточным, поскольку много входных датчиков. и эту часть тоже нужно протестировать отдельно, используя performance-тесты. Можно было взять JMeter (написать типичный тестовый сценарий), JMH / JCStress (протестировать изолированные части и сделать более тонкий бенчмарк), либо что-то свое. Когда вы принимаете решение в подобной ситуации, то советую послушать профессионалов, например, Алексея Шипилева. На JPoint 2017 он очень круто рассказывал о том, как бенчмаркать разные вещи и о чем нужно думать когда знимаетесь тестированием производительности.</p>
 </div>
-<div class="paragraph">
-<p>&lt;oembed&gt;<a href="https://youtu.be/p2b4JHESEOc&lt;/oembed&gt" class="bare">https://youtu.be/p2b4JHESEOc&lt;/oembed&gt</a>;</p>
+<div class="videoblock">
+<div class="content">
+<iframe width="640" height="380" src="https://www.youtube.com/embed/p2b4JHESEOc?rel=0" frameborder="0" allowfullscreen></iframe>
+</div>
 </div>
 <div class="paragraph">
 <p>Мы выбрали вариант сделать что-то свое, поскольку в проекте был нетипичный подход к QA — унас нет отдельной команды тестировщиков, и команда бэкенда сама тестировала функциональность. То есть человек, написавший socket-сервер, должен был сам покрыть код обычными юнитами, интеграционными и performance-тестами.</p>
@@ -617,7 +619,7 @@ Awaitility.await()
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-05-21 12:26:50 01000
+Last updated 2020-05-21 12:32:03 01000
 </div>
 </div>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
