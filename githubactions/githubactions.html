@@ -454,6 +454,8 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_добавим_статический_анализатор">6. Добавим статический анализатор</a></li>
 <li><a href="#_release_management">7. Release management</a></li>
 <li><a href="#_авто_аннотирование_пулл_реквестов">8. Авто-аннотирование пулл-реквестов</a></li>
+<li><a href="#_пора_деплоить">9. Пора деплоить</a></li>
+<li><a href="#_мониторинг">10. Мониторинг</a></li>
 </ul>
 </div>
 </div>
@@ -681,7 +683,7 @@ TODO: написать приложение</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="./coverage.png" alt="coverage">
+<img src="./codecov_in_github_actions.png" alt="codecov in github actions">
 </div>
 </div>
 </div>
@@ -765,7 +767,7 @@ TODO: написать приложение</p>
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="./release_drafter.png" alt="release drafter">
+<img src="./draft.png" alt="draft">
 </div>
 </div>
 <div class="paragraph">
@@ -909,15 +911,239 @@ TODO: написать приложение</p>
 </div>
 </div>
 <div class="paragraph">
-<p>Подружить экшен автоматически проставляющий метки в пулл-реквесты и экшен проверяющий наличие обязательных меток, у меня не вышло, похоже что проще написать свое действие для этой задачи.
-Но даже в таком виде пользоваться довольно удобно.</p>
+<p>Подружить действие автоматически проставляющее метки в пулл-реквесты и действие проверяющее наличие обязательных меток - у меня не вышло, <code>match-label</code> на отрез не хочет видеть проставленные ботом метки. Похоже проще написать свое действие совмещающее оба этапа.Но даже в таком виде пользоваться довольно удобно, нужно выбрать метку из списка при создании пулл-реквеста.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_пора_деплоить">9. Пора деплоить</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Я попробовал несколько вариантов деплоя через github actions (через ssh, через scp, и при помощи docker-hub), и могу сказать что скорее всего вы найдете способ залить бинарку на сервер, каким бы извращенным не был ваш pipeline.</p>
+</div>
+<div class="paragraph">
+<p>Мне понравился вариант держать всю инфраструктуру в одном месте, поэтому рассмотрим как сделать деплой в github packages (это репозиторий для бинарного контента, npm, jar, docker)</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./rep_actions.png" alt="rep actions">
+</div>
+</div>
+<div class="paragraph">
+<p>скприпт сборки docker образа и публикации его в github packages:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yml"><span class="na">name</span><span class="pi">:</span> <span class="s">Deploy docker image</span>
+
+<span class="na">on</span><span class="pi">:</span>
+  <span class="na">push</span><span class="pi">:</span>
+    <span class="na">branches</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="s1">'</span><span class="s">master'</span>
+
+<span class="na">jobs</span><span class="pi">:</span>
+
+  <span class="na">build_docker_image</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-18.04</span>
+    <span class="na">steps</span><span class="pi">:</span>
+
+<span class="c1">#     Build JAR:</span>
+      <span class="pi">-</span> <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/checkout@v1</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">set up JDK </span><span class="m">11</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">actions/setup-java@v1</span>
+        <span class="na">with</span><span class="pi">:</span>
+          <span class="na">java-version</span><span class="pi">:</span> <span class="m">1.11</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Maven Package</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">mvn -B clean compile package -DskipTests</span>
+
+<span class="c1">#     Set global environment variables:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">set global env</span>
+        <span class="na">id</span><span class="pi">:</span> <span class="s">global_env</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+          <span class="s">echo "::set-output name=IMAGE_NAME::${GITHUB_REPOSITORY#*/}"</span>
+          <span class="s">echo "::set-output name=DOCKERHUB_IMAGE_NAME::docker.pkg.github.com/${GITHUB_REPOSITORY}/${GITHUB_REPOSITORY#*/}"</span>
+
+<span class="c1">#     Build Docker image:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Build and tag image</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+          <span class="s">docker build -t "${{ steps.global_env.outputs.DOCKERHUB_IMAGE_NAME }}:latest" -t "${{ steps.global_env.outputs.DOCKERHUB_IMAGE_NAME }}:${GITHUB_SHA::8}" .</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Docker login</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">docker login docker.pkg.github.com -u $GITHUB_ACTOR -p ${{secrets.GITHUB_TOKEN}}</span>
+
+<span class="c1">#     Publish image to github package repository:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Publish image</span>
+        <span class="na">env</span><span class="pi">:</span>
+          <span class="na">IMAGE_NAME</span><span class="pi">:</span> <span class="s">$GITHUB_REPOSITORY</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="s">docker push "docker.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.global_env.outputs.IMAGE_NAME }}"</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Для начала нам надо собрать JAR файл нашего приложения, после чего мы вычисляем путь к github docker registry и название нашего образа.
+Тут есть несолько хитростей с которыми мы еще не сталкивались:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>конструкция вида: <code>echo "::set-output name=NAME::VALUE"</code> позволяет задать значение переменной в текущем шаге, так чтобы его потом можно было прочитать во всех остальных шагах.</p>
+</li>
+<li>
+<p>получить значение переменной установленой на предыдущем шаге можно через идентификатор этого шага:
+<code>${{ steps.global_env.outputs.DOCKERHUB_IMAGE_NAME }}</code></p>
+</li>
+<li>
+<p>В стандартной переменной <code>GITHUB_REPOSITORY</code> хранится название репозитория и его владелец ("owner/repo-name"). Для того чтобы вырезать из этой строки все кроме названия репозитория воспользуемся bash синтаксисом: <code>${GITHUB_REPOSITORY#*/}</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Далее нам нужно собрать докер образ</p>
+</div>
+<div class="paragraph">
+<p><code>docker build -t "docker.pkg.github.com/antkorwin/github-actions/github-actions:latest"</code></p>
+</div>
+<div class="paragraph">
+<p>Авторизоваться в registry:</p>
+</div>
+<div class="paragraph">
+<p><code>docker login docker.pkg.github.com -u $GITHUB_ACTOR -p ${{secrets.GITHUB_TOKEN}}</code></p>
+</div>
+<div class="paragraph">
+<p>И опубликовать образ в github packages repository:</p>
+</div>
+<div class="paragraph">
+<p><code>docker push "docker.pkg.github.com/antkorwin/github-actions/github-actions"</code></p>
+</div>
+<div class="paragraph">
+<p>Для того чтобы указать версию образа, мы используем первые цифры из SHA-хэша коммита - <code>GITHUB_SHA</code>
+тут тоже есть нюансы, если вы будете делать такие сборки не только при merge в master, а еще и по событию создания пулл-реквеста, то SHA может не совпадать с хэшем, который мы видим в истории гита, потому что действие actions/checkout делает свой уникальный хэш, чтобы избежать взаимных блокировок действий в PR.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./github_package_repository.png" alt="github package repository">
+</div>
+</div>
+<div class="paragraph">
+<p>Если все получилось благополучно, то открыв раздел packages (<a href="https://github.com/antkorwin/github-actions/packages" class="bare">https://github.com/antkorwin/github-actions/packages</a>) в репозитории, вы увидите новый докер образ:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./docker_images.png" alt="docker images">
+</div>
+</div>
+<div class="paragraph">
+<p>Там же можно посмотреть список версий докер-образа.</p>
+</div>
+<div class="paragraph">
+<p>Остается только настроить наш сервер на работу с этим registry и запустить перезапуск сервиса.
+О том как это сделать через systemd, я пожалуй расскажу в другой раз.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_мониторинг">10. Мониторинг</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Давайте посмотрим несложный вариант как делать health check нашего приложения при помощи github actions.
+В нашем бутовом приложении есть actuator, так что API для проверки его состояния даже и писать не надо, для денивых уже все сделали.
+Нужно только дернуть хост: <code>SERVER-URL:PORT/actuator/health</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code>$ curl -v 127.0.0.1:8080/actuator/health
+
+&gt; GET /actuator/health HTTP/1.1
+&gt; Host: 127.0.0.1:8080
+&gt; User-Agent: curl/7.61.1
+&gt; Accept: */*
+
+&lt; HTTP/1.1 200
+&lt; Content-Type: application/vnd.spring-boot.actuator.v3+json
+&lt; Transfer-Encoding: chunked
+&lt; Date: Thu, 04 Jun 2020 12:33:37 GMT
+
+{"status":"UP"}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Все что нам нужно написать таск проверки сервера по крону, ну а если вдруг он нам не ответит,
+то будем слать уведомление в телеграм:</p>
+</div>
+<div class="paragraph">
+<p>Для начала разберемся как запустить workflow по крону:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yml"><span class="na">on</span><span class="pi">:</span>
+  <span class="na">schedule</span><span class="pi">:</span>
+    <span class="pi">-</span> <span class="na">cron</span><span class="pi">:</span>  <span class="s1">'</span><span class="s">*/5</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*</span><span class="nv"> </span><span class="s">*'</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Все просто, даже не верится что в гитхабе можно сделать такие ивенты, которые совсем не укладываются в webhook-и.
+Детали есть в документации: <a href="https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule" class="bare">https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule</a></p>
+</div>
+<div class="paragraph">
+<p>Проверку статуса сервера сделаем руками через curl:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yml"><span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">ping</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-18.04</span>
+    <span class="na">steps</span><span class="pi">:</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">curl actuator</span>
+        <span class="na">id</span><span class="pi">:</span> <span class="s">ping</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+          <span class="s">echo "::set-output name=status::$(curl ${{secrets.SERVER_HOST}}/api/actuator/health)"</span>
+
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">health check</span>
+        <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+          <span class="s">if [[ ${{ steps.ping.outputs.status }} != *"UP"* ]]; then</span>
+            <span class="s">echo "health check is failed"</span>
+            <span class="s">exit 1</span>
+          <span class="s">fi</span>
+          <span class="s">echo "It's OK"</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Сначала сохраняем в переменную то что ответил сервер на запрос, на следующем шаге проверяем что статус UP и если это не так, то выходим с ошибкой. Если нужно руками "завалить" действие, то <code>exit 1</code> подходящее оружие.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yml">  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">send alert in telegram</span>
+    <span class="na">if</span><span class="pi">:</span> <span class="s">${{ failure() }}</span>
+    <span class="na">uses</span><span class="pi">:</span> <span class="s">appleboy/telegram-action@master</span>
+    <span class="na">with</span><span class="pi">:</span>
+      <span class="na">to</span><span class="pi">:</span> <span class="s">${{ secrets.TELEGRAM_TO }}</span>
+      <span class="na">token</span><span class="pi">:</span> <span class="s">${{ secrets.TELEGRAM_TOKEN }}</span>
+      <span class="na">message</span><span class="pi">:</span> <span class="pi">|</span>
+        <span class="s">Health check of the:</span>
+        <span class="s">${{secrets.SERVER_HOST}}/api/actuator/health</span>
+        <span class="s">failed with the result:</span>
+        <span class="s">${{ steps.ping.outputs.status }}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Отправку в телеграм делаем только если действие завалилось на предыдущем шаге.
+Для отправки сообщения используем <code>appleboy/telegram-action</code>, о том как получить токен бота и id чата можно почитать в документации:
+<a href="https://github.com/appleboy/telegram-action" class="bare">https://github.com/appleboy/telegram-action</a></p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./cron.png" alt="cron">
+</div>
+</div>
+<div class="paragraph">
+<p>Не забудьте прописать в секретах на гитхабе: URL для сервера и токены для телеграм бота.</p>
 </div>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-06-04 07:04:39 +1000
+Last updated 2020-06-05 00:00:54 +1000
 </div>
 </div>
 <style>

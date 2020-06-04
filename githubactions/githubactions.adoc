@@ -414,10 +414,6 @@ jobs:
 #     Set global environment variables:
       - name: set global env
         id: global_env
-#       переменную IMAGE_NAME формируем из названия репозитория
-#                       "owner/repo-name"
-#       берем все что после   /  чтобы задать имя образа
-#       set-output выставляет переменную в этом шаге
         run: |
           echo "::set-output name=IMAGE_NAME::${GITHUB_REPOSITORY#*/}"
           echo "::set-output name=DOCKERHUB_IMAGE_NAME::docker.pkg.github.com/${GITHUB_REPOSITORY}/${GITHUB_REPOSITORY#*/}"
@@ -440,9 +436,12 @@ jobs:
 Для начала нам надо собрать JAR файл нашего приложения, после чего мы вычисляем путь к github docker registry и название нашего образа.
 Тут есть несолько хитростей с которыми мы еще не сталкивались:
 
-- конструкция вида: `echo "::set-output name=NAME::VALUE"` позволяет задать значение переменной в текущем шаге, так чтобы его можно было прочитать во всех остальных шагах.
-- `${GITHUB_REPOSITORY#*/}` мы используем стандартную переменную в которой хранится название репозитория в формате   
-"owner/repo-name" но для названия образа нам нужно только название репозитория, без поля owner.
+- конструкция вида: `echo "::set-output name=NAME::VALUE"` позволяет задать значение переменной в текущем шаге, так чтобы его потом можно было прочитать во всех остальных шагах.
+
+- получить значение переменной установленой на предыдущем шаге можно через идентификатор этого шага:
+`${{ steps.global_env.outputs.DOCKERHUB_IMAGE_NAME }}`
+
+- В стандартной переменной `GITHUB_REPOSITORY` хранится название репозитория и его владелец ("owner/repo-name"). Для того чтобы вырезать из этой строки все кроме названия репозитория воспользуемся bash синтаксисом: `${GITHUB_REPOSITORY#*/}` 
 
 Далее нам нужно собрать докер образ
 
@@ -456,20 +455,102 @@ jobs:
 
 `docker push "docker.pkg.github.com/antkorwin/github-actions/github-actions"`
 
-- для того чтобы указать версию бинарки, мы используем первые цифры из SHA коммита - `GITHUB_SHA`
- тут тоже есть нюансы, если вы будете делать такие сборки по событию создания пулл-реквеста, то SHA не будет совпадать с тем что видно в истории гита, потому что действие checkout делает свой уникальный хэш, чтобы избежать взаимных блокировок действий.
+Для того чтобы указать версию образа, мы используем первые цифры из SHA-хэша коммита - `GITHUB_SHA` 
+тут тоже есть нюансы, если вы будете делать такие сборки не только при merge в master, а еще и по событию создания пулл-реквеста, то SHA может не совпадать с хэшем, который мы видим в истории гита, потому что действие actions/checkout делает свой уникальный хэш, чтобы избежать взаимных блокировок действий в PR.
 
 image::./github_package_repository.png[]
 
 Если все получилось благополучно, то открыв раздел packages (https://github.com/antkorwin/github-actions/packages) в репозитории, вы увидите новый докер образ:
 
-
-
-
 image::./docker_images.png[]
  
-Там же можно посмотреть историю загрузки версий.
+Там же можно посмотреть список версий докер-образа.
 
-Остается только настроить наш сервер на работу с этим registry и дернуть перезапуск сервиса. О том как это сделать через systemd, я пожалуй расскажу в другой раз.
+Остается только настроить наш сервер на работу с этим registry и запустить перезапуск сервиса. 
+О том как это сделать через systemd, я пожалуй расскажу в другой раз.
 
+== Мониторинг
 
+Давайте посмотрим несложный вариант как делать health check нашего приложения при помощи github actions.
+В нашем бутовом приложении есть actuator, так что API для проверки его состояния даже и писать не надо, для денивых уже все сделали.
+Нужно только дернуть хост: `SERVER-URL:PORT/actuator/health`
+
+[source]
+----
+$ curl -v 127.0.0.1:8080/actuator/health
+
+> GET /actuator/health HTTP/1.1
+> Host: 127.0.0.1:8080
+> User-Agent: curl/7.61.1
+> Accept: */*
+
+< HTTP/1.1 200
+< Content-Type: application/vnd.spring-boot.actuator.v3+json
+< Transfer-Encoding: chunked
+< Date: Thu, 04 Jun 2020 12:33:37 GMT
+
+{"status":"UP"}
+----
+
+Все что нам нужно написать таск проверки сервера по крону, ну а если вдруг он нам не ответит, 
+то будем слать уведомление в телеграм:
+
+Для начала разберемся как запустить workflow по крону:
+
+[source, yml]
+----
+on:
+  schedule:
+    - cron:  '*/5 * * * *'
+----
+
+Все просто, даже не верится что в гитхабе можно сделать такие ивенты, которые совсем не укладываются в webhook-и.
+Детали есть в документации: https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule 
+
+Проверку статуса сервера сделаем руками через curl:
+
+[source, yml]
+----
+jobs:
+  ping:
+    runs-on: ubuntu-18.04
+    steps:
+    
+      - name: curl actuator
+        id: ping
+        run: |
+          echo "::set-output name=status::$(curl ${{secrets.SERVER_HOST}}/api/actuator/health)"
+
+      - name: health check
+        run: |
+          if [[ ${{ steps.ping.outputs.status }} != *"UP"* ]]; then
+            echo "health check is failed"
+            exit 1
+          fi
+          echo "It's OK"
+----
+
+Сначала сохраняем в переменную то что ответил сервер на запрос, на следующем шаге проверяем что статус UP и если это не так, то выходим с ошибкой. Если нужно руками "завалить" действие, то `exit 1` подходящее оружие.
+
+[source, yml]
+----
+  - name: send alert in telegram
+    if: ${{ failure() }}
+    uses: appleboy/telegram-action@master
+    with:
+      to: ${{ secrets.TELEGRAM_TO }}
+      token: ${{ secrets.TELEGRAM_TOKEN }}
+      message: |
+        Health check of the:
+        ${{secrets.SERVER_HOST}}/api/actuator/health
+        failed with the result:
+        ${{ steps.ping.outputs.status }}
+----
+
+Отправку в телеграм делаем только если действие завалилось на предыдущем шаге. 
+Для отправки сообщения используем `appleboy/telegram-action`, о том как получить токен бота и id чата можно почитать в документации:
+https://github.com/appleboy/telegram-action
+
+image::./cron.png[]
+
+Не забудьте прописать в секретах на гитхабе: URL для сервера и токены для телеграм бота.
