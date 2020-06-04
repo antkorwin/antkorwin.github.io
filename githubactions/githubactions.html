@@ -456,6 +456,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <li><a href="#_авто_аннотирование_пулл_реквестов">8. Авто-аннотирование пулл-реквестов</a></li>
 <li><a href="#_пора_деплоить">9. Пора деплоить</a></li>
 <li><a href="#_мониторинг">10. Мониторинг</a></li>
+<li><a href="#_бонус_трек_jira_для_ленивых">11. Бонус трек - jira для ленивых</a></li>
 </ul>
 </div>
 </div>
@@ -1140,10 +1141,86 @@ TODO: написать приложение</p>
 </div>
 </div>
 </div>
+<div class="sect1">
+<h2 id="_бонус_трек_jira_для_ленивых">11. Бонус трек - jira для ленивых</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Я обещал что мы вернемся к JIRA, и мы вернулись. Сотни раз наблюдал на стендапах, ситуацию, когда разработчики сделали фичу, слили ветку, но забыли перетянуть задачу в JIRA. Кончено если бы все это делалось в одном месте, то было бы проще, но фактически мы пишем код в IDE, сливаем ветки в bitbucket или GitHub, а задачи потом таскаем в Jira, для этого надо открывать новые окна, иногда логиниться еще раз и т.д. Когда ты прекрасно помнишь что надо делать дальше, то открывать борду лишний раз нет смысла. В итоге, утром на стендапе надо тратить время на актуализацию доски задач.</p>
+</div>
+<div class="paragraph">
+<p>GitHub поможет нам и в этом рутинном занятии,
+для начала мы можем перетягивать задачи автоматом, в колонку
+code_review, когда закинули пулл-реквест. Все что нужно - это придерживаться соглашения в наименовании веток:</p>
+</div>
+<div class="paragraph">
+<p><code>[имя проекта]-[номер таска]-название</code>
+например если ключ проекта "Github Actions" будет GA, то <code>GA-8-jira-bot</code> может быть веткой для реализации задачи GA-8.</p>
+</div>
+<div class="paragraph">
+<p>Интеграция с Jira работает через экшены от atlassian, они не идеальны, надо сказать, что некоторые из них у меня вообще не заработали.
+Но мы обсудим только те, что точно работают и активно используются.</p>
+</div>
+<div class="paragraph">
+<p>Для начала нужно пройти авторизацию в JIRA при помощи действия: <a href="https://github.com/atlassian/gajira-login">atlassian/gajira-login</a></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yml"><span class="na">jobs</span><span class="pi">:</span>
+  <span class="na">build</span><span class="pi">:</span>
+    <span class="na">runs-on</span><span class="pi">:</span> <span class="s">ubuntu-latest</span>
+    <span class="na">name</span><span class="pi">:</span> <span class="s">Jira Workflow</span>
+    <span class="na">steps</span><span class="pi">:</span>
+      <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Login</span>
+        <span class="na">uses</span><span class="pi">:</span> <span class="s">atlassian/gajira-login@master</span>
+        <span class="na">env</span><span class="pi">:</span>
+          <span class="na">JIRA_BASE_URL</span><span class="pi">:</span> <span class="s">${{ secrets.JIRA_BASE_URL }}</span>
+          <span class="na">JIRA_USER_EMAIL</span><span class="pi">:</span> <span class="s">${{ secrets.JIRA_USER_EMAIL }}</span>
+          <span class="na">JIRA_API_TOKEN</span><span class="pi">:</span> <span class="s">${{ secrets.JIRA_API_TOKEN }}</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Для этого надо получить токен в JIRA, как это сделать расписано тут: <a href="https://confluence.atlassian.com/cloud/api-tokens-938839638.html" class="bare">https://confluence.atlassian.com/cloud/api-tokens-938839638.html</a></p>
+</div>
+<div class="paragraph">
+<p>Вычленяем идентификатор задачи из названия ветки:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yml">  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Find Issue</span>
+    <span class="na">shell</span><span class="pi">:</span> <span class="s">bash</span>
+    <span class="na">run</span><span class="pi">:</span> <span class="s">echo "##[set-output name=branch;]$(echo ${GITHUB_HEAD_REF} | egrep -o 'TP-[0-9]{1,4}')"</span>
+    <span class="na">id</span><span class="pi">:</span> <span class="s">extract_branch</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Если поискать в github marketplace то можно найти действие для этой задачи, но мне пришлось написать тоже самое через grep по названию ветки потому что это действие от atlasian ни в какую не захотело работать на моем проекте, разбираться что же там не так дольше чем сделать руками тоже самое.</p>
+</div>
+<div class="paragraph">
+<p>Осталось только переместить задачу в колонку "Code review" при создании пулл-реквеста:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="rouge highlight"><code data-lang="yml">  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Transition issue</span>
+    <span class="na">uses</span><span class="pi">:</span> <span class="s">atlassian/gajira-transition@master</span>
+    <span class="na">with</span><span class="pi">:</span>
+      <span class="na">issue</span><span class="pi">:</span> <span class="s">${{ steps.extract_branch.outputs.branch }}</span>
+      <span class="na">transition</span><span class="pi">:</span> <span class="s2">"</span><span class="s">In</span><span class="nv"> </span><span class="s">progress"</span></code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Для этого есть специальное действие на github, все что ему нужно это идентификатор задачи полученный на предыдущем шаге и авторизация в JIRA, которую мы делали выше.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="./jira.gif" alt="jira">
+</div>
+</div>
+</div>
+</div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-06-05 00:00:54 +1000
+Last updated 2020-06-05 09:05:24 +1000
 </div>
 </div>
 <style>
