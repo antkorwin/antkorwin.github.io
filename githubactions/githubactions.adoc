@@ -375,6 +375,101 @@ theme:TRASH:
   - "target/**"
 ----
 
-Подружить экшен автоматически проставляющий метки в пулл-реквесты и экшен проверяющий наличие обязательных меток, у меня не вышло, похоже что проще написать свое действие для этой задачи.
-Но даже в таком виде пользоваться довольно удобно.
+Подружить действие автоматически проставляющее метки в пулл-реквесты и действие проверяющее наличие обязательных меток - у меня не вышло, `match-label` на отрез не хочет видеть проставленные ботом метки. Похоже проще написать свое действие совмещающее оба этапа.Но даже в таком виде пользоваться довольно удобно, нужно выбрать метку из списка при создании пулл-реквеста.
+
+== Пора деплоить
+
+Я попробовал несколько вариантов деплоя через github actions (через ssh, через scp, и при помощи docker-hub), и могу сказать что скорее всего вы найдете способ залить бинарку на сервер, каким бы извращенным не был ваш pipeline.
+
+Мне понравился вариант держать всю инфраструктуру в одном месте, поэтому рассмотрим как сделать деплой в github packages (это репозиторий для бинарного контента, npm, jar, docker) 
+
+image::./rep_actions.png[]
+
+скприпт сборки docker образа и публикации его в github packages:
+
+[source, yml]
+----
+name: Deploy docker image
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+
+  build_docker_image:
+    runs-on: ubuntu-18.04
+    steps:
+
+#     Build JAR:
+      - uses: actions/checkout@v1
+      - name: set up JDK 11
+        uses: actions/setup-java@v1
+        with:
+          java-version: 1.11
+      - name: Maven Package
+        run: mvn -B clean compile package -DskipTests
+
+#     Set global environment variables:
+      - name: set global env
+        id: global_env
+#       переменную IMAGE_NAME формируем из названия репозитория
+#                       "owner/repo-name"
+#       берем все что после   /  чтобы задать имя образа
+#       set-output выставляет переменную в этом шаге
+        run: |
+          echo "::set-output name=IMAGE_NAME::${GITHUB_REPOSITORY#*/}"
+          echo "::set-output name=DOCKERHUB_IMAGE_NAME::docker.pkg.github.com/${GITHUB_REPOSITORY}/${GITHUB_REPOSITORY#*/}"
+
+#     Build Docker image:
+      - name: Build and tag image
+        run: |
+          docker build -t "${{ steps.global_env.outputs.DOCKERHUB_IMAGE_NAME }}:latest" -t "${{ steps.global_env.outputs.DOCKERHUB_IMAGE_NAME }}:${GITHUB_SHA::8}" .
+
+      - name: Docker login
+        run: docker login docker.pkg.github.com -u $GITHUB_ACTOR -p ${{secrets.GITHUB_TOKEN}}
+
+#     Publish image to github package repository:
+      - name: Publish image
+        env:
+          IMAGE_NAME: $GITHUB_REPOSITORY
+        run: docker push "docker.pkg.github.com/$GITHUB_REPOSITORY/${{ steps.global_env.outputs.IMAGE_NAME }}"
+----
+
+Для начала нам надо собрать JAR файл нашего приложения, после чего мы вычисляем путь к github docker registry и название нашего образа.
+Тут есть несолько хитростей с которыми мы еще не сталкивались:
+
+- конструкция вида: `echo "::set-output name=NAME::VALUE"` позволяет задать значение переменной в текущем шаге, так чтобы его можно было прочитать во всех остальных шагах.
+- `${GITHUB_REPOSITORY#*/}` мы используем стандартную переменную в которой хранится название репозитория в формате   
+"owner/repo-name" но для названия образа нам нужно только название репозитория, без поля owner.
+
+Далее нам нужно собрать докер образ
+
+`docker build -t "docker.pkg.github.com/antkorwin/github-actions/github-actions:latest"`
+
+Авторизоваться в registry:
+
+`docker login docker.pkg.github.com -u $GITHUB_ACTOR -p ${{secrets.GITHUB_TOKEN}}`
+
+И опубликовать образ в github packages repository:
+
+`docker push "docker.pkg.github.com/antkorwin/github-actions/github-actions"`
+
+- для того чтобы указать версию бинарки, мы используем первые цифры из SHA коммита - `GITHUB_SHA`
+ тут тоже есть нюансы, если вы будете делать такие сборки по событию создания пулл-реквеста, то SHA не будет совпадать с тем что видно в истории гита, потому что действие checkout делает свой уникальный хэш, чтобы избежать взаимных блокировок действий.
+
+image::./github_package_repository.png[]
+
+Если все получилось благополучно, то открыв раздел packages (https://github.com/antkorwin/github-actions/packages) в репозитории, вы увидите новый докер образ:
+
+
+
+
+image::./docker_images.png[]
+ 
+Там же можно посмотреть историю загрузки версий.
+
+Остается только настроить наш сервер на работу с этим registry и дернуть перезапуск сервиса. О том как это сделать через systemd, я пожалуй расскажу в другой раз.
+
 
