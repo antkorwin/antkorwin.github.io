@@ -575,7 +575,8 @@ GET  /rockets/{id}/info</code></pre>
 <p>при помощи <code>with</code> мы можем указать параметры с которыми запускаем действие, посути это аргументы, которые будут передаваться в экшен</p>
 </div>
 <div class="paragraph">
-<p>остается только запустить мавеном сборку проекта: <code>run: mvn -B clean package</code> флаг -B говорит о том что нам нужен non-interactive mode, чтобы равен вдруг не захотел что-то у нас спросить</p>
+<p>остается только запустить мавеном сборку проекта: <code>run: mvn -B clean package</code> флаг -B говорит о том что нам нужен non-interactive mode,
+чтобы мавен вдруг не захотел что-то у нас спросить</p>
 </div>
 <div class="imageblock">
 <div class="content">
@@ -591,7 +592,8 @@ GET  /rockets/{id}/info</code></pre>
 <h2 id="_автоматизируем_запуск_тестов">5. Автоматизируем запуск тестов</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Сборка это хорошо но, в реальности проект может благополучно собираться но не работать. Поэтому следующим шагом нужно заняться автоматизацией прогона тестов. К тому же, довольно удобно смотреть результат прохода тестов, когда делаешь ревью PR - ты точно знаешь что тесты проходят и никто не забыл перед тем как делать merge прогнать свою ветку.</p>
+<p>Сборка это хорошо но, в реальности проект может благополучно собираться но не работать. Поэтому следующим шагом нужно заняться автоматизацией прогона тестов. К тому же, довольно удобно смотреть результат прохода тестов, когда делаешь ревью PR - ты точно знаешь что тесты проходят и никто не забыл,
+перед тем как делать merge, прогнать свою ветку.</p>
 </div>
 <div class="paragraph">
 <p>Делаем запуск тестов при создании пулл-реквеста и merge в мастер, а заодно добавим построение отчета о code-coverage.</p>
@@ -630,7 +632,9 @@ GET  /rockets/{id}/info</code></pre>
 У codecov есть свой экшен, но ему для работы с нашим pull-request-ом нужен токен:</p>
 </div>
 <div class="paragraph">
-<p><code>${{ secrets.CODECOV_TOKEN }}</code> - такую конструкцию мы будем встречать еще не один раз, secrets это механизм хранения сикретов в гитхабе, мы можем там прописать пароли/токены/хосты/url-ы и прочие данные которыми не стоит светить в кодовой базе репозитория.</p>
+<p><code>${{ secrets.CODECOV_TOKEN }}</code> - такую конструкцию мы будем встречать еще не один раз,
+secrets это механизм хранения секретов в гитхабе, мы можем там прописать пароли/токены/хосты/url-ы
+и прочие данные, которыми не стоит светить в кодовой базе репозитория.</p>
 </div>
 <div class="paragraph">
 <p>Добавить переменную в secrets, можно в настройках репозитория на github:</p>
@@ -1195,9 +1199,21 @@ code_review, когда закинули пулл-реквест. Все что 
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="yml">  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Find Issue</span>
+    <span class="na">id</span><span class="pi">:</span> <span class="s">find_issue</span>
     <span class="na">shell</span><span class="pi">:</span> <span class="s">bash</span>
-    <span class="na">run</span><span class="pi">:</span> <span class="s">echo "##[set-output name=branch;]$(echo ${GITHUB_HEAD_REF} | egrep -o 'TP-[0-9]{1,4}')"</span>
-    <span class="na">id</span><span class="pi">:</span> <span class="s">extract_branch</span></code></pre>
+    <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+      <span class="s">echo "::set-output name=ISSUE_ID::$(echo ${GITHUB_HEAD_REF} | egrep -o 'GA-[0-9]{1,4}')"</span>
+      <span class="s">echo brach name: $GITHUB_HEAD_REF</span>
+      <span class="s">echo extracted issue: ${GITHUB_HEAD_REF} | egrep -o 'GA-[0-9]{1,4}'</span>
+
+  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Check Issue</span>
+    <span class="na">shell</span><span class="pi">:</span> <span class="s">bash</span>
+    <span class="na">run</span><span class="pi">:</span> <span class="pi">|</span>
+      <span class="s">if [[ "${{steps.find_issue.outputs.ISSUE_ID}}" == "" ]]; then</span>
+        <span class="s">echo "Please name your branch according to the JIRA issue: [project_key]-[task_number]-branch_name"</span>
+        <span class="s">exit 1</span>
+      <span class="s">fi</span>
+      <span class="s">echo succcessfully found JIRA issue: ${{steps.find_issue.outputs.ISSUE_ID}}</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1209,10 +1225,11 @@ code_review, когда закинули пулл-реквест. Все что 
 <div class="listingblock">
 <div class="content">
 <pre class="rouge highlight"><code data-lang="yml">  <span class="pi">-</span> <span class="na">name</span><span class="pi">:</span> <span class="s">Transition issue</span>
+    <span class="na">if</span><span class="pi">:</span> <span class="s">${{ success() }}</span>
     <span class="na">uses</span><span class="pi">:</span> <span class="s">atlassian/gajira-transition@master</span>
     <span class="na">with</span><span class="pi">:</span>
-      <span class="na">issue</span><span class="pi">:</span> <span class="s">${{ steps.extract_branch.outputs.branch }}</span>
-      <span class="na">transition</span><span class="pi">:</span> <span class="s2">"</span><span class="s">In</span><span class="nv"> </span><span class="s">progress"</span></code></pre>
+      <span class="na">issue</span><span class="pi">:</span> <span class="s">${{ steps.find_issue.outputs.ISSUE_ID }}</span>
+      <span class="na">transition</span><span class="pi">:</span> <span class="s2">"</span><span class="s">Code</span><span class="nv"> </span><span class="s">review"</span></code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -1288,7 +1305,7 @@ code_review, когда закинули пулл-реквест. Все что 
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-06-05 11:38:44 +1000
+Last updated 2020-06-05 11:59:15 +1000
 </div>
 </div>
 <style>
