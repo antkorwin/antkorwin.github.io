@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.10">
 <meta name="author" content="Korovin Anatoliy">
-<title>Github Actions</title>
+<title>How to make CI/CD pipeline with GitHub Actions</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
@@ -439,7 +439,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </head>
 <body class="article toc2 toc-left">
 <div id="header">
-<h1>Github Actions</h1>
+<h1>How to make CI/CD pipeline with GitHub Actions</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 </div>
@@ -474,35 +474,10 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <h2 id="_что_будем_автоматизировать">2. Что будем автоматизировать</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Для начала нам нужен проект, который мы будем автоматизировать, давайте сделаем небольшое приложение запускающее ракету на марс и сообщающее нам ее координаты. Возьмем spring-boot и реализуем простенькое REST-API:</p>
+<p>Для начала нам нужен проект, который мы будем автоматизировать, давайте сделаем небольшое приложение на <code>Spring boot / Java 11 / Maven</code>. В рамках этой статьи, логика приложения нас интересовать не будет совсем, нам важна инфраструктура вокруг приложения, так что нам хватит простенького REST API контроллера.</p>
 </div>
 <div class="paragraph">
-<p>Сделаем небольшое WEB приложение на <code>Spring boot / Java 11 / Maven</code>.
-В рамках этой статьи логика приложения нас интересовать не будет совсем, нам важна инфраструктура.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="rouge highlight"><code># создаем новую ракету
-POST /rockets/create
-
-# инициируем запуск ракеты на Марс
-POST /rockets/{id}/start
-
-# Получаем координаты ракеты и ее состояние
-GET  /rockets/{id}/info</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Обычные круды, никакого rocket science (несмотря на тематику)
-Посмотреть исходники можно тут: <a href="https://github.com/antkorwin/github-actions" class="bare">https://github.com/antkorwin/github-actions</a>
-Все этапы построения pipeline-конвейера отражены в пулл-реквестах этого проекта.</p>
-</div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p>TODO: замениь <a href="https://github.com/antkorwin/github-actions">hello world</a> на нормальное приложение</p>
-</div>
-</div>
+<p>Посмотреть исходники можно тут: <a href="https://github.com/antkorwin/github-actions" class="bare">https://github.com/antkorwin/github-actions</a> все этапы построения pipeline-конвейера отражены в пулл-реквестах этого проекта.</p>
 </div>
 </div>
 </div>
@@ -1254,7 +1229,7 @@ code_review, когда закинули пулл-реквест. Все что 
 </div>
 <div class="imageblock">
 <div class="content">
-<img src="./devops.png" alt="devops">
+<img src="./devops.jpg" alt="devops">
 </div>
 </div>
 <div class="paragraph">
@@ -1305,7 +1280,7 @@ code_review, когда закинули пулл-реквест. Все что 
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2020-06-05 11:59:15 +1000
+Last updated 2020-06-10 07:48:59 +1000
 </div>
 </div>
 <style>

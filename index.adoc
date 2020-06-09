@@ -60,6 +60,13 @@ How to work with errors that occur in a different parts of the state machine log
 // link:./statemachine/statemachine_transaction_consistency.html[Transactions support of the state machine] (English) image:./statemachine/eng.png[english,25]::
 // How to provide consistency between the state machine and other systems
 
+### CI/CD with Github Actions 
+
+link:./githubactions/githubactions.html[How to make CI/CD pipeline with GitHub Actions for Java projects] (Russian) image:./statemachine/rus.png[russian,25]::
+A full cycle of continues integration and deployment with GitHub Actions. We consider how to integrate poject with the JIRA, how to show test coverage in pull-requests and we will talk about release managment and deployment project in the docker registry(github packages). 
+
+
+
 ### Spring Cloud:
 
 link:./cloud/spring_cloud_contract_junit5.html[How to use JUnit5 and Spring Cloud Contract] (English) image:./statemachine/eng.png[english,25]::
