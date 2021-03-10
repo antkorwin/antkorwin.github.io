@@ -441,6 +441,7 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 <ul class="sectlevel1">
 <li><a href="#truea-real-example-of-using-phantomreferences">1. A real example of using PhantomReferences</a></li>
 <li><a href="#truestandard-java-api-to-delete-temporary-files">2. Standard java API to delete temporary files.</a></li>
+<li><a href="#trueusing-the-phantomreference">3. Using the PhantomReference</a></li>
 </ul>
 </div>
 </div>
@@ -499,6 +500,11 @@ temp.deleteOnExit();</code></pre>
 <div class="paragraph">
 <p>In our case, this application should work 24x7, and reboot this service just to clean a temp folder sounds like a strange solution. Of course, we can delete temp files manually after finish processing, but it will require a lot of refactoring and complicate unit tests.</p>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="trueusing-the-phantomreference"><a class="anchor" href="#trueusing-the-phantomreference"></a>3. Using the PhantomReference</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>How we can simplify the solution for this problem? We need something to track all references to the file because we can delete a file from the disk exactly after all references will be collected by GC. Using PhantomReference can help us, when the reference is dequeued from the queue we can delete a file.</p>
 </div>
@@ -660,7 +666,7 @@ All examples and source codes in this article have been simplified. If you want 
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2021-03-10 19:35:20 01000
+Last updated 2021-03-10 23:30:24 01000
 </div>
 </div>
 </body>

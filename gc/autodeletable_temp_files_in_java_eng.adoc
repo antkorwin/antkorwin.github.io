@@ -43,6 +43,7 @@ In one week this microservice created around 500 Gb temporary files, and after r
 
 In our case, this application should work 24x7, and reboot this service just to clean a temp folder sounds like a strange solution. Of course, we can delete temp files manually after finish processing, but it will require a lot of refactoring and complicate unit tests. 
  
+## Using the PhantomReference
 
 How we can simplify the solution for this problem? We need something to track all references to the file because we can delete a file from the disk exactly after all references will be collected by GC. Using PhantomReference can help us, when the reference is dequeued from the queue we can delete a file.
 
