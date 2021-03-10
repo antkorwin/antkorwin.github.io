@@ -1,4 +1,4 @@
-= PhantomReference and how to delete temporary files in java 
+= Автоматически удаляемые temp файлы в java 
 :source-highlighter: prettify
 :icons: font
 :toc: left
