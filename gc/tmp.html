@@ -5,8 +5,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="generator" content="Asciidoctor 2.0.8.dev">
-<meta name="author" content="Korovin Anatoliy">
-<title>Anatoliy Korovin</title>
+<meta name="author" content="Korovin Anatoliy, Home">
+<title>PhantomReference and how to delete temporary files in java</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
 <style>
 /* Asciidoctor default stylesheet | MIT License | http://asciidoctor.org */
@@ -427,303 +427,93 @@ body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-b
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
-<body class="article">
+<body class="article toc2 toc-left">
 <div id="header">
-<h1>Anatoliy Korovin</h1>
+<h1>PhantomReference and how to delete temporary files in java</h1>
 <div class="details">
 <span id="author" class="author">Korovin Anatoliy</span><br>
 <span id="email" class="email"><a href="mailto:antkorwin@gmail.com">antkorwin@gmail.com</a></span><br>
+<span id="author2" class="author">Home</span><br>
+<span id="email2" class="email"><a href="http://antkorwin.com" class="bare">http://antkorwin.com</a></span><br>
+</div>
+<div id="toc" class="toc2">
+<div id="toctitle">Table of Contents</div>
+<ul class="sectlevel1">
+<li><a href="#trueintro">1. Intro</a></li>
+<li><a href="#trueстандартный-механизм-удаления-файлов">2. Стандартный механизм удаления файлов</a></li>
+</ul>
 </div>
 </div>
 <div id="content">
-<div id="preamble">
+<div class="sect1">
+<h2 id="trueintro"><a class="anchor" href="#trueintro"></a>1. Intro</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>My thoughts about Java, Spring Framework, TDD and other&#8230;&#8203;</p>
+<p>Если вы когда-нибудь читали о том какие типы ссылок бывают в java, и недоумевали зачем оно нужно в реальной жизни, то в этой статье я расскажу о примере реального сценария, когда может пригодиться знание того как работают PhantomReferences, если вдруг вы еще не сталкивались с различными типами ссылок в java, то можете прочитать эту статью: <a href="http://antkorwin.com/concurrency/weakreference.html" class="bare">http://antkorwin.com/concurrency/weakreference.html</a></p>
+</div>
+<div class="paragraph">
+<p>Думаю что многие сталкивались с ситуацией, когда нужно создать временный файл, например для обработки какого-нибудь изображения, особенно при работе с файлами достаточно большого размера, когда нельзя постоянно держать результат выполнения операции в памяти.</p>
+</div>
+<div class="paragraph">
+<p>Недавно в одном из микросервисов на работе(занимающемся конвертацией файлов в разные форматы) я заметил что создание временных файлов стало приводить к сильному росту занятого пространства на диске. По правде говоря не заметить это было не возможно, потому что место на диске полностью кончилось и работа сервиса была парализована. Конечно после этого пришлось поменять настройку уведомлений об инцидентах из забикса в телеграм-чат и теперь мы узнаем об этом заранее, но сегодняшняя история не об этом =)</p>
+</div>
+<div class="paragraph">
+<p><code>[скрин занятого места в темпе]</code></p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="truemy-current-activity"><a class="anchor" href="#truemy-current-activity"></a>My current activity:</h2>
+<h2 id="trueстандартный-механизм-удаления-файлов"><a class="anchor" href="#trueстандартный-механизм-удаления-файлов"></a>2. Стандартный механизм удаления файлов</h2>
 <div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>twitter: <a href="https://twitter.com/antkorwin">@antkorwin</a></p>
-</li>
-<li>
-<p>github: <a href="https://github.com/antkorwin">@antkorwin</a></p>
-</li>
-<li>
-<p>linkedin: <a href="https://www.linkedin.com/in/antkorwin/">@antkorwin</a></p>
-</li>
-<li>
-<p>telegram: <a href="https://t.me/test_tools">@test_tools</a></p>
-</li>
-<li>
-<p>host at <a href="https://bitcask.live/">Bitcask Podcast</a></p>
-</li>
-</ul>
+<div class="paragraph">
+<p>В java есть стандартный механизм для удаления временных файлов:</p>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="truemy-projects"><a class="anchor" href="#truemy-projects"></a>My Projects:</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Java synchronization library: <a href="https://github.com/antkorwin/xsync">XSync</a></p>
-</li>
-<li>
-<p>String interpolation javac plugin: <a href="https://github.com/antkorwin/better-strings">BetterStrings</a></p>
-</li>
-<li>
-<p>Testing tools: <a href="https://github.com/jupiter-tools">JupiterTools</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="truemy-articles-and-blog-posts"><a class="anchor" href="#truemy-articles-and-blog-posts"></a>My Articles and Blog Posts:</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="truetesting"><a class="anchor" href="#truetesting"></a>Testing:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./test_properties/dynamic_properties.html">How to set dynamic value of properties in spring boot tests</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span> </dt>
-<dd>
-<p>Как задать динамические значения spring properties для теста.</p>
-</dd>
-<dt class="hdlist1"><a href="./test_properties/test_property_source_repeatable.html">Support @TestPropertySource as a repeatable annotation</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span> </dt>
-<dd>
-<p>История моего очередного коммита в Spring Framework,
-в этот раз исправляем поведение аннотации <code>TestPropertySource</code> так,
-чтобы можно было ее использовать одновременно
-в своих мета-аннотациях и локально над тестовыми классами.</p>
-</dd>
-<dt class="hdlist1"><a href="./junit5/junit5_in_spring4.html">How to use the JUnit5 in the Spring Framework 4</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>The workaround for using a modern version of Junit (the JUnit5 Jupiter) with a Spring Framework version older than 5, or SpringBoot version earlier than 2.0.</p>
-</dd>
-<dt class="hdlist1"><a href="./junit5/junit5_parallel_execution.html">How to use the Parallel Execution of tests in the JUnit5</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>Example of usage the <code>JUnit5 5.3.0-RC1</code> to run tests in parallel execution mode.</p>
-</dd>
-<dt class="hdlist1"><a href="./async/async_test_spring.html">Asynchronous tests, the Awaitility and uncaught exceptions from other threads</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>The story of my research of fragile asynchronous tests in the Spring Framework and uncaught exceptions handling by the Awaitility.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truespring-state-machine"><a class="anchor" href="#truespring-state-machine"></a>Spring State Machine:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./statemachine/statemachine.html">Spring State machine workshop</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span> </dt>
-<dd>
-<p>Example of using a spring state machine for an automatization of a different kinds of business process.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_rus.html">Spring State machine workshop</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span> </dt>
-<dd>
-<p>Использование spring state machine для автоматизации бизнес-процессов</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_persisting.html">Persisting a spring state machine</a> (English)  <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to store a current state of a state machine in the MongoDb and how to test it with the Docker by the testcontainers framework.</p>
-</dd>
-<dt class="hdlist1"><a href="./statemachine/statemachine_exception_handling.html">Error handling</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to work with errors that occur in a different parts of the state machine logics.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truecicd-with-github-actions"><a class="anchor" href="#truecicd-with-github-actions"></a>CI/CD with Github Actions</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./githubactions/githubactions.html">How to make CI/CD pipeline with GitHub Actions for Java projects</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span></dt>
-<dd>
-<p>A full cycle of continues integration and deployment with GitHub Actions. We consider how to integrate poject with the JIRA, how to show test coverage in pull-requests and we will talk about release managment and deployment project in the docker registry(github packages).</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truespring-cloud"><a class="anchor" href="#truespring-cloud"></a>Spring Cloud:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./cloud/spring_cloud_contract_junit5.html">How to use JUnit5 and Spring Cloud Contract</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Example of using a Spring Cloud Contract for testing of the contract between pair of microservices.
-We consider how to make a full circle of using a Spring Cloud Contract with JUnit5,
-we will talk about a using TeamCity to build a project and Artifactory for deploy binary of contracts.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truespring-configuration"><a class="anchor" href="#truespring-configuration"></a>Spring Configuration:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./spring_configuration/autoconfig.html">Spring auto-configuration &amp; conditional</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Write you own auto-configuration classes with a ConditionalOnBean dependency</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truehibernate"><a class="anchor" href="#truehibernate"></a>Hibernate:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./hibernate/entity_init.html">Choosing the right way to initialize a fields of the entity</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Варианты инициализации полей сущности, значениями поумолчанию, а так же типичные ошибки при работе с ними. Эта статья послужила материалом для
-Детективной истории от Баруха Садогурского и Евгения Борисова на конференции jpoint 2018.</p>
-</dd>
-<dt class="hdlist1"><a href="./hibernate/unproxy.html">разворачиваем прокси (hibernate покажи личико)</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как получить из hibernate proxy сам объект.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truereflection"><a class="anchor" href="#truereflection"></a>Reflection:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./reflection/make_new_instance.html">создаем новый объект через reflection</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Тонкости implicit параметров при создании нового экземпляра объекта.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="trueconcurrency-garbage-collector"><a class="anchor" href="#trueconcurrency-garbage-collector"></a>Concurrency &amp; Garbage Collector:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./concurrency/weakreference.html">Soft, Weak &amp; Phantom References in Java</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Consider the differences between the types of references in Java.
-And look at examples of using a WeakReference, SoftReference &amp; PhantomReference.</p>
-</dd>
-<dt class="hdlist1"><a href="./gc/autodeletable_temp_files_in_java_eng.html">Auto-deletable temporary files in Java</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to make automatically deleted temporary files in Java, a real example of using the PhantomReference.</p>
-</dd>
-<dt class="hdlist1"><a href="./gc/autodeletable_temp_files_in_java.html">Автоматически удаляемые temp файлы в java</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="russian" width="25"></span></dt>
-<dd>
-<p>Как сделать автоматическое удаление временных файлов в java на базе PhantomReference ссылок.</p>
-</dd>
-<dt class="hdlist1"><a href="./concurrency/synchronization_by_value.html">Synchronized by the value of the object</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>An example of the use of WeakReference for the synchronization by value of object. Also a comparing of benchmark for different ConcurrentMap implementations.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truedifferent"><a class="anchor" href="#truedifferent"></a>Different</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="http://antkorwin.com/idea/openfile.html">Intellij IDEA Little tricks</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>How to open files in IDEA from a browser link.</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truecode-conventions"><a class="anchor" href="#truecode-conventions"></a>Code conventions:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="http://antkorwin.com/codestyle.html">Code style conventions</a> (English) <span class="image"><img src="./statemachine/eng.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Code style conventions</p>
-</dd>
-</dl>
-</div>
-</div>
-<div class="sect2">
-<h3 id="trueannotation-processing"><a class="anchor" href="#trueannotation-processing"></a>Annotation processing:</h3>
-<div class="dlist">
-<dl>
-<dt class="hdlist1"><a href="./annotation_processor/lombok_mapstruct.html">Как подружить lombok и mapstruct</a> (Russian) <span class="image"><img src="./statemachine/rus.png" alt="english" width="25"></span></dt>
-<dd>
-<p>Как использовать сразу два кодо-генератора, да так чтобы задать определенную последовательность их запуска.</p>
-</dd>
-</dl>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="truepublic-talks"><a class="anchor" href="#truepublic-talks"></a>Public Talks:</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="trueheisenbug-moscow-2019-iot-where-is-my-garbage-collector-5-12-2019"><a class="anchor" href="#trueheisenbug-moscow-2019-iot-where-is-my-garbage-collector-5-12-2019"></a>Heisenbug Moscow 2019 - IoT, Where is my Garbage collector - 5.12.2019  <span class="image"><img src="./statemachine/rus.png" alt="russian" width="28"></span></h3>
-<div class="videoblock">
+<div class="listingblock">
 <div class="content">
-<iframe width="640" height="304" src="https://www.youtube.com/embed/_KZ9vfAkK-E?rel=0" frameborder="0" allowfullscreen></iframe>
+<pre class="highlight"><code class="language-java" data-lang="java">example</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>&#160;<br></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="trueheisenbug-piter-2019-microservice-wars-slides-18-05-2019"><a class="anchor" href="#trueheisenbug-piter-2019-microservice-wars-slides-18-05-2019"></a>Heisenbug Piter 2019 - Microservice wars (slides) - 18.05.2019 <span class="image"><img src="./statemachine/rus.png" alt="russian" width="28"></span></h3>
-<div class="videoblock">
-<div class="content">
-<iframe width="640" height="380" src="https://www.youtube.com/embed/UeQfaulJJDo?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
+<p>Но с ним есть один подвох, мало кто читает спецификацию, это же скучно, а там написано что удален файл будет только после остановки виртуальной машины, при этом остановка должна быть корректной. Т.е. другими словами, все файлы будут сохраняться на диске, в ожидании перезапуска сервиса. Это поведение легко заметить на графике роста занятого места в разделе с папкой темп:</p>
 </div>
 <div class="paragraph">
-<p>&#160;<br></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truehighload-2019-slides-9-04-2019"><a class="anchor" href="#truehighload-2019-slides-9-04-2019"></a>Highload++ 2019 (slides) - 9.04.2019 <span class="image"><img src="./statemachine/rus.png" alt="russian" width="28"></span></h3>
-<div class="paragraph">
-<p><span class="image"><a class="image" href="https://speakerdeck.com/antkorwin/microservice-wars-junit-episode-v-testcontainers-strikes-back"><img src="./images/HeisenBUG_2019_slides.jpg" alt="heisenbug" width="640"></a></span></p>
+<p><code>[график с перезагрузкой]</code></p>
 </div>
 <div class="paragraph">
-<p>&#160;<br></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="trueintro-to-the-spring-cloud-live-workshop-16-11-2018"><a class="anchor" href="#trueintro-to-the-spring-cloud-live-workshop-16-11-2018"></a>Intro to the Spring Cloud (Live Workshop) - 16.11.2018 <span class="image"><img src="./statemachine/rus.png" alt="russian" width="28"></span></h3>
-<div class="videoblock">
-<div class="content">
-<iframe width="640" height="390" src="https://www.youtube.com/embed/dK1CsTt9tAc?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
+<p>За неделю работы сервис создает порядка 500Gb временных файлов, и как только его перезапустили большая часть их была удалена.</p>
 </div>
 <div class="paragraph">
-<p>&#160;<br></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="truespring-cloud-contract-api-контракты-микросервисов-12-10-2018"><a class="anchor" href="#truespring-cloud-contract-api-контракты-микросервисов-12-10-2018"></a>Spring Cloud Contract -  API контракты микросервисов - 12.10.2018 <span class="image"><img src="./statemachine/rus.png" alt="english" width="28"></span></h3>
-<div class="videoblock">
-<div class="content">
-<iframe width="640" height="390" src="https://www.youtube.com/embed/365nPFiQtuI?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
+<p>В нашем случае этот сервис должен работать 24х7 и останавливать его только чтобы подчистить темп, по меньшей мере - странно. Начинать руками удалять файлы, после того как мы закончили весь процесс их обработки тоже неудобно, потому что для этого нужно переписывать логику нескольких классов и тестировать весь этот механизм (сделать это конечно можно, но это слишком трудозатратно).</p>
 </div>
 <div class="paragraph">
-<p>&#160;<br></p>
+<p>Что можно сделать в такой ситуации? Нам нужен механизм позволяющий удалить файл после того как с ним закончили работу. Формально это может значить, что как только у нас не осталось ссылок на файл и объект указывающий на него собран GC, то файл можно удалять. И тут нам приходит на помощь PhantomReference, который  позволяет отследить момент сборки объекта коллектором. Как только ссылка на объект будет извлечена из очереди, мы можем удалять файл на диске.</p>
 </div>
+<div class="paragraph">
+<p>Для этого нам потребуется расширить класс PhantomReference, добавим туда путь до файла и метод для его удаления:</p>
 </div>
-<div class="sect2">
-<h3 id="truestate-machine-workshop-live-video-18-05-2018"><a class="anchor" href="#truestate-machine-workshop-live-video-18-05-2018"></a>State machine workshop live video - 18.05.2018 <span class="image"><img src="./statemachine/rus.png" alt="english" width="28"></span></h3>
-<div class="videoblock">
-<div class="content">
-<iframe width="640" height="390" src="https://www.youtube.com/embed/J56_t5lny9c?rel=0" frameborder="0" allowfullscreen></iframe>
+<div class="paragraph">
+<p><code>[src]</code></p>
 </div>
+<div class="paragraph">
+<p>При создании временного файла будем создавать фантомную ссылку на этот файл:</p>
+</div>
+<div class="paragraph">
+<p><code>[src] // ссылка на очередь в которой появится событие когда объект соберет GC</code></p>
+</div>
+<div class="paragraph">
+<p>при этом в отдельном потоке нужно ждать в очереди наш указатель, как только мы его получим, файл можно удалять:</p>
+</div>
+<div class="paragraph">
+<p><code>[src]</code></p>
+</div>
+<div class="paragraph">
+<p>Теперь за неделю работы сервис не сдвинул с места объем накопленного в temp Folder. Это хороший результат, как минимум это значит что теперь никто не будет разбужен ночью сообщением о том что место на диске кончилось. =)</p>
+</div>
+<div class="paragraph">
+<p><code>[график стабильность]</code></p>
+</div>
+<div class="paragraph">
+<p>Конечно у этого механизма есть оверхед в плане производительности, создавать новый поток для сборки неиспользуемых файлов - не дешевая операция, но при необходимости этот поток можно создать при старте приложения и оставить фоновым демоном. Однако в нашем кейсе, создание файлов происходит настолько интенсивно, что этот поток почти никогда не останавливается.</p>
 </div>
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript" >
@@ -753,13 +543,31 @@ And look at examples of using a WeakReference, SoftReference &amp; PhantomRefere
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/47919536" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
-</div>
+<div id="disqus_thread"></div>
+<script>
+/**
+*  RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+*  LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables*/
+/*
+var disqus_config = function () {
+this.page.url = 'antkorwin.com';  // Replace PAGE_URL with your page's canonical URL variable
+this.page.identifier = 'TITLE'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+};
+*/
+(function() { // DON'T EDIT BELOW THIS LINE
+var d = document, s = d.createElement('script');
+s.src = 'https://antkorwin.disqus.com/embed.js';
+s.setAttribute('data-timestamp', +new Date());
+(d.head || d.body).appendChild(s);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
 </div>
 </div>
 </div>
 <div id="footer">
 <div id="footer-text">
-Last updated 2021-03-09 23:46:51 01000
+Last updated 2021-02-27 23:15:20 01000
 </div>
 </div>
 </body>

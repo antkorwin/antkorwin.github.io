@@ -100,6 +100,12 @@ link:./concurrency/weakreference.html[Soft, Weak & Phantom References in Java] (
 Consider the differences between the types of references in Java.
 And look at examples of using a WeakReference, SoftReference & PhantomReference.
 
+link:./gc/autodeletable_temp_files_in_java_eng.html[Auto-deletable temporary files in Java] (English) image:./statemachine/eng.png[english,25]::
+How to make automatically deleted temporary files in Java, a real example of using the PhantomReference.
+
+link:./gc/autodeletable_temp_files_in_java.html[Автоматически удаляемые temp файлы в java] (Russian) image:./statemachine/rus.png[russian,25]::
+Как сделать автоматическое удаление временных файлов в java на базе PhantomReference ссылок.
+
 link:./concurrency/synchronization_by_value.html[Synchronized by the value of the object] (English) image:./statemachine/eng.png[english,25]::
 An example of the use of WeakReference for the synchronization by value of object. Also a comparing of benchmark for different ConcurrentMap implementations.
 
