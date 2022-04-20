@@ -9,8 +9,7 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 // START OF CONTENT
 
 
-
-text 
+this could be your text
 
 
 // END OF CONTENT
