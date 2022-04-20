@@ -10,6 +10,8 @@ Korovin Anatoliy <antkorwin@gmail.com>;  Home <http://antkorwin.com>
 
 
 
+text 
+
 
 // END OF CONTENT
 include::metrica.adoc[]
