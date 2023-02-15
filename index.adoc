@@ -4,23 +4,33 @@
 :experimental:
 Korovin Anatoliy <antkorwin@gmail.com>
 
-My thoughts about Java, Spring Framework, TDD and other...
+image::images/profile_photo.jpg[width=300]
+
+CEO at https://thewhite.ru[theWhite], founder at https://wicando.io[wicando.io], founder at https://timerra.io[timerra.io]
 
 ## My current activity:
 
+- telegram: link:https://t.me/antkorwin_blog[@antkorwin_blog]
 - twitter: link:https://twitter.com/antkorwin[@antkorwin]
 - github: link:https://github.com/antkorwin[@antkorwin]
 - linkedin: link:https://www.linkedin.com/in/antkorwin/[@antkorwin]
-- telegram: link:https://t.me/test_tools[@test_tools]
 - host at link:https://bitcask.live/[Bitcask Podcast]
 
-## My Projects:
+## Open Source Projects:
 
 - Java synchronization library: link:https://github.com/antkorwin/xsync[XSync]
 - String interpolation javac plugin: link:https://github.com/antkorwin/better-strings[BetterStrings]
 - Testing tools: link:https://github.com/jupiter-tools[JupiterTools]
 
-## My Articles and Blog Posts:
+## Articles for CEO / founders / owners
+
+### Sales and business development
+
+link:./sales/usp.html[Как найти и сформулировать УТП(уникальное торговое предложение)] (Russian) image:./statemachine/rus.png[russian,25] ::
+Что такое УТП, зачем это вам нужно, и как сформулировать уникальную ценность для успешного продвижения вашего продукта.
+
+
+## Technical Articles and Blog Posts:
 
 ### Testing:
 
