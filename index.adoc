@@ -29,6 +29,9 @@ CEO at https://thewhite.ru[theWhite], founder at https://wicando.io[wicando.io],
 link:./sales/usp.html[Как найти и сформулировать УТП(уникальное торговое предложение)] (Russian) image:./statemachine/rus.png[russian,25] ::
 Что такое УТП, зачем это вам нужно, и как сформулировать уникальную ценность для успешного продвижения вашего продукта.
 
+link:./sales/kak_sostavit_smetu_proekta_chtoby_zarabotat_na_nem.html[Как быстро составить смету проекта, так чтобы точно заработать на нем (8 эффективных правил)] (Russian) image:./statemachine/rus.png[russian,25] ::
+Топ 8 инструментов, чтобы сделать хорошую смету на айти проект. В статье - все что нужно знать о том как систематизировать работу со сметами и упростить жизнь не только отделу продаж, но и разработчикам.
+
 
 ## Technical Articles and Blog Posts:
 
