@@ -62,7 +62,7 @@ image::employee-turnover-cost-5.png[link="https://wicando.io"]
 
 Скопировать таблицу себе и пересчитать сколько в вашем случае будет стоить замена сотрудника можно тут:
 
-image:../../icons/excel.png[github,64,64]  link:https://t.me/antkorwin_blog[ Калькулятор расходов на замену сотрудника]
+image:../../icons/excel.png[github,64,64]  link:https://docs.google.com/spreadsheets/d/1SGxZitQF7HTZXolJsZ6AWmxtKd-XuR02mDuKbHs7MxM/edit?usp=sharing[ Калькулятор расходов на замену сотрудника]
 
 Если понравилась статья, то можно подписаться на обновления в телеграм канале:
 
